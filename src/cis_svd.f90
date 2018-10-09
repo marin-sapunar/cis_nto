@@ -52,18 +52,17 @@ contains
     !> @note The first row/column of the output matrix s_wf are the overlaps between the reference
     !! and the CIS states.
     !----------------------------------------------------------------------------------------------
-    subroutine cis_overlap(beta, trunc, s_mo_a, s_mo_b, wf_a1, wf_a2, wf_b1, wf_b2, s_wf)
+    subroutine cis_overlap(trunc, s_mo, wf_a1, wf_a2, wf_b1, wf_b2, s_wf)
         use blas95, only : gemm
         use matrix_mod, only : mat_ge_det
-        logical, intent(in) :: beta !< Unrestricted calculation.
         real(dp), intent(in) :: trunc !< Threshold for truncating the wave functions.
-        real(dp), intent(in) :: s_mo_a(:, :) !< Overlaps of alpha molecular orbitals.
-        real(dp), intent(in) :: s_mo_b(:, :) !< Overlaps of beta molecular orbitals.
+        real(dp), intent(in) :: s_mo(:, :, :) !< Overlaps of alpha/beta molecular orbitals.
         real(dp), intent(in) :: wf_a1(:, :, :) !< Bra alpha wave function coefficients.
         real(dp), intent(in) :: wf_a2(:, :, :) !< Ket alpha wave function coefficients.
         real(dp), intent(in) :: wf_b1(:, :, :) !< Bra beta wave function coefficients.
         real(dp), intent(in) :: wf_b2(:, :, :) !< Ket beta wave function coefficients.
         real(dp), allocatable, intent(out) :: s_wf(:, :) !< Wave function overlaps.
+        logical :: beta !< Restricted/unrestricted calculation.
         integer :: n_1 !< Number of bra orbitals.
         integer :: n_2 !< Number of bra orbitals.
         integer :: no_a !< Number of occupied alpha orbitals.
@@ -97,8 +96,10 @@ contains
         integer :: i, j
 
         ! Get dimensions.
-        n_1 = size(s_mo_a, 1)
-        n_2 = size(s_mo_a, 2)
+        beta = .false.
+        if (size(s_mo, 3) == 2) beta = .true.
+        n_1 = size(s_mo, 1)
+        n_2 = size(s_mo, 2)
         no_a = size(wf_a1, 2)
         nwf_1 = size(wf_a1, 3)
         nwf_2 = size(wf_a2, 3)
@@ -121,10 +122,11 @@ contains
 
         if (beta) then
             ! Allocate beta arrays.
+            no_b = size(wf_b1, 2)
             allocate(c_b1(no_b, nwf_1))
             allocate(c_b2(no_b, nwf_2))
-            allocate(mo_b1(n_1, no_b, nwf_1))
-            allocate(mo_b2(n_2, no_b, nwf_2))
+            allocate(mo_b1(n_1, 2*no_b, nwf_1))
+            allocate(mo_b2(n_2, 2*no_b, nwf_2))
             allocate(s_nto_b(no_b*2, no_b*2))
             allocate(wrk_b(no_b*2, n_2))
             allocate(sr_b(nwf_1))
@@ -133,8 +135,8 @@ contains
             allocate(na_b1(nwf_1))
             allocate(na_b2(nwf_2))
             ! Calculate beta NTOs.
-            call cis_nto(no_b, n_1-no_b, nwf_1, wf_b1, c_b1, mo_b1)
-            call cis_nto(no_b, n_2-no_b, nwf_2, wf_b2, c_b2, mo_b2)
+            call cis_nto(n_1-no_b, no_b, nwf_1, wf_b1, c_b1, mo_b1)
+            call cis_nto(n_2-no_b, no_b, nwf_2, wf_b2, c_b2, mo_b2)
         end if
 
         ! Truncate wave functions:
@@ -151,10 +153,10 @@ contains
         end if
 
         ! Calculate alpha determinant blocks.
-        rr_a = mat_ge_det(s_mo_a(1:no_a, 1:no_a))
-        if (beta) rr_b = mat_ge_det(s_mo_b(1:no_b, 1:no_b))
+        rr_a = mat_ge_det(s_mo(1:no_a, 1:no_a, 1))
+        if (beta) rr_b = mat_ge_det(s_mo(1:no_b, 1:no_b, 2))
         do i = 1, nwf_1
-            call gemm(mo_a1(:, :, i), s_mo_a, wrk_a, transa='T')
+            call gemm(mo_a1(:, :, i), s_mo(:, :, 1), wrk_a, transa='T')
             do j = 1, nwf_2
                 call gemm(wrk_a, mo_a2(:, :, j), s_nto_a)
                 call nto_rs(no_a, na_a1(i), s_nto_a, c_a1(:, i), sr_a(i), .true.)
@@ -165,9 +167,9 @@ contains
 
         ! Calculate beta determinant blocks.
         if (beta) then
-            rr_b = mat_ge_det(s_mo_b(1:no_b, 1:no_b))
+            rr_b = mat_ge_det(s_mo(1:no_b, 1:no_b, 2))
             do i = 1, nwf_1
-                call gemm(mo_b1(:, :, i), s_mo_b, wrk_b, transa='T')
+                call gemm(mo_b1(:, :, i), s_mo(:, :, 2), wrk_b, transa='T')
                 do j = 1, nwf_2
                     call gemm(wrk_b, mo_b2(:, :, j), s_nto_b)
                     call nto_rs(no_b, na_b1(i), s_nto_b, c_b1(:, i), sr_b(i), .true.)

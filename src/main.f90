@@ -45,6 +45,7 @@ program cis_olap_test
     integer :: i,s,ounit
     character(len=1000) :: temp
     real(dp) :: thr
+    logical :: beta
 
     i = command_argument_count()
     thr = 1.0_dp
@@ -64,6 +65,8 @@ program cis_olap_test
         call read_txt('wfb2', nvb2, nob2, nwf2, wfb2)
     end if
     rhf = max(rhf1, rhf2)
+    if (rhf == 1) beta = .false.
+    if (rhf == 2) beta = .true.
 
     allocate(wrk(nmo1, nao2))
     allocate(s_mo(nmo1, nmo2, rhf))
@@ -72,7 +75,7 @@ program cis_olap_test
         call gemm(wrk, mo2(:, :, s), s_mo(:, :, s))
     end do
 
-    call cis_overlap(.false., thr, s_mo(:, :, 1), s_mo(:, :, 1), wfa1, wfa2, wfb1, wfb2, s_wf)
+    call cis_overlap(thr, s_mo, wfa1, wfa2, wfb1, wfb2, s_wf)
 
     open(newunit=ounit, file='omat', action='write')
     do i = 1, nwf2 + 1
