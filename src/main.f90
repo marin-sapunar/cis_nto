@@ -6,7 +6,7 @@ program cis_olap_test
     use blas95, only : gemm, dot, gemv
     implicit none
 
-    integer :: rhf = 0
+    integer :: rhf = 0 !< Restricted (1) or unrestricted(2) calculation.
     integer :: rhf1 = 0 !< Restricted (1) or unrestricted (2) for 1 wave functions.
     integer :: rhf2 = 0 !< Restricted (1) or unrestricted (2) for 2 wave functions.
     integer :: nao1 = 0 !< Number of atomic orbitals 1.
@@ -45,7 +45,6 @@ program cis_olap_test
     integer :: i,s,ounit
     character(len=1000) :: temp
     real(dp) :: thr
-    logical :: beta
 
     i = command_argument_count()
     thr = 1.0_dp
@@ -60,19 +59,24 @@ program cis_olap_test
 
     call read_txt('wfa1', nva1, noa1, nwf1, wfa1)
     call read_txt('wfa2', nva2, noa2, nwf2, wfa2)
-    if (rhf1 == 2) then
-        call read_txt('wfb1', nvb1, nob1, nwf1, wfb1)
-        call read_txt('wfb2', nvb2, nob2, nwf2, wfb2)
-    end if
+    if (rhf1 == 2) call read_txt('wfb1', nvb1, nob1, nwf1, wfb1)
+    if (rhf2 == 2) call read_txt('wfb2', nvb2, nob2, nwf2, wfb2)
     rhf = max(rhf1, rhf2)
-    if (rhf == 1) beta = .false.
-    if (rhf == 2) beta = .true.
+    if (rhf1 /= rhf) then
+        allocate(wfb1(nva1, noa1, nwf1))
+        wfa1 = wfa1 / sqrt(2.0_dp)
+        wfb1 = -wfa1
+    else if (rhf2 /= rhf) then
+        allocate(wfb2(nva2, noa2, nwf2))
+        wfa2 = wfa2 / sqrt(2.0_dp)
+        wfb2 = -wfa2
+    end if
 
     allocate(wrk(nmo1, nao2))
     allocate(s_mo(nmo1, nmo2, rhf))
     do s = 1, rhf
-        call gemm(mo1(:, :, s), s_ao, wrk, transa='T')
-        call gemm(wrk, mo2(:, :, s), s_mo(:, :, s))
+        call gemm(mo1(:, :, min(s, rhf1)), s_ao, wrk, transa='T')
+        call gemm(wrk, mo2(:, :, min(s, rhf2)), s_mo(:, :, s))
     end do
 
     call cis_overlap(thr, s_mo, wfa1, wfa2, wfb1, wfb2, s_wf)
@@ -81,6 +85,9 @@ program cis_olap_test
     do i = 1, nwf2 + 1
         write(ounit,*) s_wf(:, i)
     end do
+  ! do i = 1, nwf2
+  !     write(ounit,'(999(f13.10,x))') s_wf(2:, i+1)
+  ! end do
     close(ounit)
   ! call orthog_lowdin(s_wf)
   ! do i = 1, nwf1 
