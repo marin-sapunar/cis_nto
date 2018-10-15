@@ -1,6 +1,6 @@
 program cis_olap_test
     use global_defs
-    use cis_svd_mod
+    use cis_overlap_mod
     use read_txt_mod
     use orthog_mod
     use blas95, only : gemm, dot, gemv
@@ -85,14 +85,6 @@ program cis_olap_test
     do i = 1, nwf2 + 1
         write(ounit,*) s_wf(:, i)
     end do
-  ! do i = 1, nwf2
-  !     write(ounit,'(999(f13.10,x))') s_wf(2:, i+1)
-  ! end do
     close(ounit)
-  ! call orthog_lowdin(s_wf)
-  ! do i = 1, nwf1 
-  !     write(*,*) s_wf(i+1, 2:)
-  ! end do
-
 
 end program cis_olap_test

@@ -12,25 +12,26 @@ enable_language (Fortran)
   set_property (CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS Release Debug DebugAll)
 
 
-  set(LINALG MKL CACHE STRING
-          "Choose linear algebra library, options are: MKL OpenBLAS BLAS")
-  set_property (CACHE LINALG PROPERTY STRINGS MKL OpenBLAS BLAS)
+  set(LINALG MKL CACHE STRING "Linear algebra library, at the moment only MKL is supported")
+  set_property(CACHE LINALG PROPERTY STRINGS MKL)
 
+  option(OMP "Use OMP." ON)
+  option(STATIC "Create a static executable." OFF)
 
 ###################################################################################################
 # Compiler specific options:                                                                      #
-  if(CMAKE_Fortran_COMPILER_ID STREQUAL "INTEL")
-    set(dialect "-fpp")
+  if(CMAKE_Fortran_COMPILER_ID STREQUAL "Intel")
+    add_compile_options(-fpp)
     set(CMAKE_Fortran_FLAGS_RELEASE  "-O3")
     set(CMAKE_Fortran_FLAGS_DEBUG    "-O2 -traceback -g")
     set(CMAKE_Fortran_FLAGS_DEBUGALL "-O0 -traceback -g -check all -debug all")
   elseif(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
-    set(dialect "-cpp -ffree-line-length-0")
+    add_compile_options(-cpp)
+    add_compile_options(-ffree-line-length-0)
     set(CMAKE_Fortran_FLAGS_RELEASE  "-O3")
     set(CMAKE_Fortran_FLAGS_DEBUG "-O2 -fbacktrace -g")
     set(CMAKE_Fortran_FLAGS_DEBUGALL "-O0 -fbacktrace -Wall -pedantic -fcheck=all")
   endif()
-  set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} ${dialect}")
 
 
 ###################################################################################################
@@ -57,48 +58,44 @@ enable_language (Fortran)
                  "or call cmake with -DF95ROOT=/path/to/f95root_dir")
       endif()
     endif()
-    message ("-- MKLROOT = ${MKLROOT}")
-    message ("-- F95ROOT = ${F95ROOT}")
+    message (STATUS "MKLROOT = ${MKLROOT}")
+    message (STATUS "F95ROOT = ${F95ROOT}")
 
+    # Compile flags:
     # F95 Interface:
-    include_directories(${F95ROOT}/include/intel64/ilp64 ${MKLROOT}/include) 
+    include_directories(${F95ROOT}/include/intel64/ilp64)
     set(F95_LIBS ${F95ROOT}/lib/intel64/libmkl_blas95_ilp64.a)
     set(F95_LIBS ${F95_LIBS} ${F95ROOT}/lib/intel64/libmkl_lapack95_ilp64.a)
     set(LINKLIBS ${LINKLIBS} ${F95_LIBS})
-
-    # MKL libraries.
-    add_compile_options(-fdefault-integer-8 -m64)
+    # MKL libraries:
+    include_directories(${MKLROOT}/include) 
     set(MKL_LIBS "-Wl,--no-as-needed -Wl,--start-group")
-    if(CMAKE_Fortran_COMPILER_ID STREQUAL "INTEL")
-      set(MKL_LIBS ${MKL_LIBS} "-lmkl_intel_ilp64 -lmkl_intel_thread")
-    elseif(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
-      set(MKL_LIBS ${MKL_LIBS} "-lmkl_gf_ilp64 -lmkl_gnu_thread")
+    if(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
+      set(MKL_LIBS ${MKL_LIBS} "-lmkl_gf_ilp64")
+      add_compile_options(-fdefault-integer-8 -m64)
+    else()
+      add_compile_options(-i8 -m64)
+      set(MKL_LIBS ${MKL_LIBS} "-lmkl_intel_ilp64")
     endif()
-    set(MKL_LIBS ${MKL_LIBS} "-lmkl_core -Wl,--end-group -liomp5 -lpthread -lm -ldl")
+    set(MKL_LIBS ${MKL_LIBS} "-lmkl_sequential -lmkl_core -Wl,--end-group -lpthread -lm -ldl")
     set(LINKLIBS ${LINKLIBS} ${MKL_LIBS})
-    
   endif()
- #if(LINALG STREQUAL "OpenBLAS")
- #  find_package(OpenBLAS REQUIRED)
- ## include_directories(${OpenBLAS_INCLUDE_DIR})
- #  if(STATIC)
- #    # Need to add OpenBLAS_STATIC_LIBRARIES to OpenBlas config file.
- #    message(STATUS "OpenBLAS found: " ${OpenBLAS_STATIC_LIBRARIES})
- #    set(LINKLIBS ${LINKLIBS} ${OpenBLAS_STATIC_LIBRARIES} -liomp5 -lpthread -lm -ldl)
- #  else()
- #    message(STATUS "OpenBLAS found: " ${OpenBLAS_LIBRARIES})
- #    set(LINKLIBS ${LINKLIBS} ${OpenBLAS_LIBRARIES} -liomp5 -lpthread -lm -ldl)
- #  endif()
- #endif()
- #if(LINALG STREQUAL "BLAS")
- #  find_package(LAPACK REQUIRED)
- #  set(LINKLIBS ${LINKLIBS} ${LAPACK_LIBRARIES})
- #endif()
+
+  if(OMP)
+    find_package(OpenMP REQUIRED)
+    set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} ${OpenMP_Fortran_FLAGS}")
+    message(STATUS "OpenMP libraries:  ${OpenMP_Fortran_LIB_NAMES}")
+  endif()
+
+  if(STATIC)
+    set(LINKLIBS ${LINKLIBS} "-static")
+  endif()
+
 
 
 ################################################################################
 # Build                                                                        #
 
-  file(GLOB SOURCES "src/*f90")
-  add_executable(cis_overlap.exe ${SOURCES})
+  file(GLOB SOURCES "src/utils/*f90" "src/core/*f90")
+  add_executable(cis_overlap.exe "src/prog_overlap.f90" ${SOURCES})
   target_link_libraries(cis_overlap.exe ${LINKLIBS})
