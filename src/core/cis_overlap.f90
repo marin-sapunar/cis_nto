@@ -74,49 +74,51 @@ contains
         n_1 = size(s_mo, 1)
         n_2 = size(s_mo, 2)
         no_a = size(wf_a1, 2)
+        if (beta) no_b = size(wf_b1, 2)
         nwf_1 = size(wf_a1, 3)
         nwf_2 = size(wf_a2, 3)
-
-        ! Allocate alpha arrays.
+        ! Allocate nto arrays.
         allocate(c_a1(no_a, nwf_1))
         allocate(c_a2(no_a, nwf_2))
         allocate(mo_a1(n_1, 2*no_a, nwf_1))
         allocate(mo_a2(n_2, 2*no_a, nwf_2))
         allocate(s_nto_a(no_a*2, no_a*2))
-        allocate(wrk_a(no_a*2, n_2))
-        allocate(rr_a(nwf_1, nwf_2))
-        allocate(sr_a(nwf_1, nwf_2))
-        allocate(rs_a(nwf_1, nwf_2))
-        allocate(ss_a(nwf_1, nwf_2))
         allocate(na_a1(nwf_1))
         allocate(na_a2(nwf_2))
-        ! Calculate alpha NTOs.
-        call cis_nto(n_1-no_a, no_a, nwf_1, wf_a1, c_a1, mo_a1)
-        call cis_nto(n_2-no_a, no_a, nwf_2, wf_a2, c_a2, mo_a2)
-
         if (beta) then
-            ! Allocate beta arrays.
-            no_b = size(wf_b1, 2)
             allocate(c_b1(no_b, nwf_1))
             allocate(c_b2(no_b, nwf_2))
             allocate(mo_b1(n_1, 2*no_b, nwf_1))
             allocate(mo_b2(n_2, 2*no_b, nwf_2))
             allocate(s_nto_b(no_b*2, no_b*2))
-            allocate(wrk_b(no_b*2, n_2))
+            allocate(na_b1(nwf_1))
+            allocate(na_b2(nwf_2))
+        end if
+        ! Allocate work arrays.
+        allocate(rr_a(nwf_1, nwf_2))
+        allocate(sr_a(nwf_1, nwf_2))
+        allocate(rs_a(nwf_1, nwf_2))
+        allocate(ss_a(nwf_1, nwf_2))
+        allocate(wrk_a(no_a*2, n_2))
+        if (beta) then
             allocate(rr_b(nwf_1, nwf_2))
             allocate(sr_b(nwf_1, nwf_2))
             allocate(rs_b(nwf_1, nwf_2))
             allocate(ss_b(nwf_1, nwf_2))
-            allocate(na_b1(nwf_1))
-            allocate(na_b2(nwf_2))
-            ! Calculate beta NTOs.
+            allocate(wrk_b(no_b*2, n_2))
+        end if
+
+        ! Calculate NTOs.
+        call cis_nto(n_1-no_a, no_a, nwf_1, wf_a1, c_a1, mo_a1)
+        call cis_nto(n_2-no_a, no_a, nwf_2, wf_a2, c_a2, mo_a2)
+        if (beta) then
             call cis_nto(n_1-no_b, no_b, nwf_1, wf_b1, c_b1, mo_b1)
             call cis_nto(n_2-no_b, no_b, nwf_2, wf_b2, c_b2, mo_b2)
         end if
 
         ! Truncate wave functions:
-        call cis_nto_reduce(beta, trunc, c_a1, c_b1, na_a1, na_b1)
-        call cis_nto_reduce(beta, trunc, c_a2, c_b2, na_a2, na_b2)
+        call cis_nto_truncate(beta, trunc, c_a1, c_b1, na_a1, na_b1)
+        call cis_nto_truncate(beta, trunc, c_a2, c_b2, na_a2, na_b2)
         if (trunc < 1.0_dp) then
             write(stdout, '(a,f0.8)') 'Truncating wave functions based on threshold ', trunc
             write(stdout, '(a)') 'Number of remaining determinants for bra states:'
@@ -180,7 +182,6 @@ contains
 
     !----------------------------------------------------------------------------------------------
     ! SUBROUTINE: nto_rs
-    !
     !> @brief Calculate the RS or SR block between two states in a cis overlap calculation.
     !> @note Row is .false. for RS block calculations and .true. for SR block calculations.
     !----------------------------------------------------------------------------------------------
@@ -189,18 +190,16 @@ contains
         use blas95, only : dot
         integer, intent(in) :: n !< Number of occupied orbitals.
         integer, intent(in) :: na !< Number of active excitations.
-        real(dp), intent(in) :: s_nto(2*n, 2*n) !< Overlap matrix between NTOs.
+        real(dp), intent(in) :: s_nto(:, :) !< Overlap matrix between NTOs.
         real(dp), intent(in) :: c(n) !< Coefficients of excitations.
         real(dp), intent(out) :: rs !< RS/SR block sum.
-        logical, intent(in) :: row !< RS or SR?
+        logical, intent(in) :: row !< RS or SR block.
         real(dp) :: dets(na) !< Determinants.
         real(dp) :: wrk(n, n) !< Work array.
         integer :: i
 
-        if (na == 0) then
-            rs = 0.0_dp
-            return
-        end if
+        rs = 0.0_dp
+        if (na == 0) return
 
         !$omp parallel
         !$omp do private(wrk)
@@ -239,10 +238,8 @@ contains
         real(dp) :: vec(na1) !< Work vector.
         integer :: i, j
 
-        if ((na1 == 0) .or. (na2 == 0)) then
-            ss = 0.0_dp
-            return
-        end if
+        ss = 0.0_dp
+        if ((na1 == 0) .or. (na2 == 0)) return
 
         !$omp parallel default(shared)
         !$omp do private(wrk, j) schedule(dynamic)
