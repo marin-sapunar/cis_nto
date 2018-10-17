@@ -132,7 +132,11 @@ contains
         integer, intent(out) :: n_b(:) !< Number of beta coefficients in truncated wave function.
         integer :: st
         do st = 1, size(c_a, 2)
-            call cis_nto_truncate_single(beta, trunc, c_a(:, st), c_b(:, st), n_a(st), n_b(st))
+            if (beta) then
+                call cis_nto_truncate_single(beta, trunc, c_a(:, st), c_b(:, st), n_a(st), n_b(st))
+            else
+                call cis_nto_truncate_single(beta, trunc, c_a(:, st), c_a(:, st), n_a(st), n_a(st))
+            end if
         end do
     end subroutine cis_nto_truncate
 
