@@ -51,9 +51,6 @@ contains
         real(dp), intent(in) :: wf(nv, no, ns) !< CIS wave function coefficients.
         real(dp), intent(out) :: nat_coef(no, ns) !< NTO coefficients.
         real(dp), intent(out) :: nat_orbs(no+nv, 2*no, ns) !< NTOs in the MO basis.
-        real(dp) :: wrk_c(nv, no) !< Array for CI coefficients.
-        real(dp) :: wrk_o(no, no) !< Array for occupied NTOs.
-        real(dp) :: wrk_v(nv, no) !< Array for virtual NTOs.
         integer :: i
         do i = 1, ns
             call cis_nto_single(nv, no, wf(:, :, i), nat_coef(:, i), nat_orbs(:, :, i))

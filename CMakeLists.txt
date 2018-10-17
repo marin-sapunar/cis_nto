@@ -30,7 +30,7 @@ enable_language (Fortran)
     add_compile_options(-ffree-line-length-0)
     set(CMAKE_Fortran_FLAGS_RELEASE  "-O3")
     set(CMAKE_Fortran_FLAGS_DEBUG "-O2 -fbacktrace -g")
-    set(CMAKE_Fortran_FLAGS_DEBUGALL "-O0 -fbacktrace -Wall -pedantic -fcheck=all")
+    set(CMAKE_Fortran_FLAGS_DEBUGALL "-O0 -fbacktrace -Wall -pedantic -fcheck=all -fbounds-check")
   endif()
 
 

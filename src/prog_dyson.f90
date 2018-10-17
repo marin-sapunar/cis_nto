@@ -86,7 +86,7 @@ program cis_dyson_prog
         do j = 1, nwf2+1
             write(temp, '(a,i3.3,a,i3.3)') 'dys.', i-1, '.', j-1
             open(newunit=outunit, file=temp, action='write')
-            write(outunit, *) dys_mo(:, i, j)
+            write(outunit, '(1e13.5)') dys_mo(:, i, j)
             close(outunit)
         end do
     end do

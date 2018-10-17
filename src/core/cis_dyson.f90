@@ -60,6 +60,8 @@ contains
 
         real(dp), allocatable :: dys_nto(:, :, :) !< Dyson orbitals in NTO basis.
         integer :: i, j
+!character(len=100) :: temp
+!integer :: outunit
  
         ! Get dimensions.
         n_1 = size(s_mo, 1)
@@ -161,23 +163,13 @@ contains
         deallocate(wrk0_a)
         deallocate(wrk0_b)
 
-      ! write(*,*) 'rr_b'
-      ! write(*,'(7e10.3)') rr_b(:, 0, 2)
-      ! write(*,*) 'rs_b'
-      ! write(*,'(7e10.3)') rs_b(:, 0, 2)
-      ! write(*,*) 'sr_b'
-      ! write(*,'(7e10.3)') sr_b(:, 0, 2)
-      ! write(*,*) 'ss_b'
-      ! write(*,'(7e10.3)') ss_b(:, 0, 2)
-      ! stop
-
         allocate(dys_nto(2*no_b2, nwf_1+1, nwf_2+1))
-        dys_nto(:, 1, 1) = rr_b(:, 1, 1) * rr_a(1, 1)
+        dys_nto(:, 1, 1) = rr_b(:, 0, 0) * rr_a(0, 0)
         do i = 1, nwf_1
-            dys_nto(:, i+1, 1) = rr_b(:, i, 1) * sr_a(i, 1) + sr_b(:, i, 1) * rr_a(i, 1)
+            dys_nto(:, i+1, 1) = rr_b(:, i, 0) * sr_a(i, 0) + sr_b(:, i, 0) * rr_a(i, 0)
         end do
         do j = 1, nwf_2
-            dys_nto(:, 1, j+1) = rr_b(:, 1, j) * rs_a(1, j) + rs_b(:, 1, j) * rr_a(1, j)
+            dys_nto(:, 1, j+1) = rr_b(:, 0, j) * rs_a(0, j) + rs_b(:, 0, j) * rr_a(0, j)
         end do
         do i = 1, nwf_1
             do j = 1, nwf_2
@@ -185,11 +177,12 @@ contains
                 &                      ss_b(:, i, j) * rr_a(i, j) + sr_b(:, i, j) * rs_a(i, j)
             end do
         end do
-        dys_nto = dys_nto * sqrt(2.0_dp)
+
         if (allocated(dys_mo)) deallocate(dys_mo)
-        allocate(dys_mo(n_2, nwf_1+1, nwf_2+1))
-        do j = 1, nwf_2 + 1
-            call gemm(mo_b2(:, :, j), dys_nto(:, :, j), dys_mo(:, :, j))
+        allocate(dys_mo(n_2, nwf_1+1, nwf_2+1), source = 0.0_dp)
+        dys_mo(1:no_b2, :, 1) = dys_nto(1:no_b2, :, 1)
+        do j = 1, nwf_2 
+            call gemm(mo_b2(:, :, j), dys_nto(:, :, j+1), dys_mo(:, :, j+1), alpha=sqrt(2.0_dp))
         end do
     end subroutine cis_dyson
 
