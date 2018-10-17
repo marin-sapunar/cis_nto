@@ -44,7 +44,6 @@ contains
     !! the first no particle orbitals.
     !----------------------------------------------------------------------------------------------
     subroutine cis_nto(nv, no, ns, wf, nat_coef, nat_orbs)
-        use lapack95, only : gesvd
         integer, intent(in) :: nv !< Number of virtual orbitals.
         integer, intent(in) :: no !< Number of occupied orbitals.
         integer, intent(in) :: ns !< Number of states.
@@ -56,6 +55,41 @@ contains
             call cis_nto_single(nv, no, wf(:, :, i), nat_coef(:, i), nat_orbs(:, :, i))
         end do
     end subroutine cis_nto
+
+
+    !----------------------------------------------------------------------------------------------
+    ! SUBROUTINE: cis_nto_and_convert_basis
+    !> @brief Generate NTOs and convert to different basis.
+    !----------------------------------------------------------------------------------------------
+    subroutine cis_nto_and_convert_basis(mo, wf, nto_c, nto_bas)
+        use blas95, only : gemm
+        real(dp), intent(in) :: mo(:, :) !< MO coefficients in target basis.
+        real(dp), intent(in) :: wf(:, :, :) !< CIS wave function coefficients.
+        real(dp), allocatable, intent(out) :: nto_c(:, :) !< NTO coefficients.
+        real(dp), allocatable, intent(out) :: nto_bas(:, :, :) !< NTOs in target basis.
+        real(dp), allocatable :: nto_mo(:, :) !< NTOs in MO basis.
+        integer :: nbas !< Number of basis functions.
+        integer :: nmo !< Number of MOs.
+        integer :: nv !< Number of virtual orbitals.
+        integer :: no !< Number of occupied orbitals.
+        integer :: ns !< Number of states.
+        integer :: i
+
+        nbas = size(mo, 1)
+        nmo = size(mo, 2)
+        nv = size(wf, 1)
+        no = size(wf, 2)
+        ns = size(wf, 3)
+        if (.not. allocated(nto_bas)) allocate(nto_bas(nbas, 2*no, ns))
+        if (.not. allocated(nto_c)) allocate(nto_c(no, ns))
+        allocate(nto_mo(nmo, 2*no))
+        do i = 1, ns
+            call cis_nto_single(nv, no, wf(:, :, i), nto_c(:, i), nto_mo)
+            call gemm(mo, nto_mo, nto_bas(:, :, i)) 
+        end do
+    end subroutine cis_nto_and_convert_basis
+
+
 
 
     !----------------------------------------------------------------------------------------------
@@ -114,7 +148,6 @@ contains
     end subroutine cis_nto_truncate_single
 
 
-
     !----------------------------------------------------------------------------------------------
     ! SUBROUTINE: cis_nto_truncate
     !
@@ -128,9 +161,11 @@ contains
         real(dp), intent(in) :: trunc !< Threshold for truncating the wave functions.
         real(dp), intent(inout) :: c_a(:, :) !< NTO coefficients alpha.
         real(dp), intent(inout) :: c_b(:, :) !< NTO coefficients beta.
-        integer, intent(out) :: n_a(:) !< Number of alpha coefficients in truncated wave function.
-        integer, intent(out) :: n_b(:) !< Number of beta coefficients in truncated wave function.
+        integer, allocatable, intent(out) :: n_a(:) !< Number of alpha coefficients in truncated wf.
+        integer, allocatable, intent(out) :: n_b(:) !< Number of beta coefficients in truncated wf.
         integer :: st
+        if (.not. allocated(n_a)) allocate(n_a(size(c_a, 2)))
+        if (beta .and. (.not. allocated(n_b))) allocate(n_b(size(c_b, 2)))
         do st = 1, size(c_a, 2)
             if (beta) then
                 call cis_nto_truncate_single(beta, trunc, c_a(:, st), c_b(:, st), n_a(st), n_b(st))

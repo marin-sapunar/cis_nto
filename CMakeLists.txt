@@ -97,7 +97,10 @@ enable_language (Fortran)
 # Build                                                                        #
 
   file(GLOB SOURCES "src/utils/*f90" "src/core/*f90")
+  add_executable(cis_nto.exe "src/prog_nto.f90" ${SOURCES})
   add_executable(cis_overlap.exe "src/prog_overlap.f90" ${SOURCES})
-  target_link_libraries(cis_overlap.exe ${LINKLIBS})
   add_executable(cis_dyson.exe "src/prog_dyson.f90" ${SOURCES})
+
+  target_link_libraries(cis_nto.exe ${LINKLIBS})
+  target_link_libraries(cis_overlap.exe ${LINKLIBS})
   target_link_libraries(cis_dyson.exe ${LINKLIBS})
