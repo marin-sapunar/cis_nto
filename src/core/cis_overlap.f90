@@ -36,7 +36,6 @@ contains
         real(dp), intent(in) :: wf_b2(:, :, :) !< Ket beta wave function coefficients.
         real(dp), allocatable, intent(out) :: s_wf(:, :) !< Wave function overlaps.
         logical :: beta !< Restricted/unrestricted calculation.
-        integer :: n_1 !< Number of bra orbitals.
         integer :: n_2 !< Number of bra orbitals.
         integer :: no_a !< Number of occupied alpha orbitals.
         integer :: no_b !< Number of occupied beta orbitals.
@@ -71,36 +70,20 @@ contains
         ! Get dimensions.
         beta = .false.
         if (size(s_mo, 3) == 2) beta = .true.
-        n_1 = size(s_mo, 1)
         n_2 = size(s_mo, 2)
         no_a = size(wf_a1, 2)
         if (beta) no_b = size(wf_b1, 2)
         nwf_1 = size(wf_a1, 3)
         nwf_2 = size(wf_a2, 3)
-        ! Allocate nto arrays.
-        allocate(c_a1(no_a, nwf_1))
-        allocate(c_a2(no_a, nwf_2))
-        allocate(mo_a1(n_1, 2*no_a, nwf_1))
-        allocate(mo_a2(n_2, 2*no_a, nwf_2))
-        allocate(s_nto_a(no_a*2, no_a*2))
-        allocate(na_a1(nwf_1))
-        allocate(na_a2(nwf_2))
-        if (beta) then
-            allocate(c_b1(no_b, nwf_1))
-            allocate(c_b2(no_b, nwf_2))
-            allocate(mo_b1(n_1, 2*no_b, nwf_1))
-            allocate(mo_b2(n_2, 2*no_b, nwf_2))
-            allocate(s_nto_b(no_b*2, no_b*2))
-            allocate(na_b1(nwf_1))
-            allocate(na_b2(nwf_2))
-        end if
         ! Allocate work arrays.
+        allocate(s_nto_a(no_a*2, no_a*2))
         allocate(rr_a(nwf_1, nwf_2))
         allocate(sr_a(nwf_1, nwf_2))
         allocate(rs_a(nwf_1, nwf_2))
         allocate(ss_a(nwf_1, nwf_2))
         allocate(wrk_a(no_a*2, n_2))
         if (beta) then
+            allocate(s_nto_b(no_b*2, no_b*2))
             allocate(rr_b(nwf_1, nwf_2))
             allocate(sr_b(nwf_1, nwf_2))
             allocate(rs_b(nwf_1, nwf_2))
@@ -109,11 +92,11 @@ contains
         end if
 
         ! Calculate NTOs.
-        call cis_nto(n_1-no_a, no_a, nwf_1, wf_a1, c_a1, mo_a1)
-        call cis_nto(n_2-no_a, no_a, nwf_2, wf_a2, c_a2, mo_a2)
+        call cis_nto(wf_a1, c_a1, mo_a1)
+        call cis_nto(wf_a2, c_a2, mo_a2)
         if (beta) then
-            call cis_nto(n_1-no_b, no_b, nwf_1, wf_b1, c_b1, mo_b1)
-            call cis_nto(n_2-no_b, no_b, nwf_2, wf_b2, c_b2, mo_b2)
+            call cis_nto(wf_b1, c_b1, mo_b1)
+            call cis_nto(wf_b2, c_b2, mo_b2)
         end if
 
         ! Truncate wave functions:

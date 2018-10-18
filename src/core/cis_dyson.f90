@@ -36,7 +36,6 @@ contains
         integer, allocatable :: na_a2(:) !< Number of active ket orbitals alpha.
         integer, allocatable :: na_b1(:) !< Number of active bra orbitals beta.
         integer, allocatable :: na_b2(:) !< Number of active ket orbitals beta.
-
         real(dp), allocatable :: c_a1(:, :) !< Bra NTO coefficients alpha.
         real(dp), allocatable :: c_a2(:, :) !< Ket NTO coefficients alpha.
         real(dp), allocatable :: c_b1(:, :) !< Bra NTO coefficients beta.
@@ -57,11 +56,8 @@ contains
         real(dp), allocatable :: sr_b(:, :, :) !< SR Dyson block beta.
         real(dp), allocatable :: rs_b(:, :, :) !< RS Dyson block beta.
         real(dp), allocatable :: ss_b(:, :, :) !< SS Dyson block beta.
-
         real(dp), allocatable :: dys_nto(:, :, :) !< Dyson orbitals in NTO basis.
         integer :: i, j
-!character(len=100) :: temp
-!integer :: outunit
  
         ! Get dimensions.
         n_1 = size(s_mo, 1)
@@ -71,19 +67,6 @@ contains
         no_b2 = size(wf_b2, 2)
         nwf_1 = size(wf_a1, 3)
         nwf_2 = size(wf_a2, 3)
-        ! Allocate nto arrays.
-        allocate(c_a1(no_a, nwf_1))
-        allocate(c_a2(no_a, nwf_2))
-        allocate(mo_a1(n_1, 2*no_a, nwf_1))
-        allocate(mo_a2(n_2, 2*no_a, nwf_2))
-        allocate(na_a1(nwf_1))
-        allocate(na_a2(nwf_2))
-        allocate(c_b1(no_b1, nwf_1))
-        allocate(c_b2(no_b2, nwf_2))
-        allocate(mo_b1(n_1, 2*no_b1, nwf_1))
-        allocate(mo_b2(n_2, 2*no_b2, nwf_2))
-        allocate(na_b1(nwf_1))
-        allocate(na_b2(nwf_2))
         ! Allocate work arrays.
         allocate(rr_a(0:nwf_1, 0:nwf_2), source = 0.0_dp)
         allocate(sr_a(0:nwf_1, 0:nwf_2), source = 0.0_dp)
@@ -96,10 +79,10 @@ contains
 
 
         ! Calculate NTOs.
-        call cis_nto(n_1-no_a, no_a, nwf_1, wf_a1, c_a1, mo_a1)
-        call cis_nto(n_2-no_a, no_a, nwf_2, wf_a2, c_a2, mo_a2)
-        call cis_nto(n_1-no_b1, no_b1, nwf_1, wf_b1, c_b1, mo_b1)
-        call cis_nto(n_2-no_b2, no_b2, nwf_2, wf_b2, c_b2, mo_b2)
+        call cis_nto(wf_a1, c_a1, mo_a1)
+        call cis_nto(wf_a2, c_a2, mo_a2)
+        call cis_nto(wf_b1, c_b1, mo_b1)
+        call cis_nto(wf_b2, c_b2, mo_b2)
 
         ! Truncate wave functions.
         call cis_nto_truncate(.true., trunc, c_a1, c_b1, na_a1, na_b1)
