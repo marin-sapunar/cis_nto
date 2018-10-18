@@ -2,6 +2,7 @@ program cis_dyson_prog
     use global_defs
     use cis_dyson_mod
     use read_txt_mod
+    use write_molden_mod
     use orthog_mod
     use blas95, only : gemm, dot, gemv
     implicit none
@@ -9,6 +10,7 @@ program cis_dyson_prog
     integer :: rhf = 0 !< Restricted (1) or unrestricted(2) calculation.
     integer :: rhf1 = 0 !< Restricted (1) or unrestricted (2) for 1 wave functions.
     integer :: rhf2 = 0 !< Restricted (1) or unrestricted (2) for 2 wave functions.
+    integer :: naot = 0 !< Number of atomic orbitals after final transformation.
     integer :: nao1 = 0 !< Number of atomic orbitals 1.
     integer :: nao2 = 0 !< Number of atomic orbitals 2.
     integer :: nmo1 = 0 !< Number of molecular orbitals 1.
@@ -23,6 +25,8 @@ program cis_dyson_prog
     integer :: nob2 = 0 !< Number of beta occupied orbitals 2.
     integer :: nvb1 = 0 !< Number of beta virtual orbitals 1.
     integer :: nvb2 = 0 !< Number of beta virtual orbitals 1.
+    real(dp), allocatable :: c2s(:, :) !< Transformation matrix for basis functions.
+                                       !! Dimensions: nao2 x naot.
     real(dp), allocatable :: mo1(:, :, :) !< Molecular orbital coefficients 1.
                                           !! Dimensions: nao1 x nmo1 x rhf1.
     real(dp), allocatable :: mo2(:, :, :) !< Molecular orbital coefficients 2.
@@ -38,9 +42,13 @@ program cis_dyson_prog
     real(dp), allocatable :: s_ao(:, :) !< Atomic orbital overlaps.
                                         !! Dimensions: nao1 x nao2.
     real(dp), allocatable :: s_mo(:, :, :) !< Molecular orbital overlaps.
-                                           !! Dimensions: nmo1 x nmo2 x rhf
-    real(dp), allocatable :: dys_mo(:, :, :) !< Dyson orbitals.
+                                           !! Dimensions: nmo1 x nmo2 x rhf.
+    real(dp), allocatable :: dys_mo(:, :, :) !< Dyson orbitals in mo basis.
+                                             !! Dimensions: nmo2 x nwf1+1 x nwf2+1.
     real(dp), allocatable :: dys_ao(:, :, :) !< Dyson orbitals.
+                                             !! Dimensions: naot x nwf1+1 x nwf2+1.
+    real(dp), allocatable :: dys_norm(:, :) !< Norms of the dyson orbitals.
+                                            !! Dimensions: nwf1+1 x nwf2+1.
     real(dp), allocatable :: wrk(:, :)
     integer :: i, j, s
     character(len=1000) :: temp
@@ -55,6 +63,7 @@ program cis_dyson_prog
     end if
 
     call read_txt('s_ao', nao1, nao2, s_ao)
+    call read_txt('trans', nao2, naot, c2s)
     call read_txt('mo1', nao1, nmo1, rhf1, mo1)
     call read_txt('mo2', nao2, nmo2, rhf2, mo2)
 
@@ -81,12 +90,29 @@ program cis_dyson_prog
     end do
 
     call cis_dyson(thr, s_mo, wfa1, wfa2, wfb1, wfb2, dys_mo)
+    allocate(dys_norm(nwf1+1, nwf2+1))
+    dys_norm = sum(dys_mo(:, :, :)*dys_mo(:, :, :), dim=1)
+
+    deallocate(wrk)
+    allocate(wrk(naot, nao2))
+    allocate(dys_ao(naot, nwf1, nwf2))
+    call gemm(c2s, mo2(:, :, rhf2), wrk, transa='T')
+    do j = 1, nwf2
+        call gemm(wrk, dys_mo(:, :, j), dys_ao(:, :, j))
+    end do
 
     do i = 1, nwf1+1
         do j = 1, nwf2+1
-            write(temp, '(a,i3.3,a,i3.3)') 'dys.', i-1, '.', j-1
+            ! Write MO basis dyson orbital.
+            write(temp, '(a,i3.3,a,i3.3,a)') 'dys.', i-1, '.', j-1, '.mo'
             open(newunit=outunit, file=temp, action='write')
             write(outunit, '(1e13.5)') dys_mo(:, i, j)
+            close(outunit)
+            ! Write AO basis dyson orbital.
+            write(temp, '(a,i3.3,a,i3.3,a)') 'dys.', i-1, '.', j-1, '.ao'
+            open(newunit=outunit, file=temp, action='write')
+            call write_molden_mo_single(outunit, 1000*i+j, 'a   ', 1, 0.0_dp, dys_norm(i, j),      &
+            &                           dys_ao(:, i, j))
             close(outunit)
         end do
     end do
