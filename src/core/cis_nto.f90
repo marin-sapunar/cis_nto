@@ -80,9 +80,9 @@ contains
         nv = size(wf, 1)
         no = size(wf, 2)
         ns = size(wf, 3)
-        if (.not. allocated(nto_bas)) allocate(nto_bas(nbas, 2*no, ns))
-        if (.not. allocated(nto_c)) allocate(nto_c(no, ns))
-        allocate(nto_mo(nmo, 2*no))
+        if (.not. allocated(nto_bas)) allocate(nto_bas(nbas, 2*no, ns), source=0.0_dp)
+        if (.not. allocated(nto_c)) allocate(nto_c(no, ns), source=0.0_dp)
+        allocate(nto_mo(nmo, 2*no), source=0.0_dp)
         do i = 1, ns
             call cis_nto_single(nv, no, wf(:, :, i), nto_c(:, i), nto_mo)
             call gemm(mo, nto_mo, nto_bas(:, :, i)) 
