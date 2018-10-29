@@ -6,6 +6,7 @@ program cis_dyson_prog
     use write_txt_mod
     use orthog_mod
     use ccg_ao_mod
+    use atom_basis_mod
     use one_el_op_mod
     use blas95, only : gemm, dot, gemv
     implicit none
@@ -32,6 +33,11 @@ program cis_dyson_prog
     real(dp), allocatable :: dys_mo(:, :, :) !< Dyson orbitals in mo basis.
     real(dp), allocatable :: dys_ao(:, :, :) !< Dyson orbitals.
     real(dp), allocatable :: dys_norm(:, :) !< Norms of the dyson orbitals.
+    type(atombasis), allocatable :: basis(:) !< Basis sets 2.
+    integer, allocatable :: bindex(:) !< BS index for each atom 2.
+    real(dp), allocatable :: geom(:) !< Geometry.
+    character(len=2), allocatable :: atsym(:) !< Atom symbols.
+    integer, allocatable :: atnum(:) !< Atom numbers.
     real(dp), allocatable :: wrk(:, :)
     character(len=1000) :: temp
     character(len=:), allocatable :: input_format
@@ -51,19 +57,13 @@ program cis_dyson_prog
     write(stdout, *) 'Threshold for truncating wave functions:'
     read(stdin, *) thr
 
+    call read_geom(input_format, dir2, geom, atsym, atnum)
     call read_ccg_ao(input_format, dir1, ccg1, trans_ao=trans1)
-    call read_ccg_ao(input_format, dir2, ccg2, trans_ao=trans2)
+    call read_ccg_ao(input_format, dir2, ccg2, trans_ao=trans2, basis=basis, basis_index=bindex)
     call one_el_op(ccg1, ccg2, [0,0,0], trans1, trans2, s_ao)
-    call write_txt('ao_ovl', s_ao)
-    call write_txt('trans1', trans1)
-    call write_txt('trans2', trans2)
 
     call read_mo(input_format, dir1, moa_c=moa1, mob_c=mob1)
     call read_mo(input_format, dir2, moa_c=moa2, mob_c=mob2)
-    call write_txt('moa1', moa1)
-    call write_txt('moa2', moa2)
-    call write_txt('mob1', mob1)
-    call write_txt('mob2', mob2)
 
     call read_cis(input_format, dir1, cisa=wfa1, cisb=wfb1, norm=.true.)
     call read_cis(input_format, dir2, cisa=wfa2, cisb=wfb2, norm=.true.)
@@ -73,10 +73,6 @@ program cis_dyson_prog
     if (allocated(wfb1)) rhf1 = 2
     if (allocated(wfb2)) rhf2 = 2
     rhf = max(rhf1, rhf2)
-    call write_txt('owfa1', wfa1)
-    call write_txt('owfa2', wfa2)
-    call write_txt('owfb1', wfb1)
-    call write_txt('owfb2', wfb2)
     if (rhf1 /= rhf) then
         wfa1 = wfa1 / sqrt(2.0_dp)
         allocate(mob1, source=moa1)
@@ -88,10 +84,6 @@ program cis_dyson_prog
         allocate(wfb2, source=wfa2)
         wfb2 = -wfb2
     end if
-    call write_txt('nwfa1', wfa1)
-    call write_txt('nwfa2', wfa2)
-    call write_txt('nwfb1', wfb1)
-    call write_txt('nwfb2', wfb2)
 
     allocate(wrk(size(moa1,2), size(moa2,1)))
     allocate(s_mo(size(moa1, 2), size(moa2, 2), rhf))
@@ -115,6 +107,12 @@ program cis_dyson_prog
         call gemm(wrk, dys_mo(:, :, j), dys_ao(:, :, j))
     end do
 
+    open(newunit=outunit, file='dys.at', action='write')
+    call write_molden_atoms(outunit, geom, atsym, atnum)
+    close(outunit)
+    open(newunit=outunit, file='dys.gto', action='write')
+    call write_molden_gto(outunit, basis, bindex)
+    close(outunit)
     do i = 1, nwf1+1
         do j = 1, nwf2+1
             ! Write MO basis dyson orbital.
