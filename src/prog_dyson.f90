@@ -42,10 +42,10 @@ program cis_dyson_prog
     integer :: i, j
 
     input_format = 'turbomole'
-    write(stdout, *) 'Path to N electron calculation:'
+    write(stdout, *) 'Path to N-1 electron calculation:'
     read(stdin, '(a)') temp
     dir1 = trim(adjustl(temp))
-    write(stdout, *) 'Path to N-1 electron calculation:'
+    write(stdout, *) 'Path to N electron calculation:'
     read(stdin, '(a)') temp
     dir2 = trim(adjustl(temp))
     write(stdout, *) 'Threshold for truncating wave functions:'
@@ -55,22 +55,28 @@ program cis_dyson_prog
     call read_ccg_ao(input_format, dir2, ccg2, trans_ao=trans2)
     call one_el_op(ccg1, ccg2, [0,0,0], trans1, trans2, s_ao)
     call write_txt('ao_ovl', s_ao)
+    call write_txt('trans1', trans1)
+    call write_txt('trans2', trans2)
 
     call read_mo(input_format, dir1, moa_c=moa1, mob_c=mob1)
     call read_mo(input_format, dir2, moa_c=moa2, mob_c=mob2)
+    call write_txt('moa1', moa1)
+    call write_txt('moa2', moa2)
+    call write_txt('mob1', mob1)
+    call write_txt('mob2', mob2)
 
-    call read_cis(input_format, dir1, cisa=wfa1, cisb=wfb1)
-    call read_cis(input_format, dir2, cisa=wfa2, cisb=wfb2)
+    call read_cis(input_format, dir1, cisa=wfa1, cisb=wfb1, norm=.true.)
+    call read_cis(input_format, dir2, cisa=wfa2, cisb=wfb2, norm=.true.)
     nwf1 = size(wfa1, 3)
     nwf2 = size(wfa2, 3)
-    call write_txt('wfa1', wfa1)
-    call write_txt('wfa2', wfa2)
-    call write_txt('wfb1', wfb1)
-    call write_txt('wfb2', wfb2)
 
     if (allocated(wfb1)) rhf1 = 2
     if (allocated(wfb2)) rhf2 = 2
     rhf = max(rhf1, rhf2)
+    call write_txt('owfa1', wfa1)
+    call write_txt('owfa2', wfa2)
+    call write_txt('owfb1', wfb1)
+    call write_txt('owfb2', wfb2)
     if (rhf1 /= rhf) then
         wfa1 = wfa1 / sqrt(2.0_dp)
         allocate(mob1, source=moa1)
@@ -82,6 +88,10 @@ program cis_dyson_prog
         allocate(wfb2, source=wfa2)
         wfb2 = -wfb2
     end if
+    call write_txt('nwfa1', wfa1)
+    call write_txt('nwfa2', wfa2)
+    call write_txt('nwfb1', wfb1)
+    call write_txt('nwfb2', wfb2)
 
     allocate(wrk(size(moa1,2), size(moa2,1)))
     allocate(s_mo(size(moa1, 2), size(moa2, 2), rhf))
@@ -98,8 +108,8 @@ program cis_dyson_prog
     dys_norm = sum(dys_mo(:, :, :)*dys_mo(:, :, :), dim=1)
 
     deallocate(wrk)
-    allocate(wrk(size(trans2, 1), size(mob2, 2)))
-    allocate(dys_ao(size(trans2, 1), nwf1, nwf2))
+    allocate(wrk(size(trans2, 2), size(mob2, 2)))
+    allocate(dys_ao(size(trans2, 2), nwf1, nwf2))
     call gemm(trans2, mob2(:, :), wrk, transa='T')
     do j = 1, nwf2
         call gemm(wrk, dys_mo(:, :, j), dys_ao(:, :, j))
