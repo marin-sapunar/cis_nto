@@ -18,6 +18,15 @@ enable_language (Fortran)
   option(OMP "Use OMP." ON)
   option(STATIC "Create a static executable." OFF)
 
+  set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+  set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+  set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+  set(CMAKE_Fortran_MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/include)
+
+  include_directories(${CMAKE_Fortran_MODULE_DIRECTORY})
+  link_directories(${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
+
+
 ###################################################################################################
 # Compiler specific options:                                                                      #
   if(CMAKE_Fortran_COMPILER_ID STREQUAL "Intel")
@@ -92,14 +101,19 @@ enable_language (Fortran)
   endif()
 
 
-
 ################################################################################
 # Build                                                                        #
+  add_subdirectory(theochemIO)
+  set(LINKLIBS ${LINKLIBS} "-ltheochemio") 
 
-  file(GLOB SOURCES "src/utils/*f90" "src/core/*f90")
+  file(GLOB SOURCES "src/core/*f90" "src/utils/*f90")
   add_executable(cis_nto.exe "src/prog_nto.f90" ${SOURCES})
   add_executable(cis_overlap.exe "src/prog_overlap.f90" ${SOURCES})
   add_executable(cis_dyson.exe "src/prog_dyson.f90" ${SOURCES})
+
+  add_dependencies(cis_nto.exe theochemio)
+  add_dependencies(cis_overlap.exe theochemio)
+  add_dependencies(cis_dyson.exe theochemio)
 
   target_link_libraries(cis_nto.exe ${LINKLIBS})
   target_link_libraries(cis_overlap.exe ${LINKLIBS})

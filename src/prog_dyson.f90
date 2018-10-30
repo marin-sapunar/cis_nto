@@ -1,106 +1,119 @@
 program cis_dyson_prog
     use global_defs
     use cis_dyson_mod
-    use read_txt_mod
+    use read_all_mod
     use write_molden_mod
-    use orthog_mod
-    use blas95, only : gemm, dot, gemv
+    use ccg_ao_mod
+    use atom_basis_mod
+    use one_el_op_mod
+    use matrix_mod
+    use occupation_mod
+    use blas95, only : gemm
     implicit none
 
     integer :: rhf = 0 !< Restricted (1) or unrestricted(2) calculation.
     integer :: rhf1 = 0 !< Restricted (1) or unrestricted (2) for 1 wave functions.
     integer :: rhf2 = 0 !< Restricted (1) or unrestricted (2) for 2 wave functions.
-    integer :: naot = 0 !< Number of atomic orbitals after final transformation.
-    integer :: nao1 = 0 !< Number of atomic orbitals 1.
-    integer :: nao2 = 0 !< Number of atomic orbitals 2.
-    integer :: nmo1 = 0 !< Number of molecular orbitals 1.
-    integer :: nmo2 = 0 !< Number of molecular orbitals 2.
-    integer :: nwf1 = 0 !< Number of wave functions 1.
-    integer :: nwf2 = 0 !< Number of wave functions 2.
-    integer :: noa1 = 0 !< Number of alpha occupied orbitals 1.
-    integer :: noa2 = 0 !< Number of alpha occupied orbitals 2.
-    integer :: nva1 = 0 !< Number of alpha virtual orbitals 1.
-    integer :: nva2 = 0 !< Number of alpha virtual orbitals 1.
-    integer :: nob1 = 0 !< Number of beta occupied orbitals 1.
-    integer :: nob2 = 0 !< Number of beta occupied orbitals 2.
-    integer :: nvb1 = 0 !< Number of beta virtual orbitals 1.
-    integer :: nvb2 = 0 !< Number of beta virtual orbitals 1.
-    real(dp), allocatable :: c2s(:, :) !< Transformation matrix for basis functions.
-                                       !! Dimensions: nao2 x naot.
-    real(dp), allocatable :: mo1(:, :, :) !< Molecular orbital coefficients 1.
-                                          !! Dimensions: nao1 x nmo1 x rhf1.
-    real(dp), allocatable :: mo2(:, :, :) !< Molecular orbital coefficients 2.
-                                          !! Dimensions: nao2 x nmo2 x rhf2.
+    integer :: nwf1 !< Number of excited states 1.
+    integer :: nwf2 !< Number of excited states 2.
+    real(dp), allocatable :: trans1(:, :) !< Transformation matrix for basis functions 1.
+    real(dp), allocatable :: trans2(:, :) !< Transformation matrix for basis functions 2.
+    type(ccg), allocatable :: ccg1(:) !< Atomic orbitals 1.
+    type(ccg), allocatable :: ccg2(:) !< Atomic orbitals 2.
+    real(dp), allocatable :: moa1(:, :) !< Molecular orbital coefficients alpha 1.
+    real(dp), allocatable :: moa2(:, :) !< Molecular orbital coefficients alpha 2.
+    real(dp), allocatable :: mob1(:, :) !< Molecular orbital coefficients beta 1.
+    real(dp), allocatable :: mob2(:, :) !< Molecular orbital coefficients beta 2.
     real(dp), allocatable :: wfa1(:, :, :) !< CI alpha single excitation coefficients 1.
-                                           !! Dimensions: nva1 x noa1 x nwf1.
     real(dp), allocatable :: wfa2(:, :, :) !< CI alpha single excitation coefficients 2.
-                                           !! Dimensions: nva2 x noa2 x nwf2.
     real(dp), allocatable :: wfb1(:, :, :) !< CI beta single excitation coefficients 1.
-                                           !! Dimensions: nvb1 x nob1 x nwf1.
     real(dp), allocatable :: wfb2(:, :, :) !< CI beta single excitation coefficients 2.
-                                           !! Dimensions: nvb2 x nob2 x nwf2.
+    logical, allocatable :: occ1(:, :) !< Occupied MO mask 1.
+    logical, allocatable :: occ2(:, :) !< Occupied MO mask 2.
+    logical, allocatable :: act1(:, :) !< Active MO mask 1.
+    logical, allocatable :: act2(:, :) !< Active MO mask 2.
     real(dp), allocatable :: s_ao(:, :) !< Atomic orbital overlaps.
-                                        !! Dimensions: nao1 x nao2.
     real(dp), allocatable :: s_mo(:, :, :) !< Molecular orbital overlaps.
-                                           !! Dimensions: nmo1 x nmo2 x rhf.
     real(dp), allocatable :: dys_mo(:, :, :) !< Dyson orbitals in mo basis.
-                                             !! Dimensions: nmo2 x nwf1+1 x nwf2+1.
     real(dp), allocatable :: dys_ao(:, :, :) !< Dyson orbitals.
-                                             !! Dimensions: naot x nwf1+1 x nwf2+1.
     real(dp), allocatable :: dys_norm(:, :) !< Norms of the dyson orbitals.
-                                            !! Dimensions: nwf1+1 x nwf2+1.
+    type(atombasis), allocatable :: basis(:) !< Basis sets 2.
+    integer, allocatable :: bindex(:) !< BS index for each atom 2.
+    real(dp), allocatable :: geom(:) !< Geometry.
+    character(len=2), allocatable :: atsym(:) !< Atom symbols.
+    integer, allocatable :: atnum(:) !< Atom numbers.
     real(dp), allocatable :: wrk(:, :)
-    integer :: i, j, s
     character(len=1000) :: temp
+    character(len=:), allocatable :: input_format
+    character(len=:), allocatable :: dir1
+    character(len=:), allocatable :: dir2
     real(dp) :: thr
     integer :: outunit
+    integer :: i, j
 
-    i = command_argument_count()
-    thr = 1.0_dp
-    if (i > 0) then
-        call get_command_argument(1, temp)
-        read(temp, *) thr
-    end if
+    input_format = 'turbomole'
+    write(stdout, *) 'Path to N-1 electron calculation:'
+    read(stdin, '(a)') temp
+    dir1 = trim(adjustl(temp))
+    write(stdout, *) 'Path to N electron calculation:'
+    read(stdin, '(a)') temp
+    dir2 = trim(adjustl(temp))
+    write(stdout, *) 'Threshold for truncating wave functions:'
+    read(stdin, *) thr
 
-    call read_txt('s_ao', nao1, nao2, s_ao)
-    call read_txt('trans', nao2, naot, c2s)
-    call read_txt('mo1', nao1, nmo1, rhf1, mo1)
-    call read_txt('mo2', nao2, nmo2, rhf2, mo2)
+    call read_geom(input_format, dir2, geom, atsym, atnum)
+    call read_ccg_ao(input_format, dir1, ccg1, trans_ao=trans1)
+    call read_ccg_ao(input_format, dir2, ccg2, trans_ao=trans2, basis=basis, basis_index=bindex)
+    call one_el_op(ccg1, ccg2, [0,0,0], trans1, trans2, s_ao)
 
-    call read_txt('wfa1', nva1, noa1, nwf1, wfa1)
-    call read_txt('wfa2', nva2, noa2, nwf2, wfa2)
-    if (rhf1 == 2) call read_txt('wfb1', nvb1, nob1, nwf1, wfb1)
-    if (rhf2 == 2) call read_txt('wfb2', nvb2, nob2, nwf2, wfb2)
+    call read_mo(input_format, dir1, moa_c=moa1, mob_c=mob1)
+    call read_mo(input_format, dir2, moa_c=moa2, mob_c=mob2)
+
+    call read_cis(input_format, dir1, cisa=wfa1, cisb=wfb1, occ_mo=occ1, act_mo=act1, norm=.true.)
+    call read_cis(input_format, dir2, cisa=wfa2, cisb=wfb2, occ_mo=occ2, act_mo=act2, norm=.true.)
+    nwf1 = size(wfa1, 3)
+    nwf2 = size(wfa2, 3)
+
+    if (allocated(wfb1)) rhf1 = 2
+    if (allocated(wfb2)) rhf2 = 2
     rhf = max(rhf1, rhf2)
     if (rhf1 /= rhf) then
-        allocate(wfb1(nva1, noa1, nwf1))
         wfa1 = wfa1 / sqrt(2.0_dp)
-        wfb1 = -wfa1
+        allocate(mob1, source=moa1)
+        allocate(wfb1, source=wfa1)
+        wfb1 = -wfb1
     else if (rhf2 /= rhf) then
-        allocate(wfb2(nva2, noa2, nwf2))
         wfa2 = wfa2 / sqrt(2.0_dp)
-        wfb2 = -wfa2
+        allocate(mob2, source=moa2)
+        allocate(wfb2, source=wfa2)
+        wfb2 = -wfb2
     end if
+    call sort_mo(occ1(:, 1), act1(:, 1), moa1, remove_inactive = .true.)
+    call sort_mo(occ2(:, 1), act2(:, 1), moa2, remove_inactive = .true.)
+    if (rhf == 2) call sort_mo(occ1(:, 2), act1(:, 2), mob1, remove_inactive = .true.)
+    if (rhf == 2) call sort_mo(occ2(:, 2), act2(:, 2), mob2, remove_inactive = .true.)
 
-    allocate(wrk(nmo1, nao2))
-    allocate(s_mo(nmo1, nmo2, rhf))
-    do s = 1, rhf
-        call gemm(mo1(:, :, min(s, rhf1)), s_ao, wrk, transa='T')
-        call gemm(wrk, mo2(:, :, min(s, rhf2)), s_mo(:, :, s))
-    end do
+    allocate(s_mo(size(moa1, 2), size(moa2, 2), rhf))
+    call mat_ge_mmm(moa1, s_ao, moa2, s_mo(:, :, 1), transa='T')
+    if (rhf == 2) call mat_ge_mmm(mob1, s_ao, mob2, s_mo(:, :, 2), transa='T')
 
     call cis_dyson(thr, s_mo, wfa1, wfa2, wfb1, wfb2, dys_mo)
     allocate(dys_norm(nwf1+1, nwf2+1))
     dys_norm = sum(dys_mo(:, :, :)*dys_mo(:, :, :), dim=1)
 
-    deallocate(wrk)
-    allocate(wrk(naot, nao2))
-    allocate(dys_ao(naot, nwf1, nwf2))
-    call gemm(c2s, mo2(:, :, rhf2), wrk, transa='T')
+    allocate(wrk(size(trans2, 2), size(mob2, 2)))
+    allocate(dys_ao(size(trans2, 2), nwf1, nwf2))
+    call gemm(trans2, mob2(:, :), wrk, transa='T')
     do j = 1, nwf2
         call gemm(wrk, dys_mo(:, :, j), dys_ao(:, :, j))
     end do
 
+    open(newunit=outunit, file='dys.at', action='write')
+    call write_molden_atoms(outunit, geom, atsym, atnum)
+    close(outunit)
+    open(newunit=outunit, file='dys.gto', action='write')
+    call write_molden_gto(outunit, basis, bindex)
+    close(outunit)
     do i = 1, nwf1+1
         do j = 1, nwf2+1
             ! Write MO basis dyson orbital.

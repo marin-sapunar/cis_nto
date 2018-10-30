@@ -8,6 +8,8 @@ module matrix_mod
     public :: mat_sy_ev
     public :: mat_sy_exp
     public :: mat_ge_det
+    public :: mat_ge_mmm
+
 
 contains
 
@@ -132,6 +134,40 @@ contains
         end do
         adet = sgn * adet
     end function mat_ge_det
+
+
+    !----------------------------------------------------------------------------------------------
+    ! SUBROUTINE: mat_ge_mmm
+    !> @brief Multiply 3 matrices
+    !----------------------------------------------------------------------------------------------
+    subroutine mat_ge_mmm(a, b, c, d, transa, transc)
+        use blas95, only : gemm
+        real(dp) :: a(:, :) !< Input matrix 1.
+        real(dp) :: b(:, :) !< Input matrix 2.
+        real(dp) :: c(:, :) !< Input matrix 3.
+        real(dp) :: d(:, :) !< Output matrix.
+        character(len=1), intent(in), optional :: transa !< op(A)
+        character(len=1), intent(in), optional :: transc !< op(C)
+
+        real(dp), allocatable :: wrk(:, :)
+        character(len=1) :: ta
+        character(len=1) :: tc
+
+        ta = 'N'
+        tc = 'N'
+        if (present(transa)) ta = transa
+        if (present(transc)) tc = transc
+
+        if (ta == 'N') then
+            allocate(wrk(size(a, 1), size(b, 2)))
+        else
+            allocate(wrk(size(a, 2), size(b, 2)))
+        end if
+
+        call gemm(a, b, wrk, transa=ta)
+        call gemm(wrk, c, d, transb=tc)
+    end subroutine mat_ge_mmm
+
 
 
 end module matrix_mod
