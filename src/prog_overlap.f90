@@ -9,8 +9,8 @@ program cis_olap_test
     implicit none
 
     integer :: rhf = 0 !< Restricted (1) or unrestricted(2) calculation.
-    integer :: rhf1 = 0 !< Restricted (1) or unrestricted (2) for 1 wave functions.
-    integer :: rhf2 = 0 !< Restricted (1) or unrestricted (2) for 2 wave functions.
+    integer :: rhf1 = 1 !< Restricted (1) or unrestricted (2) for 1 wave functions.
+    integer :: rhf2 = 1 !< Restricted (1) or unrestricted (2) for 2 wave functions.
     integer :: nwf1 = 0 !< Number of wave functions 1.
     integer :: nwf2 = 0 !< Number of wave functions 2.
     type(ccg), allocatable :: ccg1(:) !< Atomic orbitals 1.
@@ -77,8 +77,8 @@ program cis_olap_test
     end if
     call sort_mo(occ1(:, 1), act1(:, 1), moa1, remove_inactive = .true.)
     call sort_mo(occ2(:, 1), act2(:, 1), moa2, remove_inactive = .true.)
-    if (rhf == 2) call sort_mo(occ1(:, 2), act1(:, 2), mob1, remove_inactive = .true.)
-    if (rhf == 2) call sort_mo(occ2(:, 2), act2(:, 2), mob2, remove_inactive = .true.)
+    if (rhf == 2) call sort_mo(occ1(:, rhf1), act1(:, rhf1), mob1, remove_inactive = .true.)
+    if (rhf == 2) call sort_mo(occ2(:, rhf2), act2(:, rhf2), mob2, remove_inactive = .true.)
 
     allocate(s_mo(size(moa1, 2), size(moa2, 2), rhf))
     call mat_ge_mmm(moa1, s_ao, moa2, s_mo(:, :, 1), transa='T')
