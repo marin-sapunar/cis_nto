@@ -132,6 +132,7 @@ contains
       ! c_b(1:n_b) = c_b(1:n_b) / sqrt(norm)
     end subroutine cis_nto_truncate_1state_u
 
+
     !----------------------------------------------------------------------------------------------
     ! SUBROUTINE: cis_nto_truncate_1state_r
     !
@@ -162,8 +163,6 @@ contains
         ! Renormalize
       ! c_a(1:n_a) = c_a(1:n_a) / sqrt(norm)
     end subroutine cis_nto_truncate_1state_r
-
-
 
 
     !----------------------------------------------------------------------------------------------

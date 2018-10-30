@@ -3,12 +3,12 @@ program cis_dyson_prog
     use cis_dyson_mod
     use read_all_mod
     use write_molden_mod
-    use write_txt_mod
-    use orthog_mod
     use ccg_ao_mod
     use atom_basis_mod
     use one_el_op_mod
-    use blas95, only : gemm, dot, gemv
+    use matrix_mod
+    use occupation_mod
+    use blas95, only : gemm
     implicit none
 
     integer :: rhf = 0 !< Restricted (1) or unrestricted(2) calculation.
@@ -28,6 +28,10 @@ program cis_dyson_prog
     real(dp), allocatable :: wfa2(:, :, :) !< CI alpha single excitation coefficients 2.
     real(dp), allocatable :: wfb1(:, :, :) !< CI beta single excitation coefficients 1.
     real(dp), allocatable :: wfb2(:, :, :) !< CI beta single excitation coefficients 2.
+    logical, allocatable :: occ1(:, :) !< Occupied MO mask 1.
+    logical, allocatable :: occ2(:, :) !< Occupied MO mask 2.
+    logical, allocatable :: act1(:, :) !< Active MO mask 1.
+    logical, allocatable :: act2(:, :) !< Active MO mask 2.
     real(dp), allocatable :: s_ao(:, :) !< Atomic orbital overlaps.
     real(dp), allocatable :: s_mo(:, :, :) !< Molecular orbital overlaps.
     real(dp), allocatable :: dys_mo(:, :, :) !< Dyson orbitals in mo basis.
@@ -65,8 +69,8 @@ program cis_dyson_prog
     call read_mo(input_format, dir1, moa_c=moa1, mob_c=mob1)
     call read_mo(input_format, dir2, moa_c=moa2, mob_c=mob2)
 
-    call read_cis(input_format, dir1, cisa=wfa1, cisb=wfb1, norm=.true.)
-    call read_cis(input_format, dir2, cisa=wfa2, cisb=wfb2, norm=.true.)
+    call read_cis(input_format, dir1, cisa=wfa1, cisb=wfb1, occ_mo=occ1, act_mo=act1, norm=.true.)
+    call read_cis(input_format, dir2, cisa=wfa2, cisb=wfb2, occ_mo=occ2, act_mo=act2, norm=.true.)
     nwf1 = size(wfa1, 3)
     nwf2 = size(wfa2, 3)
 
@@ -84,22 +88,19 @@ program cis_dyson_prog
         allocate(wfb2, source=wfa2)
         wfb2 = -wfb2
     end if
+    call sort_mo(occ1(:, 1), act1(:, 1), moa1, remove_inactive = .true.)
+    call sort_mo(occ2(:, 1), act2(:, 1), moa2, remove_inactive = .true.)
+    if (rhf == 2) call sort_mo(occ1(:, 2), act1(:, 2), mob1, remove_inactive = .true.)
+    if (rhf == 2) call sort_mo(occ2(:, 2), act2(:, 2), mob2, remove_inactive = .true.)
 
-    allocate(wrk(size(moa1,2), size(moa2,1)))
     allocate(s_mo(size(moa1, 2), size(moa2, 2), rhf))
-    call gemm(moa1, s_ao, wrk, transa='T')
-    call gemm(wrk, moa2, s_mo(:, :, 1))
-    if (rhf == 2) then
-        call gemm(mob1, s_ao, wrk, transa='T')
-        call gemm(wrk, mob2, s_mo(:, :, 2))
-    end if
-    call write_txt('s_mo', s_mo)
+    call mat_ge_mmm(moa1, s_ao, moa2, s_mo(:, :, 1), transa='T')
+    if (rhf == 2) call mat_ge_mmm(mob1, s_ao, mob2, s_mo(:, :, 2), transa='T')
 
     call cis_dyson(thr, s_mo, wfa1, wfa2, wfb1, wfb2, dys_mo)
     allocate(dys_norm(nwf1+1, nwf2+1))
     dys_norm = sum(dys_mo(:, :, :)*dys_mo(:, :, :), dim=1)
 
-    deallocate(wrk)
     allocate(wrk(size(trans2, 2), size(mob2, 2)))
     allocate(dys_ao(size(trans2, 2), nwf1, nwf2))
     call gemm(trans2, mob2(:, :), wrk, transa='T')

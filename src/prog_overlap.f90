@@ -2,7 +2,6 @@ program cis_olap_test
     use global_defs
     use cis_overlap_mod
     use read_all_mod
-    use orthog_mod
     use ccg_ao_mod
     use one_el_op_mod
     use matrix_mod
@@ -83,7 +82,7 @@ program cis_olap_test
 
     allocate(s_mo(size(moa1, 2), size(moa2, 2), rhf))
     call mat_ge_mmm(moa1, s_ao, moa2, s_mo(:, :, 1), transa='T')
-    call mat_ge_mmm(mob1, s_ao, mob2, s_mo(:, :, 2), transa='T')
+    if (rhf == 2) call mat_ge_mmm(mob1, s_ao, mob2, s_mo(:, :, 2), transa='T')
 
     call cis_overlap(thr, s_mo, wfa1, wfa2, wfb1, wfb2, s_wf)
 
