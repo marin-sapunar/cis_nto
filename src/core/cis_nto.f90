@@ -33,7 +33,7 @@ contains
         nto_mo(no+1:no+nv, no+1:2*no) = wrk_v
         if (mat_ge_det(wrk_o) < 0) then
             nto_mo(:, no) = -nto_mo(:, no)
-            nto_mo(:, no) = -nto_mo(:, 2*no)
+            nto_mo(:, 2*no) = -nto_mo(:, 2*no)
         end if
     end subroutine cis_nto_1state
 

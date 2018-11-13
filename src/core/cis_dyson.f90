@@ -25,7 +25,6 @@ contains
         real(dp), intent(in) :: wf_b1(:, :, :) !< Bra beta wave function coefficients.
         real(dp), intent(in) :: wf_b2(:, :, :) !< Ket beta wave function coefficients.
         real(dp), allocatable, intent(out) :: dys_mo(:, :, :) !< Dyson orbital in MO basis.
-        integer :: n_1 !< Number of bra orbitals.
         integer :: n_2 !< Number of bra orbitals.
         integer :: no_a !< Number of occupied alpha orbitals.
         integer :: no_b1 !< Number of occupied beta orbitals.
@@ -48,6 +47,7 @@ contains
         real(dp), allocatable :: wrk_b(:, :) !< Work array for beta overlaps.
         real(dp), allocatable :: wrk0_a(:, :) !< Work array for alpha overlaps.
         real(dp), allocatable :: wrk0_b(:, :) !< Work array for beta overlaps.
+        real(dp), allocatable :: wrk_nto(:) !< Work array for blocks in NTO basis.
         real(dp) :: rr_a !< RR block alpha.
         real(dp), allocatable :: sr_a(:) !< SR block alpha.
         real(dp), allocatable :: rs_a(:) !< RS block alpha.
@@ -56,11 +56,9 @@ contains
         real(dp), allocatable :: sr_b(:, :) !< SR Dyson block beta.
         real(dp), allocatable :: rs_b(:, :) !< RS Dyson block beta.
         real(dp), allocatable :: ss_b(:, :, :) !< SS Dyson block beta.
-        real(dp), allocatable :: dys_nto(:, :, :) !< Dyson orbitals in NTO basis.
         integer :: i, j
  
         ! Get dimensions.
-        n_1 = size(s_mo, 1)
         n_2 = size(s_mo, 2)
         no_a = size(wf_a2, 2)
         no_b1 = size(wf_b1, 2)
@@ -71,11 +69,10 @@ contains
         allocate(sr_a(nwf_1), source = 0.0_dp)
         allocate(rs_a(nwf_2), source = 0.0_dp)
         allocate(ss_a(nwf_1, nwf_2), source = 0.0_dp)
-        allocate(rr_b(2*no_b2), source = 0.0_dp)
-        allocate(sr_b(2*no_b2, nwf_1), source = 0.0_dp)
-        allocate(rs_b(2*no_b2, nwf_2), source = 0.0_dp)
-        allocate(ss_b(2*no_b2, nwf_1, nwf_2), source = 0.0_dp)
-
+        allocate(rr_b(n_2), source = 0.0_dp)
+        allocate(sr_b(n_2, nwf_1), source = 0.0_dp)
+        allocate(rs_b(n_2, nwf_2), source = 0.0_dp)
+        allocate(ss_b(n_2, nwf_1, nwf_2), source = 0.0_dp)
 
         ! Calculate NTOs.
         call cis_nto(wf_a1, c_a1, mo_a1)
@@ -98,28 +95,36 @@ contains
 
         ! Ref - Ref.
         rr_a = mat_ge_det(s_mo(1:no_a, 1:no_a, 1))
-        call nto_rr_dys(no_b2, s_mo(:, :, 2), rr_b(:))
+        call nto_rr_dys(no_b2, s_mo(:, :, 2), rr_b(1:no_b2))
 
         allocate(wrk0_a(no_a*2, n_2))
         allocate(wrk0_b(no_b1*2, n_2))
         allocate(wrk_a(no_a*2, no_a*2))
         allocate(wrk_b(no_b1*2, no_b2*2))
+        allocate(wrk_nto(2*no_b2), source = 0.0_dp)
         do i = 1, nwf_1
-            ! CIS - Ref.
+            ! CIS - Ref
             call gemm(mo_a1(:, :, i), s_mo(:, :, 1), wrk0_a, transa='T')
             call gemm(mo_b1(:, :, i), s_mo(:, :, 2), wrk0_b, transa='T')
-            call nto_rs(no_a, na_a1(i), wrk0_a, c_a1(:, i), sr_a(i), .true.)
-            call nto_sr_dys(no_b2, na_b1(i), wrk0_b, c_b1(:, i), sr_b(:, i))
-            ! CIS - CIS.
             do j = 1, nwf_2
                 call gemm(wrk0_a, mo_a2(:, :, j), wrk_a)
                 call gemm(wrk0_b, mo_b2(:, :, j), wrk_b)
+                ! Ref - CIS
                 if (i == 1) then
                     call nto_rs(no_a, na_a2(j), wrk_a, c_a2(:, j), rs_a(j), .false.)
-                    call nto_rs_dys(no_b2, na_b2(j), wrk_b, c_b2(:, j), rr_b(:), rs_b(:, j))
+                    call nto_rs_dys(no_b2, na_b2(j), wrk_b, c_b2(:, j), wrk_nto)
+                    call gemv(mo_b2(:, :, j), wrk_nto, rs_b(:, j))
                 end if
+                ! CIS - Ref
+                if (j == 1) then
+                    call nto_rs(no_a, na_a1(i), wrk_a, c_a1(:, i), sr_a(i), .true.)
+                    call nto_sr_dys(no_b2, na_b1(i), wrk_b, c_b1(:, i), wrk_nto(1:no_b2))
+                    call gemv(mo_b2(:, 1:no_b2, i), wrk_nto(1:no_b2), sr_b(1:no_b2, i))
+                end if
+                ! CIS - CIS
                 call nto_ss(no_a, na_a1(i), na_a2(j), wrk_a, c_a1(:, i), c_a2(:, j), ss_a(i, j))
-                call nto_ss_dys(no_b2, na_b1(i), na_b2(j), wrk_b, c_b1(:, i), c_b2(:, j), ss_b(:, i, j))
+                call nto_ss_dys(no_b2, na_b1(i), na_b2(j), wrk_b, c_b1(:, i), c_b2(:, j), wrk_nto)
+                call gemv(mo_b2(:, :, j), wrk_nto, ss_b(:, i, j))
             end do
         end do
         deallocate(wrk_a)
@@ -127,26 +132,19 @@ contains
         deallocate(wrk0_a)
         deallocate(wrk0_b)
 
-        allocate(dys_nto(2*no_b2, 0:nwf_1, 0:nwf_2))
-        dys_nto(:, 0, 0) = rr_b * rr_a
+        allocate(dys_mo(n_2, 0:nwf_1, 0:nwf_2))
+        dys_mo(:, 0, 0) = rr_b * rr_a
         do i = 1, nwf_1
-            dys_nto(:, i, 0) = rr_b * sr_a(i) + sr_b(:, i) * rr_a
+            dys_mo(:, i, 0) = rr_b * sr_a(i) + sr_b(:, i) * rr_a
         end do
         do j = 1, nwf_2
-            dys_nto(:, 0, j) = rr_b * rs_a(j) + rs_b(:, j) * rr_a
+            dys_mo(:, 0, j) = rr_b * rs_a(j) + rs_b(:, j) * rr_a
         end do
         do i = 1, nwf_1
             do j = 1, nwf_2
-                dys_nto(:, i, j) = rr_b * ss_a(i, j) + rs_b(:, j) * sr_a(i) + &
-                                   ss_b(:, i, j) * rr_a + sr_b(:, i) * rs_a(j)
+                dys_mo(:, i, j) = rr_b * ss_a(i, j) + rs_b(:, j) * sr_a(i) + &
+                                  ss_b(:, i, j) * rr_a + sr_b(:, i) * rs_a(j)
             end do
-        end do
-
-        if (allocated(dys_mo)) deallocate(dys_mo)
-        allocate(dys_mo(n_2, nwf_1+1, nwf_2+1), source = 0.0_dp)
-        dys_mo(1:no_b2, :, 1) = dys_nto(1:no_b2, :, 1)
-        do j = 1, nwf_2 
-            call gemm(mo_b2(:, :, j), dys_nto(:, :, j+1), dys_mo(:, :, j+1), alpha=sqrt(2.0_dp))
         end do
     end subroutine cis_dyson
 
@@ -158,7 +156,7 @@ contains
         use matrix_mod, only : mat_ge_det
         integer, intent(in) :: nn !< Number of occupied orbitals in neutral.
         real(dp), intent(in) :: s_nto(:, :) !< Overlap matrix between NTOs.
-        real(dp), intent(out) :: rr(2*nn) !< RR block coefficients.
+        real(dp), intent(out) :: rr(nn) !< RR block coefficients.
         real(dp) :: wrk(nn-1, nn-1) !< Work array.
         integer :: seq(nn) !< All columns.
         integer :: cols(nn-1) !< Currently active columns.
@@ -191,7 +189,7 @@ contains
         integer, intent(in) :: na !< Number of active excitations.
         real(dp), intent(in) :: s_nto(:, :) !< Overlap matrix between NTOs.
         real(dp), intent(in) :: c(nn-1) !< Coefficients of excitations.
-        real(dp), intent(out) :: sr(2*nn) !< RS block coefficients.
+        real(dp), intent(out) :: sr(nn) !< RS block coefficients.
         real(dp) :: wrk(nn-1, nn-1) !< Work array.
         integer :: seq(nn) !< All columns.
         integer :: cols(nn-1) !< Currently active columns.
@@ -202,6 +200,7 @@ contains
         if (na == 0) return
         nc = nn - 1
         seq = [ (i, i=1, nn+1) ]
+        sr = 0.0_dp
 
         !$omp parallel default(shared)
         !$omp do private(wrk, j, cols, sgn) schedule(dynamic)
@@ -211,6 +210,7 @@ contains
             do j = 1, na
                 wrk = s_nto(1:nc, cols)
                 wrk(j, :) = s_nto(nc+j, cols)
+              ! write(*,*) i, j, mat_ge_det(wrk)
                 sr(i) = sr(i) + sgn * c(j) * mat_ge_det(wrk)
             end do
         end do
@@ -222,13 +222,12 @@ contains
     !----------------------------------------------------------------------------------------------
     ! SUBROUTINE: nto_rs_dys
     !----------------------------------------------------------------------------------------------
-    subroutine nto_rs_dys(nn, na, s_nto, c, rr, rs)
+    subroutine nto_rs_dys(nn, na, s_nto, c, rs)
         use matrix_mod, only : mat_ge_det
         integer, intent(in) :: nn !< Number of occupied orbitals in neutral.
         integer, intent(in) :: na !< Number of active excitations.
         real(dp), intent(in) :: s_nto(:, :) !< Overlap matrix between NTOs.
         real(dp), intent(in) :: c(nn) !< Coefficients of excitations.
-        real(dp), intent(in) :: rr(2*nn) !< RR block coefficients.
         real(dp), intent(out) :: rs(2*nn) !< RS block coefficients.
         real(dp) :: wrk(nn-1, nn-1) !< Work array.
         integer :: seq(nn) !< All columns.
@@ -240,13 +239,15 @@ contains
         if (na == 0) return
         nc = nn - 1
         seq = [ (i, i=1, nn+1) ]
+        rs = 0.0_dp
 
         !$omp parallel default(shared)
         !$omp do private(wrk, j, cols, sgn) schedule(dynamic)
         do i = 1, nn
             sgn = (-1)**(i+1)
             cols = pack(seq, (seq /= i))
-            rs(nn+i) = rs(nn+i) + c(i) * rr(i)
+            wrk = s_nto(1:nc, cols)
+            rs(nn+i) = rs(nn+i) + sgn * c(i) * mat_ge_det(wrk)
             do j = 1, na
                 if (j == i) cycle
                 wrk = s_nto(1:nc, cols)
@@ -287,6 +288,7 @@ contains
         if ((na1 == 0) .or. (na2 == 0)) return
         nc = nn - 1
         seq = [ (i, i=1, nn+1) ]
+        ss = 0.0_dp
 
         !$omp parallel default(shared)
         !$omp do private(wrk, wrk_c, j, k, cols, sgn) schedule(dynamic)
@@ -303,7 +305,7 @@ contains
                     if (k < i) then
                         wrk(:, k) = s_nto(1:nc, nn+k)
                         wrk(j, k) = s_nto(nc+j, nn+k)
-                    else
+                    else if (k > i) then
                         wrk(:, k-1) = s_nto(1:nc, nn+k)
                         wrk(j, k-1) = s_nto(nc+j, nn+k)
                     end if
