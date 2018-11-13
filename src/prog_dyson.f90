@@ -98,7 +98,7 @@ program cis_dyson_prog
     if (rhf == 2) call mat_ge_mmm(mob1, s_ao, mob2, s_mo(:, :, 2), transa='T')
 
     call cis_dyson(thr, s_mo, wfa1, wfa2, wfb1, wfb2, dys_mo)
-    allocate(dys_norm(nwf1+1, nwf2+1))
+    allocate(dys_norm(0:nwf1, 0:nwf2))
     dys_norm = sum(dys_mo(:, :, :)*dys_mo(:, :, :), dim=1)
 
     allocate(wrk(size(trans2, 2), size(mob2, 2)))
@@ -114,15 +114,15 @@ program cis_dyson_prog
     open(newunit=outunit, file='dys.gto', action='write')
     call write_molden_gto(outunit, basis, bindex)
     close(outunit)
-    do i = 1, nwf1+1
-        do j = 1, nwf2+1
+    do i = 0, nwf1
+        do j = 0, nwf2
             ! Write MO basis dyson orbital.
-            write(temp, '(a,i3.3,a,i3.3,a)') 'dys.', i-1, '.', j-1, '.mo'
+            write(temp, '(a,i3.3,a,i3.3,a)') 'dys.', i, '.', j, '.mo'
             open(newunit=outunit, file=temp, action='write')
             write(outunit, '(1e13.5)') dys_mo(:, i, j)
             close(outunit)
             ! Write AO basis dyson orbital.
-            write(temp, '(a,i3.3,a,i3.3,a)') 'dys.', i-1, '.', j-1, '.ao'
+            write(temp, '(a,i3.3,a,i3.3,a)') 'dys.', i, '.', j, '.ao'
             open(newunit=outunit, file=temp, action='write')
             call write_molden_mo_single(outunit, 1000*i+j, 'a   ', 1, 0.0_dp, dys_norm(i, j),      &
             &                           dys_ao(:, i, j))

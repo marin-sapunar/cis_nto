@@ -18,6 +18,7 @@ contains
     !----------------------------------------------------------------------------------------------
     subroutine cis_nto_1state(nv, no, wf, nto_c, nto_mo)
         use lapack95, only : gesvd
+        use matrix_mod, only : mat_ge_det
         integer, intent(in) :: nv !< Number of virtual orbitals.
         integer, intent(in) :: no !< Number of occupied orbitals.
         real(dp), intent(in) :: wf(nv, no) !< CIS wave function coefficients.
@@ -30,6 +31,10 @@ contains
         call gesvd(wrk_c, u=wrk_v, s=nto_c, vt=wrk_o)
         nto_mo(1:no, 1:no) = transpose(wrk_o)
         nto_mo(no+1:no+nv, no+1:2*no) = wrk_v
+        if (mat_ge_det(wrk_o) < 0) then
+            nto_mo(:, no) = -nto_mo(:, no)
+            nto_mo(:, no) = -nto_mo(:, 2*no)
+        end if
     end subroutine cis_nto_1state
 
 

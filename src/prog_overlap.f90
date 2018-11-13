@@ -87,7 +87,7 @@ program cis_olap_test
     call cis_overlap(thr, s_mo, wfa1, wfa2, wfb1, wfb2, s_wf)
 
     open(newunit=ounit, file='omat', action='write')
-    do i = 1, nwf2 + 1
+    do i = 0, nwf2
         write(ounit,*) s_wf(:, i)
     end do
     close(ounit)

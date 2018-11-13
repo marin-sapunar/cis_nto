@@ -36,7 +36,7 @@ contains
         real(dp), intent(in) :: wf_b2(:, :, :) !< Ket beta wave function coefficients.
         real(dp), allocatable, intent(out) :: s_wf(:, :) !< Wave function overlaps.
         logical :: beta !< Restricted/unrestricted calculation.
-        integer :: n_2 !< Number of bra orbitals.
+        integer :: n_2 !< Number of ket orbitals.
         integer :: no_a !< Number of occupied alpha orbitals.
         integer :: no_b !< Number of occupied beta orbitals.
         integer :: nwf_1 !< Number of bra states.
@@ -51,14 +51,13 @@ contains
         real(dp), allocatable :: mo_b2(:, :, :) !< Ket NTOs in MO basis beta.
         real(dp), allocatable :: s_nto_a(:, :) !< NTO overlaps alpha.
         real(dp), allocatable :: s_nto_b(:, :) !< NTO overlaps beta.
-        real(dp), allocatable :: wrk_a(:, :) !< Work array for alpha overlaps.
-        real(dp), allocatable :: wrk_b(:, :) !< Work array for beta overlaps.
-        real(dp), allocatable :: rr_a(:, :) !< RR block alpha.
-        real(dp), allocatable :: rr_b(:, :) !< RR block beta.
-        real(dp), allocatable :: sr_a(:, :) !< SR block alpha.
-        real(dp), allocatable :: sr_b(:, :) !< SR block beta.
-        real(dp), allocatable :: rs_a(:, :) !< RS block alpha.
-        real(dp), allocatable :: rs_b(:, :) !< RS block beta.
+        real(dp), allocatable :: wrk(:, :) !< Work array.
+        real(dp) :: rr_a !< RR block alpha.
+        real(dp) :: rr_b !< RR block beta.
+        real(dp), allocatable :: sr_a(:) !< SR block alpha.
+        real(dp), allocatable :: sr_b(:) !< SR block beta.
+        real(dp), allocatable :: rs_a(:) !< RS block alpha.
+        real(dp), allocatable :: rs_b(:) !< RS block beta.
         real(dp), allocatable :: ss_a(:, :) !< SS block alpha.
         real(dp), allocatable :: ss_b(:, :) !< SS block beta.
         integer, allocatable :: na_a1(:) !< Number of active bra orbitals alpha.
@@ -77,18 +76,14 @@ contains
         nwf_2 = size(wf_a2, 3)
         ! Allocate work arrays.
         allocate(s_nto_a(no_a*2, no_a*2))
-        allocate(rr_a(nwf_1, nwf_2))
-        allocate(sr_a(nwf_1, nwf_2))
-        allocate(rs_a(nwf_1, nwf_2))
+        allocate(sr_a(nwf_1))
+        allocate(rs_a(nwf_2))
         allocate(ss_a(nwf_1, nwf_2))
-        allocate(wrk_a(no_a*2, n_2))
         if (beta) then
             allocate(s_nto_b(no_b*2, no_b*2))
-            allocate(rr_b(nwf_1, nwf_2))
-            allocate(sr_b(nwf_1, nwf_2))
-            allocate(rs_b(nwf_1, nwf_2))
+            allocate(sr_b(nwf_1))
+            allocate(rs_b(nwf_2))
             allocate(ss_b(nwf_1, nwf_2))
-            allocate(wrk_b(no_b*2, n_2))
         end if
 
         ! Calculate NTOs.
@@ -112,53 +107,59 @@ contains
             if (beta) write(stdout, '(3x,1000(i0,1x))') na_b2
         end if
 
-        ! Calculate alpha determinant blocks.
+        rr_a = mat_ge_det(s_mo(1:no_a, 1:no_a, 1))
+        allocate(wrk(no_a*2, n_2))
         do i = 1, nwf_1
-            call gemm(mo_a1(:, :, i), s_mo(:, :, 1), wrk_a, transa='T')
+            call gemm(mo_a1(:, :, i), s_mo(:, :, 1), wrk, transa='T')
             do j = 1, nwf_2
-                call gemm(wrk_a, mo_a2(:, :, j), s_nto_a)
-                rr_a(i, j) = mat_ge_det(s_nto_a(1:no_a, 1:no_a))
-                call nto_rs(no_a, na_a1(i), s_nto_a, c_a1(:, i), sr_a(i, j), .true.)
-                call nto_rs(no_a, na_a2(j), s_nto_a, c_a2(:, j), rs_a(i, j), .false.)
+                call gemm(wrk, mo_a2(:, :, j), s_nto_a)
+                if (j == 1) call nto_rs(no_a, na_a1(i), s_nto_a, c_a1(:, i), sr_a(i), .true.)
+                if (i == 1) call nto_rs(no_a, na_a2(j), s_nto_a, c_a2(:, j), rs_a(j), .false.)
                 call nto_ss(no_a, na_a1(i), na_a2(j), s_nto_a, c_a1(:, i), c_a2(:, j), ss_a(i, j))
             end do
         end do
+        deallocate(wrk)
 
-        ! Calculate beta determinant blocks.
         if (beta) then
+            rr_b = mat_ge_det(s_mo(1:no_b, 1:no_b, 2))
+            allocate(wrk(no_b*2, n_2))
             do i = 1, nwf_1
-                call gemm(mo_b1(:, :, i), s_mo(:, :, 2), wrk_b, transa='T')
+                call gemm(mo_b1(:, :, i), s_mo(:, :, 2), wrk, transa='T')
                 do j = 1, nwf_2
-                    call gemm(wrk_b, mo_b2(:, :, j), s_nto_b)
-                    rr_b(i, j) = mat_ge_det(s_nto_b(1:no_b, 1:no_b))
-                    call nto_rs(no_b, na_b1(i), s_nto_b, c_b1(:, i), sr_b(i, j), .true.)
-                    call nto_rs(no_b, na_b2(j), s_nto_b, c_b2(:, j), rs_b(i, j), .false.)
+                    call gemm(wrk, mo_b2(:, :, j), s_nto_b)
+                    if (j == 1) call nto_rs(no_b, na_b1(i), s_nto_b, c_b1(:, i), sr_b(i), .true.)
+                    if (i == 1) call nto_rs(no_b, na_b2(j), s_nto_b, c_b2(:, j), rs_b(j), .false.)
                     call nto_ss(no_b, na_b1(i), na_b2(j), s_nto_b, c_b1(:, i), c_b2(:, j), ss_b(i, j))
                 end do
             end do
+            deallocate(wrk)
         end if
 
         if (allocated(s_wf)) deallocate(s_wf)
-        allocate(s_wf(nwf_1+1, nwf_2+1))
+        allocate(s_wf(0:nwf_1, 0:nwf_2))
 
         if (beta) then
             ! Ground state overlap:
-            s_wf(1, 1) = rr_a(1, 1) * rr_b(1, 1)
+            s_wf(0, 0) = rr_a*rr_b
             ! Ground-excited state overlap:
-            s_wf(2:, 1) = rr_a(:, 1) * sr_b(:, 1) + rr_b(:, 1) * sr_a(:, 1)
+            s_wf(1:, 0) = rr_a*sr_b + rr_b*sr_a
             ! Excited-ground state overlap:
-            s_wf(1, 2:) = rr_b(1, :) * rs_a(1, :) + rr_a(1, :) * rs_b(1, :)
+            s_wf(0, 1:) = rr_b*rs_a + rr_a*rs_b
             ! Excited-excited state overlap:
-            s_wf(2:, 2:) = rr_b * ss_a + sr_a * rs_b + rr_a * ss_b + sr_b * rs_a
+            do i = 1, nwf_1
+                s_wf(i, 1:) = rr_b*ss_a(i, :) + sr_a(i)*rs_b + rr_a*ss_b(i, :) + sr_b(i)*rs_a
+            end do
         else
             ! Ground state overlap:
-            s_wf(1, 1) = rr_a(1, 1) * rr_a(1, 1)
+            s_wf(0, 0) = rr_a*rr_a
             ! Ground-excited state overlap:
-            s_wf(2:, 1) = rr_a(:, 1) * sr_a(:, 1)
+            s_wf(1:, 0) = rr_a*sr_a
             ! Excited-ground state overlap:
-            s_wf(1, 2:) = rr_a(1, :) * rs_a(1, :)
+            s_wf(0, 1:) = rr_a*rs_a
             ! Excited-excited state overlap:
-            s_wf(2:, 2:) = rr_a * ss_a + sr_a * rs_a
+            do i = 1, nwf_1
+                s_wf(i, 1:) = rr_a*ss_a(i, :) + sr_a(i)*rs_a
+            end do
         end if
     end subroutine cis_overlap
 

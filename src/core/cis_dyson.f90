@@ -48,13 +48,13 @@ contains
         real(dp), allocatable :: wrk_b(:, :) !< Work array for beta overlaps.
         real(dp), allocatable :: wrk0_a(:, :) !< Work array for alpha overlaps.
         real(dp), allocatable :: wrk0_b(:, :) !< Work array for beta overlaps.
-        real(dp), allocatable :: rr_a(:, :) !< RR block alpha.
-        real(dp), allocatable :: sr_a(:, :) !< SR block alpha.
-        real(dp), allocatable :: rs_a(:, :) !< RS block alpha.
+        real(dp) :: rr_a !< RR block alpha.
+        real(dp), allocatable :: sr_a(:) !< SR block alpha.
+        real(dp), allocatable :: rs_a(:) !< RS block alpha.
         real(dp), allocatable :: ss_a(:, :) !< SS block alpha.
-        real(dp), allocatable :: rr_b(:, :, :) !< RR Dyson block beta.
-        real(dp), allocatable :: sr_b(:, :, :) !< SR Dyson block beta.
-        real(dp), allocatable :: rs_b(:, :, :) !< RS Dyson block beta.
+        real(dp), allocatable :: rr_b(:) !< RR Dyson block beta.
+        real(dp), allocatable :: sr_b(:, :) !< SR Dyson block beta.
+        real(dp), allocatable :: rs_b(:, :) !< RS Dyson block beta.
         real(dp), allocatable :: ss_b(:, :, :) !< SS Dyson block beta.
         real(dp), allocatable :: dys_nto(:, :, :) !< Dyson orbitals in NTO basis.
         integer :: i, j
@@ -68,14 +68,13 @@ contains
         nwf_1 = size(wf_a1, 3)
         nwf_2 = size(wf_a2, 3)
         ! Allocate work arrays.
-        allocate(rr_a(0:nwf_1, 0:nwf_2), source = 0.0_dp)
-        allocate(sr_a(0:nwf_1, 0:nwf_2), source = 0.0_dp)
-        allocate(rs_a(0:nwf_1, 0:nwf_2), source = 0.0_dp)
-        allocate(ss_a(0:nwf_1, 0:nwf_2), source = 0.0_dp)
-        allocate(rr_b(2*no_b2, 0:nwf_1, 0:nwf_2), source = 0.0_dp)
-        allocate(sr_b(2*no_b2, 0:nwf_1, 0:nwf_2), source = 0.0_dp)
-        allocate(rs_b(2*no_b2, 0:nwf_1, 0:nwf_2), source = 0.0_dp)
-        allocate(ss_b(2*no_b2, 0:nwf_1, 0:nwf_2), source = 0.0_dp)
+        allocate(sr_a(nwf_1), source = 0.0_dp)
+        allocate(rs_a(nwf_2), source = 0.0_dp)
+        allocate(ss_a(nwf_1, nwf_2), source = 0.0_dp)
+        allocate(rr_b(2*no_b2), source = 0.0_dp)
+        allocate(sr_b(2*no_b2, nwf_1), source = 0.0_dp)
+        allocate(rs_b(2*no_b2, nwf_2), source = 0.0_dp)
+        allocate(ss_b(2*no_b2, nwf_1, nwf_2), source = 0.0_dp)
 
 
         ! Calculate NTOs.
@@ -98,22 +97,8 @@ contains
         end if
 
         ! Ref - Ref.
-        rr_a(0, 0) = mat_ge_det(s_mo(1:no_a, 1:no_a, 1))
-        call nto_rr_dys(no_b2, s_mo(:, :, 2), rr_b(:, 0, 0))
-
-        ! Ref - CIS.
-        allocate(wrk0_a(n_1, no_a*2))
-        allocate(wrk0_b(n_1, no_b2*2))
-        do j = 1, nwf_2
-            call gemm(s_mo(:, :, 1), mo_a2(:, :, j), wrk0_a)
-            call gemm(s_mo(:, :, 2), mo_b2(:, :, j), wrk0_b)
-            rr_a(0, j) = mat_ge_det(wrk0_a(1:no_a, 1:no_a))
-            call nto_rs(no_a, na_a2(j), wrk0_a, c_a2(:, j), rs_a(0, j), .false.)
-            call nto_rr_dys(no_b2, wrk0_b, rr_b(:, 0, j))
-            call nto_rs_dys(no_b2, na_b2(j), wrk0_b, c_b2(:, j), rr_b(:, 0, j), rs_b(:, 0, j))
-        end do
-        deallocate(wrk0_a)
-        deallocate(wrk0_b)
+        rr_a = mat_ge_det(s_mo(1:no_a, 1:no_a, 1))
+        call nto_rr_dys(no_b2, s_mo(:, :, 2), rr_b(:))
 
         allocate(wrk0_a(no_a*2, n_2))
         allocate(wrk0_b(no_b1*2, n_2))
@@ -123,21 +108,17 @@ contains
             ! CIS - Ref.
             call gemm(mo_a1(:, :, i), s_mo(:, :, 1), wrk0_a, transa='T')
             call gemm(mo_b1(:, :, i), s_mo(:, :, 2), wrk0_b, transa='T')
-            rr_a(i, 0) = mat_ge_det(wrk0_a(1:no_a, 1:no_a))
-            call nto_rs(no_a, na_a1(i), wrk0_a, c_a1(:, i), sr_a(i, 0), .true.)
-            call nto_rr_dys(no_b2, wrk0_b, rr_b(:, i, 0))
-            call nto_sr_dys(no_b2, na_b1(i), wrk0_b, c_b1(:, i), sr_b(:, i, 0))
+            call nto_rs(no_a, na_a1(i), wrk0_a, c_a1(:, i), sr_a(i), .true.)
+            call nto_sr_dys(no_b2, na_b1(i), wrk0_b, c_b1(:, i), sr_b(:, i))
             ! CIS - CIS.
             do j = 1, nwf_2
                 call gemm(wrk0_a, mo_a2(:, :, j), wrk_a)
                 call gemm(wrk0_b, mo_b2(:, :, j), wrk_b)
-                rr_a(i, j) = mat_ge_det(wrk_a(1:no_a, 1:no_a))
-                call nto_rs(no_a, na_a1(i), wrk_a, c_a1(:, i), sr_a(i, j), .true.)
-                call nto_rs(no_a, na_a2(j), wrk_a, c_a2(:, j), rs_a(i, j), .false.)
+                if (i == 1) then
+                    call nto_rs(no_a, na_a2(j), wrk_a, c_a2(:, j), rs_a(j), .false.)
+                    call nto_rs_dys(no_b2, na_b2(j), wrk_b, c_b2(:, j), rr_b(:), rs_b(:, j))
+                end if
                 call nto_ss(no_a, na_a1(i), na_a2(j), wrk_a, c_a1(:, i), c_a2(:, j), ss_a(i, j))
-                call nto_rr_dys(no_b2, wrk_b, rr_b(:, i, j))
-                call nto_sr_dys(no_b2, na_b1(i), wrk_b, c_b1(:, i), sr_b(:, i, j))
-                call nto_rs_dys(no_b2, na_b2(j), wrk_b, c_b2(:, j), rr_b(:, i, j), rs_b(:, i, j))
                 call nto_ss_dys(no_b2, na_b1(i), na_b2(j), wrk_b, c_b1(:, i), c_b2(:, j), ss_b(:, i, j))
             end do
         end do
@@ -146,18 +127,18 @@ contains
         deallocate(wrk0_a)
         deallocate(wrk0_b)
 
-        allocate(dys_nto(2*no_b2, nwf_1+1, nwf_2+1))
-        dys_nto(:, 1, 1) = rr_b(:, 0, 0) * rr_a(0, 0)
+        allocate(dys_nto(2*no_b2, 0:nwf_1, 0:nwf_2))
+        dys_nto(:, 0, 0) = rr_b * rr_a
         do i = 1, nwf_1
-            dys_nto(:, i+1, 1) = rr_b(:, i, 0) * sr_a(i, 0) + sr_b(:, i, 0) * rr_a(i, 0)
+            dys_nto(:, i, 0) = rr_b * sr_a(i) + sr_b(:, i) * rr_a
         end do
         do j = 1, nwf_2
-            dys_nto(:, 1, j+1) = rr_b(:, 0, j) * rs_a(0, j) + rs_b(:, 0, j) * rr_a(0, j)
+            dys_nto(:, 0, j) = rr_b * rs_a(j) + rs_b(:, j) * rr_a
         end do
         do i = 1, nwf_1
             do j = 1, nwf_2
-                dys_nto(:, i+1, j+1) = rr_b(:, i, j) * ss_a(i, j) + rs_b(:, i, j) * sr_a(i, j) + &
-                &                      ss_b(:, i, j) * rr_a(i, j) + sr_b(:, i, j) * rs_a(i, j)
+                dys_nto(:, i, j) = rr_b * ss_a(i, j) + rs_b(:, j) * sr_a(i) + &
+                                   ss_b(:, i, j) * rr_a + sr_b(:, i) * rs_a(j)
             end do
         end do
 
