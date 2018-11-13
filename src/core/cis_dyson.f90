@@ -1,9 +1,17 @@
+!----------------------------------------------------------------------------------------------
+! MODULE: cis_dyson_mod
+!> @author Marin Sapunar, Ruđer Bošković Institute
+!> @date October, 2018
+!
+! DESCRIPTION:
+!> @brief Subroutines for calculating Dyson orbitals from CIS wave functions.
+!----------------------------------------------------------------------------------------------
 module cis_dyson_mod
     use global_defs
     use cis_nto_mod
     use cis_overlap_mod
-
     implicit none
+
 
 contains
 
@@ -13,7 +21,15 @@ contains
     !
     !> @brief Calculate Dyson orbitals between two sets of CIS wave functions.
     !> @details
+    !! Natural transition orbitals are calculated for the CIS wave functions. Determinants are
+    !! calculated in this basis and converted back to the canonical MO basis.
     !
+    !> @note The Dyson orbitals between the N-1 el. reference and N el. CIS states are returned as
+    !! dys_mo(:, 0, :). The Dyson orbitals between the N-1 el. CIS states and N el. reference are
+    !! returned as dys_mo(:, :, 0).
+    !
+    !> @note The rr, sr, rs and ss blocks for alpha spin are just the corresponding overlap blocks
+    !! as the number of alpha electrons is the same.
     !----------------------------------------------------------------------------------------------
     subroutine cis_dyson(trunc, s_mo, wf_a1, wf_a2, wf_b1, wf_b2, dys_mo)
         use blas95, only : gemv, gemm
@@ -151,6 +167,7 @@ contains
 
     !----------------------------------------------------------------------------------------------
     ! SUBROUTINE: nto_rr_dys
+    !> @brief Calculate the RR block of determinants for a Dyson orbital calculation.
     !----------------------------------------------------------------------------------------------
     subroutine nto_rr_dys(nn, s_nto, rr)
         use matrix_mod, only : mat_ge_det
@@ -182,6 +199,7 @@ contains
 
     !----------------------------------------------------------------------------------------------
     ! SUBROUTINE: nto_sr_dys
+    !> @brief Calculate the SR block of determinants for a Dyson orbital calculation.
     !----------------------------------------------------------------------------------------------
     subroutine nto_sr_dys(nn, na, s_nto, c, sr)
         use matrix_mod, only : mat_ge_det
@@ -210,7 +228,6 @@ contains
             do j = 1, na
                 wrk = s_nto(1:nc, cols)
                 wrk(j, :) = s_nto(nc+j, cols)
-              ! write(*,*) i, j, mat_ge_det(wrk)
                 sr(i) = sr(i) + sgn * c(j) * mat_ge_det(wrk)
             end do
         end do
@@ -221,6 +238,7 @@ contains
 
     !----------------------------------------------------------------------------------------------
     ! SUBROUTINE: nto_rs_dys
+    !> @brief Calculate the RS block of determinants for a Dyson orbital calculation.
     !----------------------------------------------------------------------------------------------
     subroutine nto_rs_dys(nn, na, s_nto, c, rs)
         use matrix_mod, only : mat_ge_det
@@ -266,6 +284,7 @@ contains
 
     !----------------------------------------------------------------------------------------------
     ! SUBROUTINE: nto_ss_dys
+    !> @brief Calculate the SS block of determinants for a Dyson orbital calculation.
     !----------------------------------------------------------------------------------------------
     subroutine nto_ss_dys(nn, na1, na2, s_nto, c1, c2, ss)
         use matrix_mod, only : mat_ge_det

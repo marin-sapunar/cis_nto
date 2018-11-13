@@ -1,0 +1,2 @@
+ -- Add option to keep frozen orbitals in overlap/dyson calculations
+ -- Orthogonalize wave functions before overlap/dyson calculations (care about UHF alpha/beta blocks)

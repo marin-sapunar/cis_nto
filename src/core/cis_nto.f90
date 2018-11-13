@@ -1,7 +1,15 @@
+!----------------------------------------------------------------------------------------------
+! MODULE: cis_nto_mod
+!> @author Marin Sapunar, Ruđer Bošković Institute
+!> @date October, 2018
+!
+! DESCRIPTION:
+!> @brief Subroutines for working with natural transition orbitals from CIS wave functions.
+!----------------------------------------------------------------------------------------------
 module cis_nto_mod
     use global_defs
-
     implicit none
+
 
 contains
 
@@ -15,6 +23,14 @@ contains
     !! transition orbitals for that spin. The NTOs are given as linear combinations of canonical 
     !! orbitals in the nat_orbs array. The array is filled with the no hole orbitals followed by 
     !! the first no particle orbitals.
+    !
+    !> @note The SVD decomposition is unique up to a sign for each pair of singular vectors (for 
+    !! non-degenerate singular values).
+    !
+    !> @note When transforming the wave function to the NTO basis, the sign of can flip. This can
+    !! be seen from the overlap between the reference determinant in the NTO and canonical basis. 
+    !! If it is negative (-1), the sign of the wave function is fixed by changing the sign of the
+    !! NTO pair corresponding to the smallest singular value.
     !----------------------------------------------------------------------------------------------
     subroutine cis_nto_1state(nv, no, wf, nto_c, nto_mo)
         use lapack95, only : gesvd
@@ -31,6 +47,7 @@ contains
         call gesvd(wrk_c, u=wrk_v, s=nto_c, vt=wrk_o)
         nto_mo(1:no, 1:no) = transpose(wrk_o)
         nto_mo(no+1:no+nv, no+1:2*no) = wrk_v
+        ! Check/fix sign.
         if (mat_ge_det(wrk_o) < 0) then
             nto_mo(:, no) = -nto_mo(:, no)
             nto_mo(:, 2*no) = -nto_mo(:, 2*no)
@@ -165,8 +182,6 @@ contains
             norm = norm + c_a(n_a)**2
             if (norm > trunc) exit
         end do
-        ! Renormalize
-      ! c_a(1:n_a) = c_a(1:n_a) / sqrt(norm)
     end subroutine cis_nto_truncate_1state_r
 
 

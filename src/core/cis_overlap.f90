@@ -1,8 +1,16 @@
+!----------------------------------------------------------------------------------------------
+! MODULE: cis_overlap_mod
+!> @author Marin Sapunar, Ruđer Bošković Institute
+!> @date October, 2018
+!
+! DESCRIPTION:
+!> @brief Subroutines for calculating overlaps between CIS wave functions.
+!----------------------------------------------------------------------------------------------
 module cis_overlap_mod
     use global_defs
     use cis_nto_mod
-
     implicit none
+
 
 contains
 
@@ -17,13 +25,8 @@ contains
     !! expansions are truncated to include only the dominant contributions until the square of the
     !! norm for each state is higher than the threshold.
     !
-    !> @note The first row/column of the output matrix s_wf are the overlaps between the reference
-    !! and the CIS states.
-    !> @note The rr, sr, rs and ss arrays, hold the results of the sums for each pair of states.
-    !! The RR block is the same for all pairs of states, and the SR and RS blocks are the same for
-    !! each ket and bra state, respectively. However, the sign of the determinants can get fliped 
-    !! by the SVD procedure so we calculate and store them for each pair of states so we don't need
-    !! to keep track of the sign.
+    !> @note The overlaps between the bra(ket) reference and ket(bra) CIS states are returned as
+    !! s_wf(0, :) and s_wf(:, 0), respectively.
     !----------------------------------------------------------------------------------------------
     subroutine cis_overlap(trunc, s_mo, wf_a1, wf_a2, wf_b1, wf_b2, s_wf)
         use blas95, only : gemm
