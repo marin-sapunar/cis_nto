@@ -67,8 +67,8 @@ contains
         m = size(mat, 1)
         n = size(mat, 2)
         allocate(s(min(m, n)))
-        allocate(u(m, m))
-        allocate(vt(n, n))
+        allocate(u(m, min(m, n)))
+        allocate(vt(n, min(m, n)))
         
         ! Compute SVD
         call gesvd(mat, s, u=u, vt=vt, info=info)

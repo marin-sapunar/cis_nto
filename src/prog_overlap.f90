@@ -6,6 +6,7 @@ program cis_olap_test
     use one_el_op_mod
     use matrix_mod
     use occupation_mod
+    use orthog_mod
     implicit none
 
     integer :: rhf = 0 !< Restricted (1) or unrestricted(2) calculation.
@@ -39,6 +40,14 @@ program cis_olap_test
     real(dp) :: thr
     integer :: i
     integer :: ounit
+    logical :: norm
+    logical :: orth
+
+
+    norm = .false.
+    orth = .true.
+   !norm = .true.
+   !orth = .false.
 
     input_format = 'turbomole'
     write(stdout, *) 'Path to input for bra states:'
@@ -57,8 +66,10 @@ program cis_olap_test
     call read_mo(input_format, dir1, moa_c=moa1, mob_c=mob1)
     call read_mo(input_format, dir2, moa_c=moa2, mob_c=mob2)
 
-    call read_cis(input_format, dir1, cisa=wfa1, cisb=wfb1, occ_mo=occ1, act_mo=act1, norm=.true.)
-    call read_cis(input_format, dir2, cisa=wfa2, cisb=wfb2, occ_mo=occ2, act_mo=act2, norm=.true.)
+    call read_cis(input_format, dir1, cisa=wfa1, cisb=wfb1, occ_mo=occ1, act_mo=act1, norm=norm, &
+    &             orthog=orth)
+    call read_cis(input_format, dir2, cisa=wfa2, cisb=wfb2, occ_mo=occ2, act_mo=act2, norm=norm, &
+    &             orthog=orth)
     nwf1 = size(wfa1, 3)
     nwf2 = size(wfa2, 3)
     if (allocated(wfb1)) rhf1 = 2
