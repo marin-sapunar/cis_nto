@@ -38,26 +38,28 @@ program cis_olap_test
     character(len=:), allocatable :: dir1
     character(len=:), allocatable :: dir2
     real(dp) :: thr
-    integer :: i
+    integer :: i, narg
     integer :: ounit
     logical :: norm
     logical :: orth
+    logical :: orth_omat
 
-
-    norm = .false.
-    orth = .true.
-   !norm = .true.
-   !orth = .false.
 
     input_format = 'turbomole'
-    write(stdout, *) 'Path to input for bra states:'
-    read(stdin, '(a)') temp
+    narg = command_argument_count()
+    if (narg /= 2) stop 'Call program with paths to bra and ket state calculations.'
+    call get_command_argument(1, temp)
     dir1 = trim(adjustl(temp))
-    write(stdout, *) 'Path to input for ket states:'
-    read(stdin, '(a)') temp
+    call get_command_argument(2, temp)
     dir2 = trim(adjustl(temp))
     write(stdout, *) 'Threshold for truncating wave functions:'
     read(stdin, *) thr
+    write(stdout, *) 'Normalize wave functions before overlap calculation:'
+    read(stdin, *) norm
+    write(stdout, *) 'Orthogonalize wave functions before overlap calculation:'
+    read(stdin, *) orth
+    write(stdout, *) 'Orthogonalize overlap matrix after calculation:'
+    read(stdin, *) orth_omat
 
     call read_ccg_ao(input_format, dir1, ccg1, trans_ao=trans1)
     call read_ccg_ao(input_format, dir2, ccg2, trans_ao=trans2)
@@ -96,6 +98,7 @@ program cis_olap_test
     if (rhf == 2) call mat_ge_mmm(mob1, s_ao, mob2, s_mo(:, :, 2), transa='T')
 
     call cis_overlap(thr, s_mo, wfa1, wfa2, wfb1, wfb2, s_wf)
+    if (orth_omat) call orthog_lowdin(s_wf)
 
     open(newunit=ounit, file='omat', action='write')
     do i = 0, nwf2
