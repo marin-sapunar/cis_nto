@@ -9,7 +9,7 @@
 module cis_dyson_mod
     use global_defs
     use cis_nto_mod
-    use cis_overlap_mod
+    use cis_overlap_nto_mod
     implicit none
 
 

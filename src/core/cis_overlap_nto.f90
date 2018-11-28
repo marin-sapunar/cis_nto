@@ -6,7 +6,7 @@
 ! DESCRIPTION:
 !> @brief Subroutines for calculating overlaps between CIS wave functions.
 !----------------------------------------------------------------------------------------------
-module cis_overlap_mod
+module cis_overlap_nto_mod
     use global_defs
     use cis_nto_mod
     implicit none
@@ -16,7 +16,7 @@ contains
 
 
     !----------------------------------------------------------------------------------------------
-    ! SUBROUTINE: cis_overlap
+    ! SUBROUTINE: cis_overlap_nto
     !
     !> @brief Calculate overlap matrix between two sets of CIS wave functions.
     !> @details
@@ -28,7 +28,7 @@ contains
     !> @note The overlaps between the bra(ket) reference and ket(bra) CIS states are returned as
     !! s_wf(0, :) and s_wf(:, 0), respectively.
     !----------------------------------------------------------------------------------------------
-    subroutine cis_overlap(trunc, s_mo, wf_a1, wf_a2, wf_b1, wf_b2, s_wf)
+    subroutine cis_overlap_nto(trunc, s_mo, wf_a1, wf_a2, wf_b1, wf_b2, s_wf)
         use blas95, only : gemm
         use matrix_mod, only : mat_ge_det
         real(dp), intent(in) :: trunc !< Threshold for truncating the wave functions.
@@ -164,7 +164,7 @@ contains
                 s_wf(i, 1:) = rr_a*ss_a(i, :) + sr_a(i)*rs_a
             end do
         end if
-    end subroutine cis_overlap
+    end subroutine cis_overlap_nto
 
 
     !----------------------------------------------------------------------------------------------
@@ -247,4 +247,4 @@ contains
     end subroutine nto_ss
 
 
-end module cis_overlap_mod
+end module cis_overlap_nto_mod
