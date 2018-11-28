@@ -146,8 +146,8 @@ contains
         nwf = size(c, 2)
         rs = 0.0_dp
 
-!       !$omp parallel default(shared)
-!       !$omp do private(wrk, a, o, v, cdet) schedule(dynamic)
+        !$omp parallel default(shared)
+        !$omp do private(wrk, a, o, v, cdet) schedule(dynamic) reduction(+:rs)
         do i = 1, no*nv
             if (.not. any(m(i, :))) cycle
             o = int((i-1)/nv) + 1
@@ -164,8 +164,8 @@ contains
                 rs(a) = rs(a) + cdet * c(i, a)
             end do
         end do
-!       !$omp end do
-!       !$omp end parallel
+        !$omp end do
+        !$omp end parallel
     end subroutine cis_rs
 
 
@@ -188,8 +188,8 @@ contains
         nwf2 = size(c2, 2)
         ss = 0.0_dp
 
-!       !$omp parallel default(shared)
-!       !$omp do private(wrk, j, a, b, o1, v1, o2, v2, cdet) schedule(dynamic)
+        !$omp parallel default(shared)
+        !$omp do private(wrk, j, a, b, o1, v1, o2, v2, cdet) schedule(dynamic) reduction(+:ss)
         do i = 1, no*nv1
             if (.not. any(m1(i, :))) cycle
             o1 = int((i-1)/nv1) + 1
@@ -212,8 +212,8 @@ contains
                 end do
             end do
         end do
-!       !$omp end do
-!       !$omp end parallel
+        !$omp end do
+        !$omp end parallel
     end subroutine cis_ss
 
 
