@@ -1,12 +1,12 @@
 program cis_olap_test
     use global_defs
     use read_all_mod
+    use occupation_mod
     use ccg_ao_mod
     use one_el_op_mod
     use matrix_mod
-    use occupation_mod
     use orthog_mod
-
+    use phase_mod
     use cis_overlap_nto_mod
     use cis_overlap_cis_mod
     implicit none
@@ -51,6 +51,7 @@ program cis_olap_test
     logical :: norm
     logical :: orth
     logical :: orth_omat
+    logical :: phase_omat
     integer :: alg
 
 
@@ -71,6 +72,8 @@ program cis_olap_test
     read(stdin, *) orth
     write(stdout, *) 'Orthogonalize overlap matrix after calculation:'
     read(stdin, *) orth_omat
+    write(stdout, *) 'Match phase of states after calculation:'
+    read(stdin, *) phase_omat
 
     ! Read input.
     call read_ccg_ao(input_format, dir1, ccg1, trans_ao=trans1)
@@ -117,7 +120,7 @@ program cis_olap_test
     ! Calculate WF overlap matrix.
     select case(alg)
     case(1)
-        call cis_overlap_cis(thr, on1%ao(1), on1%ao(2), s_mo, wfa1, wfa2, wfb1, wfb2, s_wf)
+        call cis_overlap_cis(thr, on1%ao(1), on1%ao(rhf1), s_mo, wfa1, wfa2, wfb1, wfb2, s_wf)
     case(2)
         cisa1 = reshape(wfa1, [on1%av(1), on1%ao(1), nwf1])
         deallocate(wfa1)
@@ -132,6 +135,7 @@ program cis_olap_test
         call cis_overlap_nto(thr, s_mo, cisa1, cisa2, cisb1, cisb2, s_wf)
     end select
     if (orth_omat) call orthog_lowdin(s_wf)
+    if (phase_omat) call phasematch_assigned(s_wf)
 
     open(newunit=ounit, file='omat', action='write')
     do i = 0, nwf2
