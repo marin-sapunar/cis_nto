@@ -34,7 +34,7 @@ program cis_nto_prog
     logical, allocatable :: act(:, :) !< Active MO mask.
 
     logical :: beta = .false.
-    integer :: i, j
+    integer :: i, j, narg
     character(len=1000) :: temp
     real(dp) :: thr
     integer :: outunit
@@ -43,9 +43,11 @@ program cis_nto_prog
     character(len=:), allocatable :: dir
 
     input_format = 'turbomole'
-    write(stdout, *) 'Path to electronic structure calculation:'
-    read(stdin, '(a)') temp
+    narg = command_argument_count()
+    if (narg /= 1) stop 'Call program with paths to converged single point calculation.'
+    call get_command_argument(1, temp)
     dir = trim(adjustl(temp))
+
     write(stdout, *) 'Output file:'
     read(stdin, '(a)') temp
     outfile = trim(adjustl(temp))
@@ -56,7 +58,6 @@ program cis_nto_prog
     call read_ccg_ao(input_format, dir, ccgao, trans_ao=c2s, basis=basis, basis_index=bindex)
     call read_mo(input_format, dir, moa_c=moa, mob_c=mob)
     call read_cis(input_format, dir, cisa=wfa, cisb=wfb, occ_mo=occ, act_mo=act, norm=.true.)
-    call write_txt('wfa', wfa)
     if (allocated(wfb)) beta = .true.
     call sort_mo(occ(:, 1), act(:, 1), moa, remove_inactive = .true.)
     if (beta) call sort_mo(occ(:, 2), act(:, 2), mob, remove_inactive = .true.)
