@@ -20,6 +20,8 @@ program cis_olap_test
     type(occupation_numbers) :: on2 !< Occupation numbers 2.
     type(ccg), allocatable :: ccg1(:) !< Atomic orbitals 1.
     type(ccg), allocatable :: ccg2(:) !< Atomic orbitals 2.
+    real(dp), allocatable :: geom1(:) !< Geometry 1.
+    real(dp), allocatable :: geom2(:) !< Geometry 2.
     real(dp), allocatable :: trans1(:, :) !< Transformation matrix for basis functions 1.
     real(dp), allocatable :: trans2(:, :) !< Transformation matrix for basis functions 2.
     real(dp), allocatable :: moa1(:, :) !< Molecular orbital coefficients alpha 1.
@@ -52,6 +54,8 @@ program cis_olap_test
     logical :: orth
     logical :: orth_omat
     logical :: phase_omat
+    logical :: center1
+    logical :: center2
     integer :: alg
 
 
@@ -74,11 +78,16 @@ program cis_olap_test
     read(stdin, *) orth_omat
     write(stdout, *) 'Match phase of states after calculation:'
     read(stdin, *) phase_omat
+    write(stdout, *) 'Remove translation from diagonal blocks of atomic orbital overlap matrix:'
+    read(stdin, *) center1
+    write(stdout, *) 'Remove translation from atomic orbital overlap matrix:'
+    read(stdin, *) center2
 
     ! Read input.
-    call read_ccg_ao(input_format, dir1, ccg1, trans_ao=trans1)
-    call read_ccg_ao(input_format, dir2, ccg2, trans_ao=trans2)
-    call one_el_op(ccg1, ccg2, [0,0,0], trans1, trans2, s_ao)
+    call read_ccg_ao(input_format, dir1, ccg1, geom=geom1, trans_ao=trans1)
+    call read_ccg_ao(input_format, dir2, ccg2, geom=geom2, trans_ao=trans2)
+    call one_el_op(ccg1, ccg2, [0,0,0], geom1, geom2, trans1, trans2, s_ao, &
+    &              center_atom_pairs=center2, center_diagonal_block=center1)
 
     call read_mo(input_format, dir1, moa_c=moa1, mob_c=mob1)
     call read_mo(input_format, dir2, moa_c=moa2, mob_c=mob2)

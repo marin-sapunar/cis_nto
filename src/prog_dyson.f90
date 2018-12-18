@@ -39,7 +39,8 @@ program cis_dyson_prog
     real(dp), allocatable :: dys_norm(:, :) !< Norms of the dyson orbitals.
     type(atombasis), allocatable :: basis(:) !< Basis sets 2.
     integer, allocatable :: bindex(:) !< BS index for each atom 2.
-    real(dp), allocatable :: geom(:) !< Geometry.
+    real(dp), allocatable :: geom1(:) !< Geometry 1.
+    real(dp), allocatable :: geom2(:) !< Geometry 2.
     character(len=2), allocatable :: atsym(:) !< Atom symbols.
     integer, allocatable :: atnum(:) !< Atom numbers.
     real(dp), allocatable :: wrk(:, :)
@@ -61,10 +62,10 @@ program cis_dyson_prog
     write(stdout, *) 'Threshold for truncating wave functions:'
     read(stdin, *) thr
 
-    call read_geom(input_format, dir2, geom, atsym, atnum)
-    call read_ccg_ao(input_format, dir1, ccg1, trans_ao=trans1)
-    call read_ccg_ao(input_format, dir2, ccg2, trans_ao=trans2, basis=basis, basis_index=bindex)
-    call one_el_op(ccg1, ccg2, [0,0,0], trans1, trans2, s_ao)
+    call read_geom(input_format, dir2, geom1, atsym, atnum)
+    call read_ccg_ao(input_format, dir1, ccg1, geom=geom1, trans_ao=trans1)
+    call read_ccg_ao(input_format, dir2, ccg2, geom=geom2, trans_ao=trans2, basis=basis, basis_index=bindex)
+    call one_el_op(ccg1, ccg2, [0,0,0], geom1, geom2, trans1, trans2, s_ao)
 
     call read_mo(input_format, dir1, moa_c=moa1, mob_c=mob1)
     call read_mo(input_format, dir2, moa_c=moa2, mob_c=mob2)
@@ -109,7 +110,7 @@ program cis_dyson_prog
     end do
 
     open(newunit=outunit, file='dys.at', action='write')
-    call write_molden_atoms(outunit, geom, atsym, atnum)
+    call write_molden_atoms(outunit, geom1, atsym, atnum)
     close(outunit)
     open(newunit=outunit, file='dys.gto', action='write')
     call write_molden_gto(outunit, basis, bindex)
