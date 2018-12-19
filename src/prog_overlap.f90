@@ -57,7 +57,11 @@ program cis_olap_test
     logical :: center1
     logical :: center2
     integer :: alg
+    real(dp), external :: omp_get_wtime
+    real(dp) :: time00, time0
+    real(dp) :: time_io, time_ao, time_mo, time_wf, time_tot
 
+    time00 = omp_get_wtime()
 
     input_format = 'turbomole'
     narg = command_argument_count()
@@ -84,10 +88,9 @@ program cis_olap_test
     read(stdin, *) center2
 
     ! Read input.
+    time0 = omp_get_wtime()
     call read_ccg_ao(input_format, dir1, ccg1, geom=geom1, trans_ao=trans1)
     call read_ccg_ao(input_format, dir2, ccg2, geom=geom2, trans_ao=trans2)
-    call one_el_op(ccg1, ccg2, [0,0,0], geom1, geom2, trans1, trans2, s_ao, &
-    &              center_atom_pairs=center2, center_diagonal_block=center1)
 
     call read_mo(input_format, dir1, moa_c=moa1, mob_c=mob1)
     call read_mo(input_format, dir2, moa_c=moa2, mob_c=mob2)
@@ -98,6 +101,14 @@ program cis_olap_test
     &             orthog=orth, occ_num = on2)
     nwf1 = size(wfa1, 2)
     nwf2 = size(wfa2, 2)
+    time_io = omp_get_wtime() - time0
+
+
+    ! Calculate AO overlaps.
+    time0 = omp_get_wtime()
+    call one_el_op(ccg1, ccg2, [0,0,0], geom1, geom2, trans1, trans2, s_ao, &
+    &              center_atom_pairs=center2, center_diagonal_block=center1)
+    time_ao = omp_get_wtime() - time0
 
     ! Allocate arrays for mixed restricted/unrestricted calculation.
     if (allocated(wfb1)) rhf1 = 2
@@ -115,18 +126,20 @@ program cis_olap_test
         wfb2 = -wfb2
     end if
 
-    ! Remove frozen mos.
+    ! Remove frozen mos and calculate MO overlap matrix.
+    time0 = omp_get_wtime()
     call sort_mo(occ1(:, 1), act1(:, 1), moa1, remove_inactive = .true.)
     call sort_mo(occ2(:, 1), act2(:, 1), moa2, remove_inactive = .true.)
     if (rhf == 2) call sort_mo(occ1(:, rhf1), act1(:, rhf1), mob1, remove_inactive = .true.)
     if (rhf == 2) call sort_mo(occ2(:, rhf2), act2(:, rhf2), mob2, remove_inactive = .true.)
 
-    ! Calculate MO overlap matrix.
     allocate(s_mo(size(moa1, 2), size(moa2, 2), rhf))
     call mat_ge_mmm(moa1, s_ao, moa2, s_mo(:, :, 1), transa='T')
     if (rhf == 2) call mat_ge_mmm(mob1, s_ao, mob2, s_mo(:, :, 2), transa='T')
+    time_mo = omp_get_wtime() - time0
 
     ! Calculate WF overlap matrix.
+    time0 = omp_get_wtime()
     select case(alg)
     case(1)
         call cis_overlap_cis(thr, on1%ao(1), on1%ao(rhf1), s_mo, wfa1, wfa2, wfb1, wfb2, s_wf)
@@ -143,6 +156,8 @@ program cis_olap_test
         end if
         call cis_overlap_nto(thr, s_mo, cisa1, cisa2, cisb1, cisb2, s_wf)
     end select
+    time_wf = omp_get_wtime() - time0
+
     if (orth_omat) call orthog_lowdin(s_wf)
     if (phase_omat) call phasematch_assigned(s_wf)
 
@@ -151,5 +166,15 @@ program cis_olap_test
         write(ounit,*) s_wf(:, i)
     end do
     close(ounit)
+
+    write(stdout,'(a)') ''
+    write(stdout,'(a)') 'Program time:'
+    time_tot = omp_get_wtime() - time00
+    write(stdout, '(4x, a40, f14.4)') 'Input                     - time (sec):', time_io
+    write(stdout, '(4x, a40, f14.4)') 'AO overlap                - time (sec):', time_ao
+    write(stdout, '(4x, a40, f14.4)') 'MO overlap                - time (sec):', time_mo
+    write(stdout, '(4x, a40, f14.4)') 'WF overlap                - time (sec):', time_wf
+    write(stdout, '(4x, 40x, a14)') '--------------'
+    write(stdout, '(4x, a40, f14.4)') 'Total                     - time (sec):', time_tot
 
 end program cis_olap_test

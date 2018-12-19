@@ -68,8 +68,13 @@ contains
         integer, allocatable :: na_b1(:) !< Number of active bra orbitals beta.
         integer, allocatable :: na_b2(:) !< Number of active ket orbitals beta.
         integer :: i, j
+        real(dp), external :: omp_get_wtime
+        real(dp) :: time00, time0
+        real(dp) :: time_nto, time_det, time_tot
 
-        ! Get dimensions.
+        time00 = omp_get_wtime()
+
+        ! Get dimensions:
         beta = .false.
         if (size(s_mo, 3) == 2) beta = .true.
         n_2 = size(s_mo, 2)
@@ -77,7 +82,7 @@ contains
         if (beta) no_b = size(wf_b1, 2)
         nwf_1 = size(wf_a1, 3)
         nwf_2 = size(wf_a2, 3)
-        ! Allocate work arrays.
+        ! Allocate work arrays:
         allocate(s_nto_a(no_a*2, no_a*2))
         allocate(sr_a(nwf_1))
         allocate(rs_a(nwf_2))
@@ -89,13 +94,15 @@ contains
             allocate(ss_b(nwf_1, nwf_2))
         end if
 
-        ! Calculate NTOs.
+        ! Calculate NTOs:
+        time0 = omp_get_wtime()
         call cis_nto(wf_a1, c_a1, mo_a1)
         call cis_nto(wf_a2, c_a2, mo_a2)
         if (beta) then
             call cis_nto(wf_b1, c_b1, mo_b1)
             call cis_nto(wf_b2, c_b2, mo_b2)
         end if
+        time_nto = omp_get_wtime() - time0
 
         ! Truncate wave functions:
         call cis_nto_truncate(beta, trunc, c_a1, c_b1, na_a1, na_b1)
@@ -110,6 +117,8 @@ contains
             if (beta) write(stdout, '(3x,1000(i0,1x))') na_b2
         end if
 
+        ! Calculate determinant blocks:
+        time0 = omp_get_wtime()
         rr_a = mat_ge_det(s_mo(1:no_a, 1:no_a, 1))
         allocate(wrk(no_a*2, n_2))
         do i = 1, nwf_1
@@ -137,10 +146,10 @@ contains
             end do
             deallocate(wrk)
         end if
+        time_det = omp_get_wtime() - time0
 
         if (allocated(s_wf)) deallocate(s_wf)
         allocate(s_wf(0:nwf_1, 0:nwf_2))
-
         if (beta) then
             ! Ground state overlap:
             s_wf(0, 0) = rr_a*rr_b
@@ -164,6 +173,16 @@ contains
                 s_wf(i, 1:) = rr_a*ss_a(i, :) + sr_a(i)*rs_a
             end do
         end if
+
+        write(stdout,'(a)') ''
+        write(stdout,'(4x, a)') 'cis_overlap_nto time:'
+        time_tot = omp_get_wtime() - time00
+        write(stdout, '(8x, a40, f14.4)') 'NTO generation            - time (sec):', time_nto
+        write(stdout, '(8x, a40, f14.4)') 'Determinant blocks        - time (sec):', time_det
+        write(stdout, '(8x, 40x, a14)') '--------------'
+        write(stdout, '(8x, a40, f14.4)') 'Total                     - time (sec):', time_tot
+
+
     end subroutine cis_overlap_nto
 
 
