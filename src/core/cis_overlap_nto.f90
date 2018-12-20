@@ -73,6 +73,10 @@ contains
         real(dp) :: time_nto, time_det, time_tot
 
         time00 = omp_get_wtime()
+        if (print_level >= 2) then
+            write(stdout, *) 
+            write(stdout, '(5x,a)') '---- start cis_overlap_nto subroutine ---'
+        end if
 
         ! Get dimensions:
         beta = .false.
@@ -96,6 +100,10 @@ contains
 
         ! Calculate NTOs:
         time0 = omp_get_wtime()
+        if (print_level >= 2) then
+            write(stdout, *) 
+            write(stdout, '(5x,a)') 'Generating NTOs...'
+        end if
         call cis_nto(wf_a1, c_a1, mo_a1)
         call cis_nto(wf_a2, c_a2, mo_a2)
         if (beta) then
@@ -108,22 +116,36 @@ contains
         call cis_nto_truncate(beta, trunc, c_a1, c_b1, na_a1, na_b1)
         call cis_nto_truncate(beta, trunc, c_a2, c_b2, na_a2, na_b2)
         if (trunc < 1.0_dp) then
-            write(stdout, '(a,f0.8)') 'Truncating wave functions based on threshold ', trunc
-            write(stdout, '(a)') 'Number of remaining determinants for bra states:'
-            write(stdout, '(3x,1000(i0,1x))') na_a1
-            if (beta) write(stdout, '(3x,1000(i0,1x))') na_b1
-            write(stdout, '(a)') 'Number of remaining determinants for ket states:'
-            write(stdout, '(3x,1000(i0,1x))') na_a2
-            if (beta) write(stdout, '(3x,1000(i0,1x))') na_b2
+            if (print_level >= 1) then
+                write(stdout, *) 
+                write(stdout, '(5x,a,f0.8)') 'Truncating wave functions based on threshold ', trunc
+                write(stdout, '(5x,a)') 'Number of remaining determinants for bra states:'
+                write(stdout, '(9x,1000(i0,1x))') na_a1
+                if (beta) write(stdout, '(9x,1000(i0,1x))') na_b1
+                write(stdout, '(5x,a)') 'Number of remaining determinants for ket states:'
+                write(stdout, '(9x,1000(i0,1x))') na_a2
+                if (beta) write(stdout, '(9x,1000(i0,1x))') na_b2
+            end if
         end if
 
         ! Calculate determinant blocks:
         time0 = omp_get_wtime()
         rr_a = mat_ge_det(s_mo(1:no_a, 1:no_a, 1))
+        if (print_level >= 2) then
+            write(stdout, *) 
+            if (beta) then
+                write(stdout, '(5x,a)') 'Computing alpha determinant blocks...'
+            else
+                write(stdout, '(5x,a)') 'Computing determinant blocks...'
+            end if
+            write(stdout, '(5x,a)') 'Status:'
+        end if
         allocate(wrk(no_a*2, n_2))
         do i = 1, nwf_1
+            if (print_level >= 2) write(stdout, '(9x,a,i0,a,i0)') 'bra state ', i, '/', nwf_1
             call gemm(mo_a1(:, :, i), s_mo(:, :, 1), wrk, transa='T')
             do j = 1, nwf_2
+                if (print_level >= 2) write(stdout, '(13x,a,i0,a,i0)') 'ket state ', j, '/', nwf_2
                 call gemm(wrk, mo_a2(:, :, j), s_nto_a)
                 if (j == 1) call nto_rs(no_a, na_a1(i), s_nto_a, c_a1(:, i), sr_a(i), .true.)
                 if (i == 1) call nto_rs(no_a, na_a2(j), s_nto_a, c_a2(:, j), rs_a(j), .false.)
@@ -133,11 +155,17 @@ contains
         deallocate(wrk)
 
         if (beta) then
+            if (print_level >= 2) then
+                write(stdout, '(5x,a)') 'Computing beta determinant blocks...'
+                write(stdout, '(5x,a)') 'Status:'
+            end if
             rr_b = mat_ge_det(s_mo(1:no_b, 1:no_b, 2))
             allocate(wrk(no_b*2, n_2))
             do i = 1, nwf_1
+                if (print_level >= 2) write(stdout, '(9x,a,i0,a,i0)') 'bra state ', i, '/', nwf_1
                 call gemm(mo_b1(:, :, i), s_mo(:, :, 2), wrk, transa='T')
                 do j = 1, nwf_2
+                    if (print_level >= 2) write(stdout, '(13x,a,i0,a,i0)') 'ket state ', j, '/', nwf_2
                     call gemm(wrk, mo_b2(:, :, j), s_nto_b)
                     if (j == 1) call nto_rs(no_b, na_b1(i), s_nto_b, c_b1(:, i), sr_b(i), .true.)
                     if (i == 1) call nto_rs(no_b, na_b2(j), s_nto_b, c_b2(:, j), rs_b(j), .false.)
@@ -174,15 +202,19 @@ contains
             end do
         end if
 
-        write(stdout,'(a)') ''
-        write(stdout,'(4x, a)') 'cis_overlap_nto time:'
-        time_tot = omp_get_wtime() - time00
-        write(stdout, '(8x, a40, f14.4)') 'NTO generation            - time (sec):', time_nto
-        write(stdout, '(8x, a40, f14.4)') 'Determinant blocks        - time (sec):', time_det
-        write(stdout, '(8x, 40x, a14)') '--------------'
-        write(stdout, '(8x, a40, f14.4)') 'Total                     - time (sec):', time_tot
-
-
+        if (print_level >= 2) then
+            write(stdout, *) 
+            write(stdout,'(5x, a)') 'cis_overlap_nto time:'
+            time_tot = omp_get_wtime() - time00
+            write(stdout, '(9x, a40, f14.4)') 'NTO generation            - time (sec):', time_nto
+            write(stdout, '(9x, a40, f14.4)') 'Determinant blocks        - time (sec):', time_det
+            write(stdout, '(9x, 40x, a14)') '--------------'
+            write(stdout, '(9x, a40, f14.4)') 'Total                     - time (sec):', time_tot
+        end if
+        if (print_level >= 2) then
+            write(stdout, *) 
+            write(stdout, '(5x,a)') '---- end cis_overlap_nto subroutine ---'
+        end if
     end subroutine cis_overlap_nto
 
 
