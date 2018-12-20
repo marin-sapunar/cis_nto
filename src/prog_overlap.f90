@@ -3,6 +3,7 @@ program cis_olap_test
     use read_all_mod
     use occupation_mod
     use ccg_ao_mod
+    use file_mod
     use one_el_op_mod
     use matrix_mod
     use orthog_mod
@@ -169,6 +170,11 @@ program cis_olap_test
         write(stdout, '(5x,a,a)') ' Directory containing calculation for bra states: ', dir1
         write(stdout, '(5x,a,a)') ' Directory containing calculation for ket states: ', dir2
     end if
+    if (.not. is_dir(dir1)) then
+        write(stderr, *) 
+        write(stderr, '(1x,a,a,a)') 'Error. Directory ', dir1, 'not found.'
+        stop
+    end if
     call read_ccg_ao(input_format, dir1, ccg1, geom=geom1, trans_ao=trans1)
     call read_mo(input_format, dir1, moa_c=moa1, mob_c=mob1)
     call read_cis(input_format, dir1, wfa=wfa1, wfb=wfb1, occ_mo=occ1, act_mo=act1, norm=norm, &
@@ -187,6 +193,11 @@ program cis_olap_test
         write(stdout, '(5x,a,2(1x,i0))') 'Number of active virtual orbitals:  ', on1%av(1:rhf1)
     end if
 
+    if (.not. is_dir(dir2)) then
+        write(stderr, *) 
+        write(stderr, '(1x,a,a,a)') 'Error. Directory ', dir2, 'not found.'
+        stop
+    end if
     call read_ccg_ao(input_format, dir2, ccg2, geom=geom2, trans_ao=trans2)
     call read_mo(input_format, dir2, moa_c=moa2, mob_c=mob2)
     call read_cis(input_format, dir2, wfa=wfa2, wfb=wfb2, occ_mo=occ2, act_mo=act2, norm=norm, &
@@ -205,6 +216,16 @@ program cis_olap_test
         write(stdout, '(5x,a,2(1x,i0))') 'Number of active virtual orbitals:  ', on2%av(1:rhf2)
     end if
     time_io = omp_get_wtime() - time0
+    if ((on1%o(1) /= on2%o(1)) .or. (on1%o(rhf1) /= on2%o(rhf2))) then
+        write(stderr, *) 
+        write(stderr, '(1x,a,a,a)') 'Error. Mismatch in number of occupied orbitals.'
+        stop
+    end if
+    if ((on1%ao(1) /= on2%ao(1)) .or. (on1%ao(rhf1) /= on2%ao(rhf2))) then
+        write(stderr, *) 
+        write(stderr, '(1x,a,a,a)') 'Error. Mismatch in number of active occupied orbitals.'
+        stop
+    end if
 
     ! Calculate AO overlaps.
     if (print_level >= 2) then
