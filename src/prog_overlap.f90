@@ -59,6 +59,7 @@ program cis_olap_test
     logical :: center1
     logical :: center2
     integer :: alg
+    integer, external :: omp_get_max_threads
     real(dp), external :: omp_get_wtime
     real(dp) :: time00, time0
     real(dp) :: time_io, time_ao, time_mo, time_wf, time_tot
@@ -161,6 +162,18 @@ program cis_olap_test
     dir1 = trim(adjustl(temp))
     call get_command_argument(narg, temp)
     dir2 = trim(adjustl(temp))
+
+    ! Begin run.
+    if (print_level >= 1) then
+        write(stdout, '(5x,a)') '-------------------------------------------------------------'
+        write(stdout, '(5x,a)') '                     cis_overlap program                     '
+        write(stdout, '(5x,a)') '                         version 1.0                         '
+        write(stdout, '(5x,a)') '                                                             '
+        write(stdout, '(5x,a)') ' Program compiled on '//__DATE__//' '//__TIME__//'.          '
+        write(stdout, '(5x,a)') '-------------------------------------------------------------'
+        write(stdout, *) 
+        write(stdout, '(1x,a,i0,a)') 'Using ', omp_get_max_threads(), ' threads.'
+    end if
 
     ! Read input.
     time0 = omp_get_wtime()
@@ -355,6 +368,12 @@ program cis_olap_test
         write(stdout, '(5x, a40, f14.4)') 'WF overlap                - time (sec):', time_wf
         write(stdout, '(5x, 40x, a14)') '--------------'
         write(stdout, '(5x, a40, f14.4)') 'Total                     - time (sec):', time_tot
+    end if
+
+    if (print_level >= 1) then
+        write(stdout, *) 
+        write(stdout, '(1x,a)') 'cis_overlap done                                            '
+        write(stdout, '(1x,a)') '-------------------------------------------------------------'
     end if
 
 end program cis_olap_test
