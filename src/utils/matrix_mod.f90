@@ -5,6 +5,7 @@ module matrix_mod
     private
     public :: genmat_diag
 ! The following subroutines require LAPACK with Fortran95 interface.
+    public :: mat_norm
     public :: mat_sy_ev
     public :: mat_sy_exp
     public :: mat_ge_det
@@ -32,6 +33,37 @@ contains
 
 
 ! The following subroutines require LAPACK with Fortran95 interface.
+    !----------------------------------------------------------------------------------------------
+    ! SUBROUTINE: mat_norm
+    !
+    ! DESCRIPTION:
+    !> @brief Returns norm of matrix (Frobenius or spectral).
+    !----------------------------------------------------------------------------------------------
+    pure function mat_norm(mat, norm_type) result(norm)
+        use lapack95, only : gesvd
+        use blas95, only : gemm
+        real(dp), intent(in) :: mat(:, :) !< Matrix.
+        character(len=*), intent(in), optional :: norm_type !< Type of norm requested.
+        real(dp) :: norm !< Norm of matrix.
+        real(dp), allocatable :: s(:) !< Singular values.
+        real(dp), allocatable :: a(:, :) !< Temporary matrix.
+        character(len=:), allocatable :: opt
+
+        opt = 'frobenius'
+        if (present(norm_type)) opt = norm_type
+
+        select case(opt)
+        case('frobenius')
+            norm = sqrt(sum(mat**2))
+        case('spectral')
+            allocate(s(min(size(mat, 1), size(mat, 2))))
+            allocate(a, source=mat)
+            call gesvd(a, s)
+            norm = sqrt(s(1))
+        end select
+    end function mat_norm
+
+
     !----------------------------------------------------------------------------------------------
     ! SUBROUTINE: mat_sy_ev
     !> @brief Eigensystem of a symmetric real matrix.

@@ -44,6 +44,7 @@ program cis_olap_test
     real(dp), allocatable :: s_ao(:, :) !< Atomic orbital overlaps.
     real(dp), allocatable :: s_mo(:, :, :) !< Molecular orbital overlaps.
     real(dp), allocatable :: s_wf(:, :) !< Wave function overlaps.
+    real(dp), allocatable :: s_wf_raw(:, :) !< Non-orthogonalized wave function overlaps.
     character(len=1000) :: temp
     character(len=:), allocatable :: input_format
     character(len=:), allocatable :: dir1
@@ -59,6 +60,7 @@ program cis_olap_test
     logical :: center1
     logical :: center2
     integer :: alg
+    real(dp) :: angle
     integer, external :: omp_get_max_threads
     real(dp), external :: omp_get_wtime
     real(dp) :: time00, time0
@@ -318,6 +320,7 @@ program cis_olap_test
             deallocate(wfb2)
         end if
         call cis_overlap_nto(thr, s_mo, cisa1, cisa2, cisb1, cisb2, s_wf)
+        allocate(s_wf_raw, source=s_wf)
     end select
     time_wf = omp_get_wtime() - time0
 
@@ -326,7 +329,7 @@ program cis_olap_test
         write(stdout, *) 
         write(stdout, '(1x,a)') 'Raw overlap matrix:'
         do i = 0, nwf2
-            write(ounit,'(5x,1000es24.16)') s_wf(i, :)
+            write(stdout,'(5x,1000es24.16)') s_wf(i, :)
         end do
     end if
 
@@ -336,8 +339,15 @@ program cis_olap_test
             write(stdout, *) 
             write(stdout, '(1x,a)') 'Orthogonalized overlap matrix:'
             do i = 0, nwf2
-                write(ounit,'(5x,1000es24.16)') s_wf(i, :)
+                write(stdout,'(5x,1000es24.16)') s_wf(i, :)
             end do
+            angle = acos(sum(s_wf*s_wf_raw) / mat_norm(s_wf) / mat_norm(s_wf_raw))
+            write(stdout, *) 
+            write(stdout, '(5x,a,f6.2)') 'Frobenius inner product angle: ', angle * 180 / 3.14159
+            write(stdout, '(5x,a)') 'Norms of rows of raw overlap matrix: '
+            write(stdout, '(9x,1000f10.4)') sum(s_wf_raw**2, 2)
+            write(stdout, '(5x,a)') 'Norms of columns of raw overlap matrix: '
+            write(stdout, '(9x,1000f10.4)') sum(s_wf_raw**2, 1)
         end if
     end if
 
@@ -347,7 +357,7 @@ program cis_olap_test
             write(stdout, *) 
             write(stdout, '(1x,a)') 'Overlap matrix with phase matching between assigned bra/ket states:'
             do i = 0, nwf2
-                write(ounit,'(5x,1000es24.16)') s_wf(i, :)
+                write(stdout, '(5x,1000es24.16)') s_wf(i, :)
             end do
         end if
     end if
