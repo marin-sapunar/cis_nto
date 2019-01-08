@@ -1,26 +1,16 @@
-##########################
-CIS NTO Module
-##########################
-
-.. contents:: :local:
+# CIS NTO Module
 
 
-Purpose of Module
-_________________
+## Purpose of Module
 
-The CIS NTO module contains programs for calculating the natural transition orbitals for
-a CIS type wave functions and using them for calculating the overlaps or Dyson orbitals
-between two sets of CIS wave functions.
+The CIS NTO module contains programs for calculating the natural transition orbitals for a CIS type wave functions and using them for calculating the overlaps or Dyson orbitals between two sets of CIS wave functions.
 
-Installation and technical information
-______________________________________
+## Installation and technical information
 
 * Language
   * Fortran 2008
-
 * License
   * MIT license (MIT)
-
 * Prerequisites
   * cmake
   * make
@@ -41,15 +31,13 @@ after running  make, the executables will be in the bin directory.
 For instructions/options run the executables with the --help command line argument.
 
 
-Testing
-_______
+## Testing
 
 
-Source Code
-___________
+## Source Code
 
-The source code is available at: Git_
+The source code is available at: [GitHub][Git]
 
 
-.. _Git: https://github.com/msapunar/cis_nto
+[Git]: https://github.com/msapunar/cis_nto
 
