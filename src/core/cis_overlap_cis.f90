@@ -130,6 +130,11 @@ contains
     end subroutine cis_overlap_cis
 
 
+    !----------------------------------------------------------------------------------------------
+    ! SUBROUTINE: cis_rs
+    !> @brief Calculate the RS or SR block between two states in a cis overlap calculation.
+    !> @note Row is .false. for RS block calculations and .true. for SR block calculations.
+    !----------------------------------------------------------------------------------------------
     subroutine cis_rs(no, nv, s_mo, c, m, rs, row)
         use matrix_mod, only : mat_ge_det
         integer, intent(in) :: no !< Number of occupied orbitals.
@@ -169,6 +174,10 @@ contains
     end subroutine cis_rs
 
 
+    !----------------------------------------------------------------------------------------------
+    ! SUBROUTINE: cis_ss
+    !> @brief Calculate the SS block between two states in a cis overlap calculation.
+    !----------------------------------------------------------------------------------------------
     subroutine cis_ss(no, nv1, nv2, s_mo, c1, c2, m1, m2, ss)
         use matrix_mod, only : mat_ge_det
         integer, intent(in) :: no !< Number of occupied orbitals.

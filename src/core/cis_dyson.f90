@@ -73,7 +73,16 @@ contains
         real(dp), allocatable :: rs_b(:, :) !< RS Dyson block beta.
         real(dp), allocatable :: ss_b(:, :, :) !< SS Dyson block beta.
         integer :: i, j
+        real(dp), external :: omp_get_wtime
+        real(dp) :: time00, time0
+        real(dp) :: time_nto, time_det, time_tot
  
+        time00 = omp_get_wtime()
+        if (print_level >= 2) then
+            write(stdout, *)
+            write(stdout, '(5x,a)') '---- start cis_dyson subroutine ----'
+        end if
+
         ! Get dimensions.
         n_2 = size(s_mo, 2)
         no_a = size(wf_a2, 2)
@@ -91,25 +100,40 @@ contains
         allocate(ss_b(n_2, nwf_1, nwf_2), source = 0.0_dp)
 
         ! Calculate NTOs.
+        time0 = omp_get_wtime()
+        if (print_level >= 2) then
+            write(stdout, *)
+            write(stdout, '(5x,a)') 'Generating NTOs...'
+        end if
         call cis_nto(wf_a1, c_a1, mo_a1)
         call cis_nto(wf_a2, c_a2, mo_a2)
         call cis_nto(wf_b1, c_b1, mo_b1)
         call cis_nto(wf_b2, c_b2, mo_b2)
+        time_nto = omp_get_wtime() - time0
 
         ! Truncate wave functions.
         call cis_nto_truncate(.true., trunc, c_a1, c_b1, na_a1, na_b1)
         call cis_nto_truncate(.true., trunc, c_a2, c_b2, na_a2, na_b2)
         if (trunc < 1.0_dp) then
-            write(stdout, '(a,f0.8)') 'Truncating wave functions based on threshold ', trunc
-            write(stdout, '(a)') 'Number of remaining determinants for bra states:'
-            write(stdout, '(3x,1000(i0,1x))') na_a1
-            write(stdout, '(3x,1000(i0,1x))') na_b1
-            write(stdout, '(a)') 'Number of remaining determinants for ket states:'
-            write(stdout, '(3x,1000(i0,1x))') na_a2
-            write(stdout, '(3x,1000(i0,1x))') na_b2
+            if (print_level >= 1) then
+                write(stdout, *)
+                write(stdout, '(5x,a,f0.8)') 'Truncating wave functions based on threshold ', trunc
+                write(stdout, '(5x,a)') 'Number of remaining determinants for N-1 el. states:'
+                write(stdout, '(9x,1000(i0,1x))') na_a1
+                write(stdout, '(9x,1000(i0,1x))') na_b1
+                write(stdout, '(5x,a)') 'Number of remaining determinants for N el. states:'
+                write(stdout, '(9x,1000(i0,1x))') na_a2
+                write(stdout, '(9x,1000(i0,1x))') na_b2
+            end if
         end if
 
         ! Ref - Ref.
+        time0 = omp_get_wtime()
+        if (print_level >= 2) then
+            write(stdout, *)
+            write(stdout, '(5x,a)') 'Computing determinant blocks...'
+            write(stdout, '(5x,a)') 'Status:'
+        end if
         rr_a = mat_ge_det(s_mo(1:no_a, 1:no_a, 1))
         call nto_rr_dys(no_b2, s_mo(:, :, 2), rr_b(1:no_b2))
 
@@ -119,10 +143,12 @@ contains
         allocate(wrk_b(no_b1*2, no_b2*2))
         allocate(wrk_nto(2*no_b2), source = 0.0_dp)
         do i = 1, nwf_1
+            if (print_level >= 2) write(stdout, '(9x,a,i0,a,i0)') 'N-1 el. state ', i, '/', nwf_1
             ! CIS - Ref
             call gemm(mo_a1(:, :, i), s_mo(:, :, 1), wrk0_a, transa='T')
             call gemm(mo_b1(:, :, i), s_mo(:, :, 2), wrk0_b, transa='T')
             do j = 1, nwf_2
+                if (print_level >= 2) write(stdout, '(13x,a,i0,a,i0)') 'N el. state ', j, '/', nwf_2
                 call gemm(wrk0_a, mo_a2(:, :, j), wrk_a)
                 call gemm(wrk0_b, mo_b2(:, :, j), wrk_b)
                 ! Ref - CIS
@@ -147,6 +173,7 @@ contains
         deallocate(wrk_b)
         deallocate(wrk0_a)
         deallocate(wrk0_b)
+        time_det = omp_get_wtime() - time0
 
         allocate(dys_mo(n_2, 0:nwf_1, 0:nwf_2))
         dys_mo(:, 0, 0) = rr_b * rr_a
@@ -162,6 +189,20 @@ contains
                                   ss_b(:, i, j) * rr_a + sr_b(:, i) * rs_a(j)
             end do
         end do
+
+        if (print_level >= 2) then
+            write(stdout, *)
+            write(stdout,'(5x, a)') 'cis_dyson time:'
+            time_tot = omp_get_wtime() - time00
+            write(stdout, '(9x, a40, f14.4)') 'NTO generation            - time (sec):', time_nto
+            write(stdout, '(9x, a40, f14.4)') 'Determinant blocks        - time (sec):', time_det
+            write(stdout, '(9x, 40x, a14)') '--------------'
+            write(stdout, '(9x, a40, f14.4)') 'Total                     - time (sec):', time_tot
+        end if
+        if (print_level >= 2) then
+            write(stdout, *)
+            write(stdout, '(5x,a)') '---- end cis_dyson subroutine ----'
+        end if
     end subroutine cis_dyson
 
 
@@ -217,7 +258,7 @@ contains
 
         if (na == 0) return
         nc = nn - 1
-        seq = [ (i, i=1, nn+1) ]
+        seq = [ (i, i=1, nn) ]
         sr = 0.0_dp
 
         !$omp parallel default(shared)
@@ -256,7 +297,7 @@ contains
 
         if (na == 0) return
         nc = nn - 1
-        seq = [ (i, i=1, nn+1) ]
+        seq = [ (i, i=1, nn) ]
         rs = 0.0_dp
 
         !$omp parallel default(shared)
@@ -306,7 +347,7 @@ contains
 
         if ((na1 == 0) .or. (na2 == 0)) return
         nc = nn - 1
-        seq = [ (i, i=1, nn+1) ]
+        seq = [ (i, i=1, nn) ]
         ss = 0.0_dp
 
         !$omp parallel default(shared)

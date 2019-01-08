@@ -75,7 +75,7 @@ contains
         time00 = omp_get_wtime()
         if (print_level >= 2) then
             write(stdout, *) 
-            write(stdout, '(5x,a)') '---- start cis_overlap_nto subroutine ---'
+            write(stdout, '(5x,a)') '---- start cis_overlap_nto subroutine ----'
         end if
 
         ! Get dimensions:
@@ -130,7 +130,6 @@ contains
 
         ! Calculate determinant blocks:
         time0 = omp_get_wtime()
-        rr_a = mat_ge_det(s_mo(1:no_a, 1:no_a, 1))
         if (print_level >= 2) then
             write(stdout, *) 
             if (beta) then
@@ -140,6 +139,7 @@ contains
             end if
             write(stdout, '(5x,a)') 'Status:'
         end if
+        rr_a = mat_ge_det(s_mo(1:no_a, 1:no_a, 1))
         allocate(wrk(no_a*2, n_2))
         do i = 1, nwf_1
             if (print_level >= 2) write(stdout, '(9x,a,i0,a,i0)') 'bra state ', i, '/', nwf_1
@@ -213,7 +213,7 @@ contains
         end if
         if (print_level >= 2) then
             write(stdout, *) 
-            write(stdout, '(5x,a)') '---- end cis_overlap_nto subroutine ---'
+            write(stdout, '(5x,a)') '---- end cis_overlap_nto subroutine ----'
         end if
     end subroutine cis_overlap_nto
 
