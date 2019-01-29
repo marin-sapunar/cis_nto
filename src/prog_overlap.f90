@@ -11,6 +11,7 @@ program cis_overlap_prog
     use cis_overlap_cis_mod
     use orthog_mod
     use phase_mod
+    use check_dimensions_overlap_mod
     ! I/O
     use read_all_mod
     implicit none
@@ -52,6 +53,7 @@ program cis_overlap_prog
     real(dp), allocatable :: s_wf_raw(:, :) !< Non-orthogonalized wave function overlaps.
     real(dp) :: angle !< Angle between raw and orthogonalized overlap matrix.
     ! Options
+    character(len=:), allocatable :: out_fmt_s
     character(len=:), allocatable :: input_format
     character(len=:), allocatable :: dir1
     character(len=:), allocatable :: dir2
@@ -75,6 +77,7 @@ program cis_overlap_prog
     time00 = omp_get_wtime()
 
     ! Defaults.
+    out_fmt_s = '(5x,1000f10.6)'
     print_level = 2
     outfile = 'omat'
     input_format = 'turbomole'
@@ -243,17 +246,12 @@ program cis_overlap_prog
         write(stdout, '(5x,a,2(1x,i0))') 'Number of active occupied orbitals: ', on2%ao(1:rhf2)
         write(stdout, '(5x,a,2(1x,i0))') 'Number of active virtual orbitals:  ', on2%av(1:rhf2)
     end if
+
+    ! Check input dimensions.
+    rhf = max(rhf1, rhf2)
+    call check_occ_orb(rhf1, rhf2, on1, on2, occ1, occ2, act1, act2, wfa1, wfa2, wfb1, wfb2)
+    call check_rhf(rhf1, rhf2, moa1, moa2, mob1, mob2, wfa1, wfa2, wfb1, wfb2)
     time_io = omp_get_wtime() - time0
-    if ((on1%o(1) /= on2%o(1)) .or. (on1%o(rhf1) /= on2%o(rhf2))) then
-        write(stderr, *) 
-        write(stderr, '(1x,a,a,a)') 'Error. Mismatch in number of occupied orbitals.'
-        stop
-    end if
-    if ((on1%ao(1) /= on2%ao(1)) .or. (on1%ao(rhf1) /= on2%ao(rhf2))) then
-        write(stderr, *) 
-        write(stderr, '(1x,a,a,a)') 'Error. Mismatch in number of active occupied orbitals.'
-        stop
-    end if
 
     ! Calculate AO overlaps.
     if (print_level >= 2) then
@@ -264,30 +262,6 @@ program cis_overlap_prog
     call one_el_op(ccg1, ccg2, [0,0,0], geom1, geom2, trans1, trans2, s_ao, &
     &              center_atom_pairs=center2, center_diagonal_block=center1)
     time_ao = omp_get_wtime() - time0
-
-    ! Allocate arrays for mixed restricted/unrestricted calculation.
-    rhf = max(rhf1, rhf2)
-    if (rhf1 /= rhf) then
-        if (print_level >= 1) then
-            write(stdout, *) 
-            write(stdout, '(1x,a)') 'Unrestricted bra and restricted ket calculation...'
-            write(stdout, '(5x,a)') 'Renormalizing bra CI coefficients...'
-        end if
-        wfa1 = wfa1 / sqrt(2.0_dp)
-        allocate(mob1, source=moa1)
-        allocate(wfb1, source=wfa1)
-        wfb1 = -wfb1
-    else if (rhf2 /= rhf) then
-        if (print_level >= 1) then
-            write(stdout, *) 
-            write(stdout, '(1x,a)') 'Restricted bra and unrestricted ket calculation...'
-            write(stdout, '(5x,a)') 'Renormalizing ket CI coefficients...'
-        end if
-        wfa2 = wfa2 / sqrt(2.0_dp)
-        allocate(mob2, source=moa2)
-        allocate(wfb2, source=wfa2)
-        wfb2 = -wfb2
-    end if
 
     ! Remove frozen mos and calculate MO overlap matrix.
     if (print_level >= 1) then
@@ -340,7 +314,7 @@ program cis_overlap_prog
         write(stdout, *) 
         write(stdout, '(1x,a)') 'Raw overlap matrix:'
         do i = 0, nwf2
-            write(stdout,'(5x,1000es24.16)') s_wf(i, :)
+            write(stdout, out_fmt_s) s_wf(i, :)
         end do
     end if
 
@@ -350,7 +324,7 @@ program cis_overlap_prog
             write(stdout, *) 
             write(stdout, '(1x,a)') 'Orthogonalized overlap matrix:'
             do i = 0, nwf2
-                write(stdout,'(5x,1000es24.16)') s_wf(i, :)
+                write(stdout, out_fmt_s) s_wf(i, :)
             end do
             angle = acos(sum(s_wf*s_wf_raw) / mat_norm(s_wf) / mat_norm(s_wf_raw))
             write(stdout, *) 
@@ -368,7 +342,7 @@ program cis_overlap_prog
             write(stdout, *) 
             write(stdout, '(1x,a)') 'Overlap matrix with phase matching between assigned bra/ket states:'
             do i = 0, nwf2
-                write(stdout, '(5x,1000es24.16)') s_wf(i, :)
+                write(stdout, out_fmt_s) s_wf(i, :)
             end do
         end if
     end if
