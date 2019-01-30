@@ -11,7 +11,7 @@ program cis_overlap_prog
     use cis_overlap_cis_mod
     use orthog_mod
     use phase_mod
-    use check_dimensions_overlap_mod
+    use cis_overlap_util_mod
     ! I/O
     use read_all_mod
     implicit none
@@ -273,7 +273,7 @@ program cis_overlap_prog
     time0 = omp_get_wtime()
     select case(alg)
     case(1)
-   !    call cis_overlap_cis(thr, on1%ao(1), on1%ao(rhf1), s_mo, wfa1, wfa2, wfb1, wfb2, s_wf)
+        call cis_overlap_cis(rhf, thr, s_mo_a, s_mo_b, cisa1, cisa2, cisb1, cisb2, s_wf)
     case(2)
         call cis_overlap_nto(rhf, thr, s_mo_a, s_mo_b, cisa1, cisa2, cisb1, cisb2, s_wf)
     end select

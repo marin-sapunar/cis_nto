@@ -26,22 +26,24 @@ contains
     !> @note The overlaps between the bra(ket) reference and ket(bra) CIS states are returned as
     !! s_wf(0, :) and s_wf(:, 0), respectively.
     !----------------------------------------------------------------------------------------------
-    subroutine cis_overlap_cis(trunc, no_a, no_b, s_mo, wf_a1, wf_a2, wf_b1, wf_b2, s_wf)
+    subroutine cis_overlap_cis(rhf, trunc, s_mo_a, s_mo_b, cis_a1, cis_a2, cis_b1, cis_b2, s_wf)
         use blas95, only : gemm
         use matrix_mod, only : mat_ge_det
         use truncate_wf_mod
+        integer, intent(in) :: rhf !< Restricted (1) or unrestricted (2) calculation.
         real(dp), intent(in) :: trunc !< Threshold for truncating the wave functions.
-        integer, intent(in) :: no_a !< Number of occupied alpha orbitals.
-        integer, intent(in) :: no_b !< Number of occupied beta orbitals.
-        real(dp), intent(in) :: s_mo(:, :, :) !< Overlaps of alpha/beta molecular orbitals.
-        real(dp), intent(in) :: wf_a1(:, :) !< Bra alpha wave function coefficients.
-        real(dp), intent(in) :: wf_a2(:, :) !< Ket alpha wave function coefficients.
-        real(dp), intent(in) :: wf_b1(:, :) !< Bra beta wave function coefficients.
-        real(dp), intent(in) :: wf_b2(:, :) !< Ket beta wave function coefficients.
+        real(dp), intent(in) :: s_mo_a(:, :) !< Overlaps of alpha molecular orbitals.
+        real(dp), intent(in) :: s_mo_b(:, :) !< Overlaps of beta molecular orbitals.
+        real(dp), intent(in) :: cis_a1(:, :, :) !< CIS matrix alpha 1.
+        real(dp), intent(in) :: cis_a2(:, :, :) !< CIS matrix alpha 2.
+        real(dp), intent(in) :: cis_b1(:, :, :) !< CIS matrix beta 1.
+        real(dp), intent(in) :: cis_b2(:, :, :) !< CIS matrix beta 2.
         real(dp), allocatable, intent(out) :: s_wf(:, :) !< Wave function overlaps.
         logical :: beta !< Restricted/unrestricted calculation.
         integer :: n_1 !< Number of bra orbitals.
         integer :: n_2 !< Number of ket orbitals.
+        integer :: no_a !< Number of occupied alpha orbitals.
+        integer :: no_b !< Number of occupied beta orbitals.
         integer :: nv_a1 !< Number of virtual alpha orbitals.
         integer :: nv_b1 !< Number of virtual beta orbitals.
         integer :: nv_a2 !< Number of virtual alpha orbitals.
@@ -50,6 +52,10 @@ contains
         integer :: nwf_2 !< Number of ket states.
         real(dp) :: rr_a !< RR block alpha.
         real(dp) :: rr_b !< RR block beta.
+        real(dp), allocatable :: wf_a1(:, :) !< Bra alpha wave function coefficients.
+        real(dp), allocatable :: wf_a2(:, :) !< Ket alpha wave function coefficients.
+        real(dp), allocatable :: wf_b1(:, :) !< Bra beta wave function coefficients.
+        real(dp), allocatable :: wf_b2(:, :) !< Ket beta wave function coefficients.
         real(dp), allocatable :: sr_a(:) !< SR block alpha.
         real(dp), allocatable :: sr_b(:) !< SR block beta.
         real(dp), allocatable :: rs_a(:) !< RS block alpha.
@@ -64,22 +70,28 @@ contains
 
         ! Get dimensions.
         beta = .false.
-        n_1 = size(s_mo, 1)
-        n_2 = size(s_mo, 2)
+        if (rhf == 2) beta = .true.
+        no_a = size(cis_a1, 2)
+        no_b = size(cis_b1, 2)
+        n_1 = size(s_mo_a, 1)
+        n_2 = size(s_mo_a, 2)
         nv_a1 = n_1 - no_a
         nv_a2 = n_2 - no_a
-        if (size(s_mo, 3) == 2) then
-            beta = .true.
+        if (beta) then
             nv_b1 = n_1 - no_b
             nv_b2 = n_2 - no_b
         end if
-        nwf_1 = size(wf_a1, 2)
-        nwf_2 = size(wf_a2, 2)
+        nwf_1 = size(cis_a1, 3)
+        nwf_2 = size(cis_a2, 3)
         ! Allocate work arrays.
+        allocate(wf_a1(nv_a1*no_a, nwf_1), source=reshape(cis_a1, [nv_a1*no_a, nwf_1]))
+        allocate(wf_a2(nv_a2*no_a, nwf_2), source=reshape(cis_a2, [nv_a2*no_a, nwf_2]))
         allocate(sr_a(nwf_1))
         allocate(rs_a(nwf_2))
         allocate(ss_a(nwf_1, nwf_2))
         if (beta) then
+            allocate(wf_b1(nv_b1*no_b, nwf_1), source=reshape(cis_b1, [nv_b1*no_b, nwf_1]))
+            allocate(wf_b2(nv_b2*no_b, nwf_2), source=reshape(cis_b2, [nv_b2*no_b, nwf_2]))
             allocate(sr_b(nwf_1))
             allocate(rs_b(nwf_2))
             allocate(ss_b(nwf_1, nwf_2))
@@ -89,16 +101,16 @@ contains
         call truncate_wf(trunc, beta, wf_a1, wf_b1, a_a1, a_b1)
         call truncate_wf(trunc, beta, wf_a2, wf_b2, a_a2, a_b2)
 
-        rr_a = mat_ge_det(s_mo(1:no_a, 1:no_a, 1))
-        call cis_rs(no_a, nv_a1, s_mo(:, :, 1), wf_a1, a_a1, sr_a, row = .true.)
-        call cis_rs(no_a, nv_a2, s_mo(:, :, 1), wf_a2, a_a2, rs_a, row = .false.)
-        call cis_ss(no_a, nv_a1, nv_a2, s_mo(:, :, 1), wf_a1, wf_a2, a_a1, a_a2, ss_a)
+        rr_a = mat_ge_det(s_mo_a(1:no_a, 1:no_a))
+        call cis_rs(no_a, nv_a1, s_mo_a, wf_a1, a_a1, sr_a, row = .true.)
+        call cis_rs(no_a, nv_a2, s_mo_a, wf_a2, a_a2, rs_a, row = .false.)
+        call cis_ss(no_a, nv_a1, nv_a2, s_mo_a, wf_a1, wf_a2, a_a1, a_a2, ss_a)
         
         if (beta) then
-            rr_b = mat_ge_det(s_mo(1:no_b, 1:no_b, 1))
-            call cis_rs(no_b, nv_b1, s_mo(:, :, 1), wf_b1, a_b1, sr_b, row = .true.)
-            call cis_rs(no_b, nv_b2, s_mo(:, :, 1), wf_b2, a_b2, rs_b, row = .false.)
-            call cis_ss(no_b, nv_b1, nv_b2, s_mo(:, :, 1), wf_b1, wf_b2, a_b1, a_b2, ss_b)
+            rr_b = mat_ge_det(s_mo_b(1:no_b, 1:no_b))
+            call cis_rs(no_b, nv_b1, s_mo_b, wf_b1, a_b1, sr_b, row = .true.)
+            call cis_rs(no_b, nv_b2, s_mo_b, wf_b2, a_b2, rs_b, row = .false.)
+            call cis_ss(no_b, nv_b1, nv_b2, s_mo_b, wf_b1, wf_b2, a_b1, a_b2, ss_b)
         end if
 
         if (allocated(s_wf)) deallocate(s_wf)

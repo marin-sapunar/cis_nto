@@ -1,12 +1,12 @@
 !----------------------------------------------------------------------------------------------
-! MODULE: check_dimensions_overlap_mod
+! MODULE: cis_overlap_util_mod
 !> @author Marin Sapunar, Ruđer Bošković Institute
 !> @date January, 2019
 !
 ! DESCRIPTION:
-!> @brief Ensure dimensions for two sets of states are compatible before overlap calculations
+!> @brief Utilty subroutines for cis_overlap program
 !----------------------------------------------------------------------------------------------
-module check_dimensions_overlap_mod
+module cis_overlap_util_mod
     ! General
     use global_defs
     ! Chem
@@ -185,7 +185,7 @@ contains
 
 
     !----------------------------------------------------------------------------------------------
-    ! SUBROUTINE: check_occ_mo_norms
+    ! SUBROUTINE: check_mo_norms
     !
     !> @brief Check bra/ket MO norms in ket/bra basis and freeze MOs with low norms.
     !> @details
@@ -294,11 +294,10 @@ contains
     end subroutine check_mo_norms
 
 
-
     !----------------------------------------------------------------------------------------------
     ! SUBROUTINE: cis_prepend_occ
     !
-    !> @brief Add occupied orbitals to start of a wf array
+    !> @brief Add occupied orbitals (with all zero coefficients) to start of a wf array
     !----------------------------------------------------------------------------------------------
     subroutine cis_prepend_occ(nadd, no, nv, cis)
         integer, intent(in) :: nadd
@@ -314,5 +313,4 @@ contains
     end subroutine cis_prepend_occ
 
 
-
-end module check_dimensions_overlap_mod
+end module cis_overlap_util_mod
