@@ -88,10 +88,10 @@ contains
                 &                               ' beta active occupied ket orbitals.'
                 write(stdout, '(3x,a)') 'Using previously frozen orbitals as active orbitals.'
             end if
-            call cis_prepend_occ(on1%fo(1), on1%o(1), on1%av(1), cisa1)
-            call cis_prepend_occ(on2%fo(1), on2%o(1), on2%av(1), cisa2)
-            if (rhf1 == 2) call cis_prepend_occ(on1%fo(2), on1%o(2), on1%av(2), cisb1)
-            if (rhf2 == 2) call cis_prepend_occ(on2%fo(2), on2%o(2), on2%av(2), cisb2)
+            call prepend_zero_occ_cis(on1%fo(1), cisa1)
+            call prepend_zero_occ_cis(on2%fo(1), cisa2)
+            if (rhf1 == 2) call prepend_zero_occ_cis(on1%fo(2), cisb1)
+            if (rhf2 == 2) call prepend_zero_occ_cis(on2%fo(2), cisb2)
             where(occ1) act1 = .true.
             where(occ2) act2 = .true.
             on1%ao(1) = on1%o(1)
@@ -191,11 +191,11 @@ contains
     !> @details
     !----------------------------------------------------------------------------------------------
     subroutine check_mo_norms(s_mo, mo1, mo2, cis1, cis2, freeze, freeze_threshold)
-        real(dp), allocatable, intent(inout) :: s_mo(:, :)
-        real(dp), allocatable, intent(inout) :: mo1(:, :) !< MO coefficients alpha 1.
-        real(dp), allocatable, intent(inout) :: mo2(:, :) !< MO coefficients alpha 2.
-        real(dp), allocatable, intent(inout) :: cis1(:, :, :) !< CIS matrix alpha 1.
-        real(dp), allocatable, intent(inout) :: cis2(:, :, :) !< CIS matrix alpha 2.
+        real(dp), allocatable, intent(inout) :: s_mo(:, :) !< MO overlap matrix.
+        real(dp), allocatable, intent(inout) :: mo1(:, :) !< MO coefficients 1.
+        real(dp), allocatable, intent(inout) :: mo2(:, :) !< MO coefficients 2.
+        real(dp), allocatable, intent(inout) :: cis1(:, :, :) !< CIS matrix 1.
+        real(dp), allocatable, intent(inout) :: cis2(:, :, :) !< CIS matrix 2.
         logical, intent(in) :: freeze
         real(dp), intent(in) :: freeze_threshold
         integer :: no, n_tot1, n_tot2, n_freeze, n_active
@@ -208,11 +208,6 @@ contains
         real(dp), allocatable :: bra_norms(:)
         real(dp), allocatable :: ket_norms(:)
         real(dp), allocatable :: s2(:, :)
-        real(dp), allocatable :: tmp_s_mo(:, :)
-        real(dp), allocatable :: tmp_mo1(:, :) !< MO coefficients alpha 1.
-        real(dp), allocatable :: tmp_mo2(:, :) !< MO coefficients alpha 2.
-        real(dp), allocatable :: tmp_cis1(:, :, :) !< CIS matrix alpha 1.
-        real(dp), allocatable :: tmp_cis2(:, :, :) !< CIS matrix alpha 2.
         integer :: i, bra_min(1)
 
 
@@ -270,47 +265,72 @@ contains
             allocate(active_ket(1:n_tot2))
             active_bra(1:n_active) = active_occ_bra
             active_ket(1:n_active) = active_occ_ket
-            active_bra(n_active+1:) = [ (i, i=no+1, no+size(cis1, 1)) ]
-            active_ket(n_active+1:) = [ (i, i=no+1, no+size(cis2, 1)) ]
-            allocate(tmp_s_mo(1:n_tot1, 1:n_tot2), source=s_mo(active_bra, active_ket))
-            allocate(tmp_mo1(1:size(mo1, 1), 1:n_tot1), source=mo1(:, active_bra))
-            allocate(tmp_mo2(1:size(mo2, 1), 1:n_tot2), source=mo2(:, active_ket))
-            allocate(tmp_cis1(1:size(cis1, 1), 1:n_active, 1:size(cis1, 3)), &
-            &                 source=cis1(:, active_occ_bra, :))
-            allocate(tmp_cis2(1:size(cis2, 1), 1:n_active, 1:size(cis2, 3)), &
-            &                 source=cis2(:, active_occ_ket, :))
-            deallocate(s_mo)
-            deallocate(mo1)
-            deallocate(mo2)
-            deallocate(cis1)
-            deallocate(cis2)
-            allocate(s_mo, source=tmp_s_mo)
-            allocate(mo1, source=tmp_mo1)
-            allocate(mo2, source=tmp_mo2)
-            allocate(cis1, source=tmp_cis1)
-            allocate(cis2, source=tmp_cis2)
+            call remove_frozen_mo_s(active_bra, active_ket, s_mo)
+            call remove_frozen_mo_mo(active_bra, mo1)
+            call remove_frozen_mo_mo(active_ket, mo2)
+            call remove_frozen_occ_cis(active_occ_bra, cis1)
+            call remove_frozen_occ_cis(active_occ_ket, cis2)
         end if
-
     end subroutine check_mo_norms
 
 
     !----------------------------------------------------------------------------------------------
-    ! SUBROUTINE: cis_prepend_occ
-    !
+    ! SUBROUTINE: remove_frozen_mo_s
+    !> @brief Remove frozen orbitals from MO overlap matrix.
+    !----------------------------------------------------------------------------------------------
+    subroutine remove_frozen_mo_s(act1, act2, s_mo)
+        integer, intent(in) :: act1(:) !< List of active bra orbitals.
+        integer, intent(in) :: act2(:) !< List of active ket orbitals.
+        real(dp), allocatable, intent(inout) :: s_mo(:, :) !< MO overlap matrix.
+        real(dp), allocatable :: tmp_s_mo(:, :)
+        allocate(tmp_s_mo(1:size(act1), 1:size(act2)), source=s_mo(act1, act2))
+        deallocate(s_mo)
+        allocate(s_mo, source=tmp_s_mo)
+    end subroutine remove_frozen_mo_s
+
+
+    !----------------------------------------------------------------------------------------------
+    ! SUBROUTINE: remove_frozen_mo_mo
+    !> @brief Remove frozen orbitals from MO coefficients array.
+    !----------------------------------------------------------------------------------------------
+    subroutine remove_frozen_mo_mo(act, mo)
+        integer, intent(in) :: act(:) !< List of active orbitals.
+        real(dp), allocatable, intent(inout) :: mo(:, :) !< MO coefficients.
+        real(dp), allocatable :: tmp_mo(:, :) !< Work array for MO.
+
+        allocate(tmp_mo(1:size(mo, 1), 1:size(act)), source=mo(:, act))
+        deallocate(mo)
+        allocate(mo, source=tmp_mo)
+    end subroutine remove_frozen_mo_mo
+
+        
+    !----------------------------------------------------------------------------------------------
+    ! SUBROUTINE: remove_frozen_occ_ciss
+    !> @brief Remove frozen occupied orbitals from CIS matrix.
+    !----------------------------------------------------------------------------------------------
+    subroutine remove_frozen_occ_cis(act, ci)
+        integer, intent(in) :: act(:) !< List of active occupied orbitals.
+        real(dp), allocatable, intent(inout) :: ci(:, :, :) !< CIS matrix.
+        real(dp), allocatable :: tmp_ci(:, :, :) !< Work array for CI.
+        allocate(tmp_ci(1:size(ci, 1), 1:size(act), size(ci, 3)), source=ci(:, act, :))
+        deallocate(ci)
+        allocate(ci, source=tmp_ci)
+    end subroutine remove_frozen_occ_cis
+
+    !----------------------------------------------------------------------------------------------
+    ! SUBROUTINE: prepend_zero_occ_cis
     !> @brief Add occupied orbitals (with all zero coefficients) to start of a wf array
     !----------------------------------------------------------------------------------------------
-    subroutine cis_prepend_occ(nadd, no, nv, cis)
+    subroutine prepend_zero_occ_cis(nadd, cis)
         integer, intent(in) :: nadd
-        integer, intent(in) :: no
-        integer, intent(in) :: nv
         real(dp), allocatable, intent(inout) :: cis(:, :, :)
         real(dp), allocatable :: tmp_cis(:, :, :)
 
-        allocate(tmp_cis(nv, no, size(cis,3)), source=0.0_dp)
+        allocate(tmp_cis(1:size(cis, 1), 1:size(cis, 2)+nadd, 1:size(cis, 3)), source=0.0_dp)
         tmp_cis(:, nadd+1:, :) = cis
         deallocate(cis)
         allocate(cis, source=tmp_cis)
-    end subroutine cis_prepend_occ
+    end subroutine prepend_zero_occ_cis
 
 
 end module cis_overlap_util_mod
