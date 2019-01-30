@@ -229,6 +229,8 @@ contains
             allocate(active_ket(1:n_tot2))
             active_bra(1:n_active) = active_occ_bra
             active_ket(1:n_active) = active_occ_ket
+            active_bra(n_active+1:) = [ (i, i=no+1, no+size(cis1, 1)) ]
+            active_ket(n_active+1:) = [ (i, i=no+1, no+size(cis2, 1)) ]
             call remove_frozen_mo_s(active_bra, active_ket, s_mo)
             call remove_frozen_mo_mo(active_bra, mo1)
             call remove_frozen_mo_mo(active_ket, mo2)
