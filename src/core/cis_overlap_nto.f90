@@ -28,11 +28,13 @@ contains
     !> @note The overlaps between the bra(ket) reference and ket(bra) CIS states are returned as
     !! s_wf(0, :) and s_wf(:, 0), respectively.
     !----------------------------------------------------------------------------------------------
-    subroutine cis_overlap_nto(trunc, s_mo, wf_a1, wf_a2, wf_b1, wf_b2, s_wf)
+    subroutine cis_overlap_nto(rhf, trunc, s_mo_a, s_mo_b, wf_a1, wf_a2, wf_b1, wf_b2, s_wf)
         use blas95, only : gemm
         use matrix_mod, only : mat_ge_det
+        integer, intent(in) :: rhf !< Restricted (1) or unrestricted (2) calculation.
         real(dp), intent(in) :: trunc !< Threshold for truncating the wave functions.
-        real(dp), intent(in) :: s_mo(:, :, :) !< Overlaps of alpha/beta molecular orbitals.
+        real(dp), intent(in) :: s_mo_a(:, :) !< Overlaps of alpha molecular orbitals.
+        real(dp), intent(in) :: s_mo_b(:, :) !< Overlaps of beta molecular orbitals.
         real(dp), intent(in) :: wf_a1(:, :, :) !< Bra alpha wave function coefficients.
         real(dp), intent(in) :: wf_a2(:, :, :) !< Ket alpha wave function coefficients.
         real(dp), intent(in) :: wf_b1(:, :, :) !< Bra beta wave function coefficients.
@@ -80,8 +82,8 @@ contains
 
         ! Get dimensions:
         beta = .false.
-        if (size(s_mo, 3) == 2) beta = .true.
-        n_2 = size(s_mo, 2)
+        if (rhf == 2) beta = .true.
+        n_2 = size(s_mo_a, 2)
         no_a = size(wf_a1, 2)
         if (beta) no_b = size(wf_b1, 2)
         nwf_1 = size(wf_a1, 3)
@@ -139,11 +141,11 @@ contains
             end if
             write(stdout, '(5x,a)') 'Status:'
         end if
-        rr_a = mat_ge_det(s_mo(1:no_a, 1:no_a, 1))
+        rr_a = mat_ge_det(s_mo_a(1:no_a, 1:no_a))
         allocate(wrk(no_a*2, n_2))
         do i = 1, nwf_1
             if (print_level >= 2) write(stdout, '(9x,a,i0,a,i0)') 'bra state ', i, '/', nwf_1
-            call gemm(mo_a1(:, :, i), s_mo(:, :, 1), wrk, transa='T')
+            call gemm(mo_a1(:, :, i), s_mo_a, wrk, transa='T')
             do j = 1, nwf_2
                 if (print_level >= 2) write(stdout, '(13x,a,i0,a,i0)') 'ket state ', j, '/', nwf_2
                 call gemm(wrk, mo_a2(:, :, j), s_nto_a)
@@ -159,11 +161,11 @@ contains
                 write(stdout, '(5x,a)') 'Computing beta determinant blocks...'
                 write(stdout, '(5x,a)') 'Status:'
             end if
-            rr_b = mat_ge_det(s_mo(1:no_b, 1:no_b, 2))
+            rr_b = mat_ge_det(s_mo_b(1:no_b, 1:no_b))
             allocate(wrk(no_b*2, n_2))
             do i = 1, nwf_1
                 if (print_level >= 2) write(stdout, '(9x,a,i0,a,i0)') 'bra state ', i, '/', nwf_1
-                call gemm(mo_b1(:, :, i), s_mo(:, :, 2), wrk, transa='T')
+                call gemm(mo_b1(:, :, i), s_mo_b, wrk, transa='T')
                 do j = 1, nwf_2
                     if (print_level >= 2) write(stdout, '(13x,a,i0,a,i0)') 'ket state ', j, '/', nwf_2
                     call gemm(wrk, mo_b2(:, :, j), s_nto_b)

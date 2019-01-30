@@ -34,21 +34,19 @@ program cis_overlap_prog
     real(dp), allocatable :: moa2(:, :) !< Molecular orbital coefficients alpha 2.
     real(dp), allocatable :: mob1(:, :) !< Molecular orbital coefficients beta 1.
     real(dp), allocatable :: mob2(:, :) !< Molecular orbital coefficients beta 2.
-    real(dp), allocatable :: wfa1(:, :) !< CI vector alpha single 1.
-    real(dp), allocatable :: wfa2(:, :) !< CI vector alpha single 2.
-    real(dp), allocatable :: wfb1(:, :) !< CI vector beta single 1.
-    real(dp), allocatable :: wfb2(:, :) !< CI vector beta single 2.
     real(dp), allocatable :: cisa1(:, :, :) !< CIS matrix alpha 1.
     real(dp), allocatable :: cisa2(:, :, :) !< CIS matrix alpha 2.
     real(dp), allocatable :: cisb1(:, :, :) !< CIS matrix beta 1.
     real(dp), allocatable :: cisb2(:, :, :) !< CIS matrix beta 2.
     logical, allocatable :: occ1(:, :) !< Occupied MO mask 1.
     logical, allocatable :: occ2(:, :) !< Occupied MO mask 2.
-    logical, allocatable :: act1(:, :) !< Active MO mask 1.
-    logical, allocatable :: act2(:, :) !< Active MO mask 2.
+    logical, allocatable :: act1(:, :) !< Active MO mask from el. structure calculation 1.
+    logical, allocatable :: act2(:, :) !< Active MO mask from el. structure calculation 2.
+
     ! Results
     real(dp), allocatable :: s_ao(:, :) !< Atomic orbital overlaps.
-    real(dp), allocatable :: s_mo(:, :, :) !< Molecular orbital overlaps.
+    real(dp), allocatable :: s_mo_a(:, :) !< Molecular orbital overlaps alpha.
+    real(dp), allocatable :: s_mo_b(:, :) !< Molecular orbital overlaps beta.
     real(dp), allocatable :: s_wf(:, :) !< Wave function overlaps.
     real(dp), allocatable :: s_wf_raw(:, :) !< Non-orthogonalized wave function overlaps.
     real(dp) :: angle !< Angle between raw and orthogonalized overlap matrix.
@@ -59,12 +57,14 @@ program cis_overlap_prog
     character(len=:), allocatable :: dir2
     character(len=:), allocatable :: outfile
     real(dp) :: thr
+    real(dp) :: f_by_mo_norm_t
     logical :: norm
     logical :: orth
     logical :: orth_omat
     logical :: phase_omat
     logical :: center1
     logical :: center2
+    logical :: f_by_mo_norm
     integer :: alg
     ! Help
     integer :: i, narg, outunit
@@ -89,6 +89,8 @@ program cis_overlap_prog
     phase_omat = .false.
     center1 = .false.
     center2 = .false.
+    f_by_mo_norm = .false.
+    f_by_mo_norm_t = -1.0_dp
 
     ! CLI
     narg = command_argument_count()
@@ -125,6 +127,12 @@ program cis_overlap_prog
             write(stdout, *) '                        recentering pairs of AOs in AO overlap calculation   '
             write(stdout, *) '                        (untested, not recommended without further testing)  '
             write(stdout, '(25x,a,l1)') 'default: ', center2
+            write(stdout, *) '  --freeze-mo-norm t    freeze occupied ket MOs when their norm in bra basis '
+            write(stdout, *) '                        is smaller than given threshold. Same number of bra  '
+            write(stdout, *) '                        MOs with smallest norms in ket basis is also frozen. '
+            write(stdout, *) '                        Used when geometry of a small part of a system is    '
+            write(stdout, *) '                        significantly different between bra and ket states.  '
+            write(stdout, *) '                        (untested)                                           '
             write(stdout, *) '  --threshold t         truncate wave functions using given threshold        '
             write(stdout, *) '  --outfile file        output final overlap matrix to file                  '
             write(stdout, '(25x,a,a)') 'default: ', outfile
@@ -155,6 +163,11 @@ program cis_overlap_prog
             center2 = .true.
         case('--no-recenter-aos')
             center2 = .false.
+        case('--freeze-mo-norm')
+            i = i + 1
+            call get_command_argument(i, temp)
+            read(temp, *) f_by_mo_norm_t
+            if (f_by_mo_norm_t > 0.0_dp) f_by_mo_norm = .true.
         case('--threshold')
             i = i + 1
             call get_command_argument(i, temp)
@@ -195,94 +208,62 @@ program cis_overlap_prog
         write(stdout, '(5x,a,a)') ' Directory containing calculation for ket states: ', dir2
     end if
 
-    if (.not. is_dir(dir1)) then
-        write(stderr, *) 
-        write(stderr, '(1x,a,a,a)') 'Error. Directory ', dir1, ' not found.'
-        stop
-    end if
+    call need_dir(dir1)
     call read_ccg_ao(input_format, dir1, ccg1, geom=geom1, trans_ao=trans1)
     call read_mo(input_format, dir1, moa_c=moa1, mob_c=mob1)
-    call read_cis(input_format, dir1, wfa=wfa1, wfb=wfb1, occ_mo=occ1, act_mo=act1, occ_num=on1, &
+    call read_cis(input_format, dir1, cisa=cisa1, cisb=cisb1, occ_mo=occ1, act_mo=act1, occ_num=on1, &
     &             norm=norm, orthog=orth)
-    nwf1 = size(wfa1, 2)
-    if (allocated(wfb1)) rhf1 = 2
-    if (print_level >= 1) then
-        write(stdout, *) 
-        write(stdout, '(1x,a)') 'Properties for bra states:'
-        if (rhf1 == 1) write(stdout, '(5x, a)') 'Restricted calculation.'
-        if (rhf1 == 2) write(stdout, '(5x, a)') 'Unrestricted calculation.'
-        write(stdout, '(5x,a,2(1x,i0))') 'Number of excited states:           ', nwf1
-        write(stdout, '(5x,a,2(1x,i0))') 'Number of basis functions (sphe):   ', size(trans1, 1)
-        write(stdout, '(5x,a,2(1x,i0))') 'Number of basis functions (cart):   ', size(trans1, 2)
-        write(stdout, '(5x,a,2(1x,i0))') 'Number of orbitals:                 ', on2%n
-        write(stdout, '(5x,a,2(1x,i0))') 'Number of occupied orbitals:        ', on1%o(1:rhf1)
-        write(stdout, '(5x,a,2(1x,i0))') 'Number of virtual orbitals:         ', on1%v(1:rhf1)
-        write(stdout, '(5x,a,2(1x,i0))') 'Number of active occupied orbitals: ', on1%ao(1:rhf1)
-        write(stdout, '(5x,a,2(1x,i0))') 'Number of active virtual orbitals:  ', on1%av(1:rhf1)
-    end if
+    nwf1 = size(cisa1, 3)
+    if (allocated(cisb1)) rhf1 = 2
+    call print_calculation_properties('Properties for bra states:', rhf1, nwf1, size(trans1, 1), &
+    &                                 size(trans1, 2), on1)
 
-    if (.not. is_dir(dir2)) then
-        write(stderr, *) 
-        write(stderr, '(1x,a,a,a)') 'Error. Directory ', dir2, ' not found.'
-        stop
-    end if
+    call need_dir(dir2)
     call read_ccg_ao(input_format, dir2, ccg2, geom=geom2, trans_ao=trans2)
     call read_mo(input_format, dir2, moa_c=moa2, mob_c=mob2)
-    call read_cis(input_format, dir2, wfa=wfa2, wfb=wfb2, occ_mo=occ2, act_mo=act2, norm=norm, &
+    call read_cis(input_format, dir2, cisa=cisa2, cisb=cisb2, occ_mo=occ2, act_mo=act2, norm=norm, &
     &             orthog=orth, occ_num = on2)
-    nwf2 = size(wfa2, 2)
-    if (allocated(wfb2)) rhf2 = 2
-    if (print_level >= 1) then
-        write(stdout, *) 
-        write(stdout, '(1x,a)') 'Properties for ket states:'
-        if (rhf2 == 1) write(stdout, '(5x, a)') 'Restricted calculation.'
-        if (rhf2 == 2) write(stdout, '(5x, a)') 'Unrestricted calculation.'
-        write(stdout, '(5x,a,2(1x,i0))') 'Number of excited states:           ', nwf2
-        write(stdout, '(5x,a,2(1x,i0))') 'Number of basis functions (sphe):   ', size(trans2, 1)
-        write(stdout, '(5x,a,2(1x,i0))') 'Number of basis functions (cart):   ', size(trans2, 2)
-        write(stdout, '(5x,a,2(1x,i0))') 'Number of orbitals:                 ', on2%n
-        write(stdout, '(5x,a,2(1x,i0))') 'Number of occupied orbitals:        ', on2%o(1:rhf2)
-        write(stdout, '(5x,a,2(1x,i0))') 'Number of virtual orbitals:         ', on2%v(1:rhf2)
-        write(stdout, '(5x,a,2(1x,i0))') 'Number of active occupied orbitals: ', on2%ao(1:rhf2)
-        write(stdout, '(5x,a,2(1x,i0))') 'Number of active virtual orbitals:  ', on2%av(1:rhf2)
-    end if
+    nwf2 = size(cisa2, 3)
+    if (allocated(cisb2)) rhf2 = 2
+    call print_calculation_properties('Properties for ket states:', rhf2, nwf2, size(trans2, 1), &
+    &                                 size(trans2, 2), on2)
 
     ! Check input dimensions.
     rhf = max(rhf1, rhf2)
-    call check_occ_orb(rhf1, rhf2, on1, on2, occ1, occ2, act1, act2, wfa1, wfa2, wfb1, wfb2)
-    call check_rhf(rhf1, rhf2, moa1, moa2, mob1, mob2, wfa1, wfa2, wfb1, wfb2)
+    call check_occ_orb(rhf1, rhf2, on1, on2, occ1, occ2, act1, act2, cisa1, cisa2, cisb1, cisb2)
+    call check_rhf(rhf1, rhf2, moa1, moa2, mob1, mob2, cisa1, cisa2, cisb1, cisb2)
+    call remove_frozen_mo(rhf1, rhf2, occ1, occ2, act1, act2, moa1, moa2, mob1, mob2)
     time_io = omp_get_wtime() - time0
 
     ! Calculate AO overlaps.
+    time0 = omp_get_wtime()
     if (print_level >= 2) then
         write(stdout, *) 
         write(stdout, '(1x,a)') 'Computing AO overlaps...'
     end if
-    time0 = omp_get_wtime()
     call one_el_op(ccg1, ccg2, [0,0,0], geom1, geom2, trans1, trans2, s_ao, &
     &              center_atom_pairs=center2, center_diagonal_block=center1)
     time_ao = omp_get_wtime() - time0
 
-    ! Remove frozen mos and calculate MO overlap matrix.
-    if (print_level >= 1) then
-        if ((.not. all(act1)) .or. (.not. all(act2))) then
-            write(stdout, *) 
-            write(stdout, '(1x,a)') 'Removing frozen MOs...'
-        end if
-    end if
+    ! Calculate MO overlap matrix.
     time0 = omp_get_wtime()
-    call sort_mo(occ1(:, 1), act1(:, 1), moa1, remove_inactive=.true.)
-    call sort_mo(occ2(:, 1), act2(:, 1), moa2, remove_inactive=.true.)
-    if (rhf == 2) call sort_mo(occ1(:, rhf1), act1(:, rhf1), mob1, remove_inactive=.true.)
-    if (rhf == 2) call sort_mo(occ2(:, rhf2), act2(:, rhf2), mob2, remove_inactive=.true.)
     if (print_level >= 2) then
         write(stdout, *) 
         write(stdout, '(1x,a)') 'Computing MO overlaps..'
     end if
-    allocate(s_mo(size(moa1, 2), size(moa2, 2), rhf))
-    call mat_ge_mmm(moa1, s_ao, moa2, s_mo(:, :, 1), transa='T')
-    if (rhf == 2) call mat_ge_mmm(mob1, s_ao, mob2, s_mo(:, :, 2), transa='T')
+    allocate(s_mo_a(size(moa1, 2), size(moa2, 2)))
+    call mat_ge_mmm(moa1, s_ao, moa2, s_mo_a, transa='T')
+    if (rhf == 2) then
+        allocate(s_mo_b(size(mob1, 2), size(mob2, 2)))
+        call mat_ge_mmm(mob1, s_ao, mob2, s_mo_b, transa='T')
+    end if
     time_mo = omp_get_wtime() - time0
+
+    ! Remove MO and CI coefficients based on freeze options.
+    call check_mo_norms(s_mo_a, moa1, moa2, cisa1, cisa2, f_by_mo_norm, f_by_mo_norm_t)
+    if (rhf == 2) then
+        call check_mo_norms(s_mo_b, mob1, mob2, cisb1, cisb2, f_by_mo_norm, f_by_mo_norm_t)
+    end if
 
     ! Calculate WF overlap matrix.
     if (print_level >= 2) then
@@ -292,21 +273,11 @@ program cis_overlap_prog
     time0 = omp_get_wtime()
     select case(alg)
     case(1)
-        call cis_overlap_cis(thr, on1%ao(1), on1%ao(rhf1), s_mo, wfa1, wfa2, wfb1, wfb2, s_wf)
+   !    call cis_overlap_cis(thr, on1%ao(1), on1%ao(rhf1), s_mo, wfa1, wfa2, wfb1, wfb2, s_wf)
     case(2)
-        cisa1 = reshape(wfa1, [on1%av(1), on1%ao(1), nwf1])
-        deallocate(wfa1)
-        cisa2 = reshape(wfa2, [on2%av(1), on2%ao(1), nwf2])
-        deallocate(wfa2)
-        if (rhf == 2) then
-            cisb1 = reshape(wfb1, [on1%av(2), on1%ao(2), nwf1])
-            deallocate(wfb1)
-            cisb2 = reshape(wfb2, [on2%av(2), on2%ao(2), nwf2])
-            deallocate(wfb2)
-        end if
-        call cis_overlap_nto(thr, s_mo, cisa1, cisa2, cisb1, cisb2, s_wf)
-        allocate(s_wf_raw, source=s_wf)
+        call cis_overlap_nto(rhf, thr, s_mo_a, s_mo_b, cisa1, cisa2, cisb1, cisb2, s_wf)
     end select
+    allocate(s_wf_raw, source=s_wf)
     time_wf = omp_get_wtime() - time0
 
     ! Output.
