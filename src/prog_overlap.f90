@@ -264,6 +264,8 @@ program cis_overlap_prog
     if (rhf == 2) then
         call check_mo_norms(s_mo_b, mob1, mob2, cisb1, cisb2, f_by_mo_norm, f_by_mo_norm_t)
     end if
+    call check_ci_norms(rhf, cisa1, cisb1, 'bra')
+    call check_ci_norms(rhf, cisa2, cisb2, 'ket')
 
     ! Calculate WF overlap matrix.
     if (print_level >= 2) then

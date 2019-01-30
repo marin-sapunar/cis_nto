@@ -103,42 +103,6 @@ contains
 
 
     !----------------------------------------------------------------------------------------------
-    ! SUBROUTINE: remove_frozen_mo
-    !
-    !> @brief Remove MOs frozen during electronic structure calculation.
-    !> @details
-    !! These MOs are removed from the array of MO coefficients and are not used for the remainder
-    !! of the calculation.
-    !----------------------------------------------------------------------------------------------
-    subroutine remove_frozen_mo(rhf1, rhf2, occ1, occ2, act1, act2, moa1, moa2, mob1, mob2)
-        integer, intent(in) :: rhf1 !< Restricted (1) or unrestricted (2) calculation 1.
-        integer, intent(in) :: rhf2 !< Restricted (1) or unrestricted (2) calculation 2.
-        logical, intent(in) :: occ1(:, :) !< Occupied MO mask 1.
-        logical, intent(in) :: occ2(:, :) !< Occupied MO mask 2.
-        logical, intent(in) :: act1(:, :) !< Active MO mask 1.
-        logical, intent(in) :: act2(:, :) !< Active MO mask 2.
-        real(dp), allocatable, intent(inout) :: moa1(:, :) !< MO coefficients alpha 1.
-        real(dp), allocatable, intent(inout) :: moa2(:, :) !< MO coefficients alpha 2.
-        real(dp), allocatable, intent(inout) :: mob1(:, :) !< MO coefficients beta 1.
-        real(dp), allocatable, intent(inout) :: mob2(:, :) !< MO coefficients beta 2.
-        integer :: rhf
-
-        rhf = max(rhf1, rhf2)
-        if (print_level >= 1) then
-            if ((.not. all(act1)) .or. (.not. all(act2))) then
-                write(stdout, *)
-                write(stdout, '(1x,a)') 'Removing MOs frozen in electronic structure calculation...'
-            end if
-        end if
-        call sort_mo(occ1(:, 1), act1(:, 1), moa1, remove_inactive=.true.)
-        call sort_mo(occ2(:, 1), act2(:, 1), moa2, remove_inactive=.true.)
-        if (rhf == 2) call sort_mo(occ1(:, rhf1), act1(:, rhf1), mob1, remove_inactive=.true.)
-        if (rhf == 2) call sort_mo(occ2(:, rhf2), act2(:, rhf2), mob2, remove_inactive=.true.)
-    end subroutine remove_frozen_mo
-
-
-
-    !----------------------------------------------------------------------------------------------
     ! SUBROUTINE: check_rhf
     !
     !> @brief Check for overlap calculations between restricted and unrestricted sets of states.
@@ -272,6 +236,65 @@ contains
             call remove_frozen_occ_cis(active_occ_ket, cis2)
         end if
     end subroutine check_mo_norms
+
+
+    subroutine check_ci_norms(rhf, cisa, cisb, set_name)
+        integer, intent(in) :: rhf !< Restricted (1) or unrestricted (2) calculation.
+        real(dp), allocatable, intent(in) :: cisa(:, :, :) !< CIS matrix alpha.
+        real(dp), allocatable, intent(in) :: cisb(:, :, :) !< CIS matrix beta.
+        character(len=*), intent(in) :: set_name
+        real(dp), allocatable :: norms(:)
+        real(dp), parameter :: thr = 0.1_dp
+
+        allocate(norms(1:size(cisa, 3)))
+        norms = sum(sum(cisa**2, 1), 1)
+        if (rhf == 2) norms = norms + sum(sum(cisb**2, 1), 1)
+
+        if (print_level >= 2) then
+            write(stdout, *)
+            write(stdout, '(3x,a,a,a)') 'Initial norms of ', set_name,' excited states:'
+            write(stdout, '(5x,8es11.3)') norms
+            if (any(norms < thr)) then
+                write(stdout, '(5x,a)') 'Warning. States with very low initial norm present.'
+                write(stdout, '(5x,a)') '         Check for excitations to/from frozen orbitals.'
+            end if
+        end if
+    end subroutine check_ci_norms
+
+
+    !----------------------------------------------------------------------------------------------
+    ! SUBROUTINE: remove_frozen_mo
+    !
+    !> @brief Remove MOs frozen during electronic structure calculation.
+    !> @details
+    !! These MOs are removed from the array of MO coefficients and are not used for the remainder
+    !! of the calculation.
+    !----------------------------------------------------------------------------------------------
+    subroutine remove_frozen_mo(rhf1, rhf2, occ1, occ2, act1, act2, moa1, moa2, mob1, mob2)
+        integer, intent(in) :: rhf1 !< Restricted (1) or unrestricted (2) calculation 1.
+        integer, intent(in) :: rhf2 !< Restricted (1) or unrestricted (2) calculation 2.
+        logical, intent(in) :: occ1(:, :) !< Occupied MO mask 1.
+        logical, intent(in) :: occ2(:, :) !< Occupied MO mask 2.
+        logical, intent(in) :: act1(:, :) !< Active MO mask 1.
+        logical, intent(in) :: act2(:, :) !< Active MO mask 2.
+        real(dp), allocatable, intent(inout) :: moa1(:, :) !< MO coefficients alpha 1.
+        real(dp), allocatable, intent(inout) :: moa2(:, :) !< MO coefficients alpha 2.
+        real(dp), allocatable, intent(inout) :: mob1(:, :) !< MO coefficients beta 1.
+        real(dp), allocatable, intent(inout) :: mob2(:, :) !< MO coefficients beta 2.
+        integer :: rhf
+
+        rhf = max(rhf1, rhf2)
+        if (print_level >= 1) then
+            if ((.not. all(act1)) .or. (.not. all(act2))) then
+                write(stdout, *)
+                write(stdout, '(1x,a)') 'Removing MOs frozen in electronic structure calculation...'
+            end if
+        end if
+        call sort_mo(occ1(:, 1), act1(:, 1), moa1, remove_inactive=.true.)
+        call sort_mo(occ2(:, 1), act2(:, 1), moa2, remove_inactive=.true.)
+        if (rhf == 2) call sort_mo(occ1(:, rhf1), act1(:, rhf1), mob1, remove_inactive=.true.)
+        if (rhf == 2) call sort_mo(occ2(:, rhf2), act2(:, rhf2), mob2, remove_inactive=.true.)
+    end subroutine remove_frozen_mo
 
 
     !----------------------------------------------------------------------------------------------
