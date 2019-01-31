@@ -66,6 +66,7 @@ contains
         logical, allocatable :: a_a2(:, :) !< Ket active alpha excitations.
         logical, allocatable :: a_b1(:, :) !< Bra active beta excitations.
         logical, allocatable :: a_b2(:, :) !< Ket active beta excitations.
+        character(len=50) :: count_fmt
         integer :: i
         real(dp), external :: omp_get_wtime
         real(dp) :: time00, time0
@@ -74,7 +75,7 @@ contains
         time00 = omp_get_wtime()
         if (print_level >= 2) then
             write(stdout, *)
-            write(stdout, '(5x,a)') '---- start cis_overlap_nto subroutine ----'
+            write(stdout, '(5x,a)') '---- start cis_overlap_cis subroutine ----'
         end if
 
         ! Get dimensions.
@@ -111,14 +112,16 @@ contains
         call truncate_wf(trunc, beta, wf_a2, wf_b2, a_a2, a_b2)
         if (trunc < 1.0_dp) then
             if (print_level >= 1) then
+                write(count_fmt, '(a,i0,a)') '(9x,', nwf_1, '(i0,1x),a,x,i0)'
                 write(stdout, *)
                 write(stdout, '(5x,a,f0.8)') 'Truncating wave functions based on threshold ', trunc
                 write(stdout, '(5x,a)') 'Number of remaining determinants for bra states:'
-                write(stdout, '(9x,1000(i0,1x))') count(a_a1, 1)
-                if (beta) write(stdout, '(9x,1000(i0,1x))') count(a_b1, 1)
+                write(stdout, count_fmt) count(a_a1, 1), '| Total:', count(any(a_a1, 2))
+                if (beta) write(stdout, count_fmt) count(a_b1, 1), '| Total:', count(any(a_b1, 2))
+                write(count_fmt, '(a,i0,a)') '(9x,', nwf_2, '(i0,1x),a,x,i0)'
                 write(stdout, '(5x,a)') 'Number of remaining determinants for ket states:'
-                write(stdout, '(9x,1000(i0,1x))') count(a_a2, 1)
-                if (beta) write(stdout, '(9x,1000(i0,1x))') count(a_b2, 1)
+                write(stdout, count_fmt) count(a_a2, 1), '| Total:', count(any(a_a2, 2))
+                if (beta) write(stdout, count_fmt) count(a_b2, 1), '| Total:', count(any(a_b2, 2))
             end if
         end if
 
