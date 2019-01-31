@@ -67,6 +67,15 @@ contains
         logical, allocatable :: a_b1(:, :) !< Bra active beta excitations.
         logical, allocatable :: a_b2(:, :) !< Ket active beta excitations.
         integer :: i
+        real(dp), external :: omp_get_wtime
+        real(dp) :: time00, time0
+        real(dp) :: time_rs_sr, time_ss, time_tot
+
+        time00 = omp_get_wtime()
+        if (print_level >= 2) then
+            write(stdout, *)
+            write(stdout, '(5x,a)') '---- start cis_overlap_nto subroutine ----'
+        end if
 
         ! Get dimensions.
         beta = .false.
@@ -100,17 +109,59 @@ contains
         ! Truncate wave functions:
         call truncate_wf(trunc, beta, wf_a1, wf_b1, a_a1, a_b1)
         call truncate_wf(trunc, beta, wf_a2, wf_b2, a_a2, a_b2)
+        if (trunc < 1.0_dp) then
+            if (print_level >= 1) then
+                write(stdout, *)
+                write(stdout, '(5x,a,f0.8)') 'Truncating wave functions based on threshold ', trunc
+                write(stdout, '(5x,a)') 'Number of remaining determinants for bra states:'
+                write(stdout, '(9x,1000(i0,1x))') count(a_a1, 1)
+                if (beta) write(stdout, '(9x,1000(i0,1x))') count(a_b1, 1)
+                write(stdout, '(5x,a)') 'Number of remaining determinants for ket states:'
+                write(stdout, '(9x,1000(i0,1x))') count(a_a2, 1)
+                if (beta) write(stdout, '(9x,1000(i0,1x))') count(a_b2, 1)
+            end if
+        end if
 
+
+        time0 = omp_get_wtime()
+        if (print_level >= 2) then
+            write(stdout, *)
+            if (beta) then
+                write(stdout, '(5x,a)') 'Computing alpha determinant blocks...'
+            else
+                write(stdout, '(5x,a)') 'Computing determinant blocks...'
+            end if
+            write(stdout, '(5x,a)') 'Status:'
+        end if
         rr_a = mat_ge_det(s_mo_a(1:no_a, 1:no_a))
         call cis_rs(no_a, nv_a1, s_mo_a, wf_a1, a_a1, sr_a, row = .true.)
+        if (print_level >= 2) write(stdout, '(9x,a)') 'RS block done.'
         call cis_rs(no_a, nv_a2, s_mo_a, wf_a2, a_a2, rs_a, row = .false.)
+        if (print_level >= 2) write(stdout, '(9x,a)') 'SR block done.'
+        time_rs_sr = omp_get_wtime() - time0
+
+        time0 = omp_get_wtime()
         call cis_ss(no_a, nv_a1, nv_a2, s_mo_a, wf_a1, wf_a2, a_a1, a_a2, ss_a)
+        if (print_level >= 2) write(stdout, '(9x,a)') 'SS block done.'
+        time_ss = omp_get_wtime() - time0
         
         if (beta) then
+            time0 = omp_get_wtime()
+            if (print_level >= 2) then
+                write(stdout, '(5x,a)') 'Computing beta determinant blocks...'
+                write(stdout, '(5x,a)') 'Status:'
+            end if
             rr_b = mat_ge_det(s_mo_b(1:no_b, 1:no_b))
             call cis_rs(no_b, nv_b1, s_mo_b, wf_b1, a_b1, sr_b, row = .true.)
+            if (print_level >= 2) write(stdout, '(9x,a)') 'RS block done.'
             call cis_rs(no_b, nv_b2, s_mo_b, wf_b2, a_b2, rs_b, row = .false.)
+            if (print_level >= 2) write(stdout, '(9x,a)') 'SR block done.'
+            time_rs_sr = time_rs_sr + omp_get_wtime() - time0
+            
+            time0 = omp_get_wtime()
             call cis_ss(no_b, nv_b1, nv_b2, s_mo_b, wf_b1, wf_b2, a_b1, a_b2, ss_b)
+            if (print_level >= 2) write(stdout, '(9x,a)') 'SS block done.'
+            time_ss = time_ss + omp_get_wtime() - time0
         end if
 
         if (allocated(s_wf)) deallocate(s_wf)
@@ -138,6 +189,20 @@ contains
             do i = 1, nwf_1
                 s_wf(i, 1:) = rr_a*ss_a(i, :) + sr_a(i)*rs_a
             end do
+        end if
+
+        if (print_level >= 2) then
+            write(stdout, *)
+            write(stdout,'(5x, a)') 'cis_overlap_cis time:'
+            time_tot = omp_get_wtime() - time00
+            write(stdout, '(9x, a40, f14.4)') 'RS and SR blocks          - time (sec):', time_rs_sr
+            write(stdout, '(9x, a40, f14.4)') 'SS block                  - time (sec):', time_ss
+            write(stdout, '(9x, 40x, a14)') '--------------'
+            write(stdout, '(9x, a40, f14.4)') 'Total                     - time (sec):', time_tot
+        end if
+        if (print_level >= 2) then
+            write(stdout, *)
+            write(stdout, '(5x,a)') '---- end cis_overlap_cis subroutine ----'
         end if
     end subroutine cis_overlap_cis
 
