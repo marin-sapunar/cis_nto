@@ -107,37 +107,37 @@ program cis_overlap_prog
             write(stdout, *) 'Calculate overlaps between two sets CIS type wave functions.'
             write(stdout, *)
             write(stdout, *) 'positional arguments:'
-            write(stdout, *) '  dir1                      directory containing calculation for bra states      '
-            write(stdout, *) '  dir2                      directory containing calculation for ket states      '
+            write(stdout, *) '  dir1                        directory containing calculation for bra states      '
+            write(stdout, *) '  dir2                        directory containing calculation for ket states      '
             write(stdout, *)
             write(stdout, *) 'optional arguments:'
-            write(stdout, *) '  -h, --help                 show this help message and exit                      '
-            write(stdout, *) '  -cis, --cis                use CIS algorithm for calculating overlaps           '
-            write(stdout, *) '                             (very slow, not recommended)                         '
-            write(stdout, *) '  -nto, --nto                use NTO algorithm for calculating overlaps (default) '
-            write(stdout, *) '  -ns, --(no-)norm-states    renormalize input states before calculation          '
-            write(stdout, '(29x,a,l1)') 'default: ', norm
-            write(stdout, *) '  -os, --(no-)orth-states    reorthogonalize input states before calculation      '
-            write(stdout, '(29x,a,l1)') 'default: ', orth
-            write(stdout, *) '  -oo, --(no-)orth-overlap   orthogonalize overlap matrix                         '
-            write(stdout, '(29x,a,l1)') 'default: ', orth_omat
-            write(stdout, *) '  -mp, --(no-)match-phase    match phase between assigned bra/ket states          '
-            write(stdout, '(29x,a,l1)') 'default: ', phase_omat
-            write(stdout, *) '  -rao, --(no-)recenter-aos  attempt to remove effect of basis set translation by '
-            write(stdout, *) '                             recentering pairs of AOs in AO overlap calculation   '
-            write(stdout, *) '                             (untested, not recommended without further testing)  '
-            write(stdout, '(29x,a,l1)') 'default: ', center2
-            write(stdout, *) '  -fmn, --freeze-mo-norm t   freeze occupied ket MOs when their norm in bra basis '
-            write(stdout, *) '                             is smaller than given threshold. Same number of bra  '
-            write(stdout, *) '                             MOs with smallest norms in ket basis is also frozen. '
-            write(stdout, *) '                             Used when geometry of a small part of a system is    '
-            write(stdout, *) '                             significantly different between bra and ket states.  '
-            write(stdout, *) '                             (untested)                                           '
-            write(stdout, *) '  -t, --threshold t          truncate wave functions using given threshold        '
-            write(stdout, *) '  -o, --outfile file         output final overlap matrix to file                  '
-            write(stdout, '(29x,a,a)') 'default: ',  outfile
-            write(stdout, *) '  -p, --print-level p        control output level of program (0 = quiet)           '
-            write(stdout, '(29x,a,i0)') 'default: ', print_level
+            write(stdout, *) '  -h, --help                  show this help message and exit                      '
+            write(stdout, *) '  -cis, --cis                 use CIS algorithm for calculating overlaps           '
+            write(stdout, *) '                              (very slow, not recommended)                         '
+            write(stdout, *) '  -nto, --nto                 use NTO algorithm for calculating overlaps (default) '
+            write(stdout, *) '  -ns, --(no-)norm-states     renormalize input states before calculation          '
+            write(stdout, '(31x,a,l1)') 'default: ', norm
+            write(stdout, *) '  -os, --(no-)orth-states     reorthogonalize input states before calculation      '
+            write(stdout, '(31x,a,l1)') 'default: ', orth
+            write(stdout, *) '  -oo, --(no-)orth-overlap    orthogonalize overlap matrix                         '
+            write(stdout, '(31x,a,l1)') 'default: ', orth_omat
+            write(stdout, *) '  -mp, --(no-)match-phase     match phase between assigned bra/ket states          '
+            write(stdout, '(31x,a,l1)') 'default: ', phase_omat
+            write(stdout, *) '  -rao, --(no-)recenter-aos   attempt to remove effect of basis set translation by '
+            write(stdout, *) '                              recentering pairs of AOs in AO overlap calculation   '
+            write(stdout, *) '                              (untested, not recommended without further testing)  '
+            write(stdout, '(31x,a,l1)') 'default: ', center2
+            write(stdout, *) '  -fmn, --freeze-mo-norm t    freeze occupied ket MOs when their norm in bra basis '
+            write(stdout, *) '                              is smaller than given threshold. Same number of bra  '
+            write(stdout, *) '                              MOs with smallest norms in ket basis is also frozen. '
+            write(stdout, *) '                              Used when geometry of a small part of a system is    '
+            write(stdout, *) '                              significantly different between bra and ket states.  '
+            write(stdout, *) '                              (untested)                                           '
+            write(stdout, *) '  -t, --threshold t           truncate wave functions using given threshold        '
+            write(stdout, *) '  -o, --outfile file          output final overlap matrix to file                  '
+            write(stdout, '(31x,a,a)') 'default: ',  outfile
+            write(stdout, *) '  -p, --print-level p         control output level of program (0 = quiet)          '
+            write(stdout, '(31x,a,i0)') 'default: ', print_level
             stop
         case('--cis', '-cis')
             alg = 1
