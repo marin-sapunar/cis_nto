@@ -62,7 +62,7 @@ program cis_nto_prog
         call get_command_argument(i, temp)
         if (i > narg) temp = '--help'
         select case(temp)
-        case('--help')
+        case('--help', '-h')
             write(stdout, *) 'usage: cis_nto.exe [optional arguments] dir'
             write(stdout, *)
             write(stdout, *) 'Return natural transition orbitals from a CIS/LR-TDDFT calculation.'
@@ -71,23 +71,23 @@ program cis_nto_prog
             write(stdout, *) '  dir                   directory containing the calculation                 '
             write(stdout, *)
             write(stdout, *) 'optional arguments:'
-            write(stdout, *) '  --help                show this help message and exit                      '
-            write(stdout, *) '  --threshold t         truncate wave functions using given threshold        '
-            write(stdout, '(25x,a,f7.4)') 'default: ', thr
-            write(stdout, *) '  --outfile file        output final NTOs to file                            '
-            write(stdout, '(25x,a,a)') 'default: ', outfile
-            write(stdout, *) '  --print-level p       control output level of program (0 = quiet)           '
-            write(stdout, '(25x,a,i0)') 'default: ', print_level
+            write(stdout, *) '  -h, --help                 show this help message and exit                      '
+            write(stdout, *) '  -t, --threshold t          truncate wave functions using given threshold        '
+            write(stdout, '(29x,a,f7.4)') 'default: ', thr
+            write(stdout, *) '  -o, --outfile file         output final NTOs to file                            '
+            write(stdout, '(29x,a,a)') 'default: ', outfile
+            write(stdout, *) '  -p, --print-level p        control output level of program (0 = quiet)           '
+            write(stdout, '(29x,a,i0)') 'default: ', print_level
             stop
-        case('--threshold')
+        case('--threshold', '-t')
             i = i + 1
             call get_command_argument(i, temp)
             read(temp, *) thr
-        case('--outfile')
+        case('--outfile', '-o')
             i = i + 1
             call get_command_argument(i, temp)
             outfile = trim(adjustl(temp))
-        case('--print-level')
+        case('--print-level', '-p')
             i = i + 1
             call get_command_argument(i, temp)
             read(temp, *) print_level

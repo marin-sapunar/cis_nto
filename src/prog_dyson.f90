@@ -98,36 +98,36 @@ program cis_dyson_prog
             write(stdout, *) '  dir2                  directory containing calculation for N el. system      '
             write(stdout, *)
             write(stdout, *) 'optional arguments:'
-            write(stdout, *) '  --help                show this help message and exit                      '
-            write(stdout, *) '  --(no-)norm-states    renormalize input states before calculation          '
-            write(stdout, '(25x,a,l1)') 'default: ', norm
-            write(stdout, *) '  --(no-)orth-states    reorthogonalize input states before calculation      '
-            write(stdout, '(25x,a,l1)') 'default: ', orth
-            write(stdout, *) '  --threshold t         truncate wave functions using given threshold        '
-            write(stdout, *) '  --prefix pref         prefix for output files                              '
-            write(stdout, *) '                        (geometry written to pref.at, basis set to pref.gto, '
-            write(stdout, *) '                         and dyson orbitals to pref.#.#.ao and pref.#.#.mo)  '
-            write(stdout, '(25x,a,a)') 'default: ', prefix
-            write(stdout, *) '  --print-level p       control output level of program (0 = quiet)           '
-            write(stdout, '(25x,a,i0)') 'default: ', print_level
+            write(stdout, *) '  -h, --help                 show this help message and exit                      '
+            write(stdout, *) '  -ns, --(no-)norm-states    renormalize input states before calculation          '
+            write(stdout, '(29x,a,l1)') 'default: ', norm
+            write(stdout, *) '  -os, --(no-)orth-states    reorthogonalize input states before calculation      '
+            write(stdout, '(29x,a,l1)') 'default: ', orth
+            write(stdout, *) '  -t, --threshold t          truncate wave functions using given threshold        '
+            write(stdout, *) '  -pre, --prefix pref        prefix for output files                              '
+            write(stdout, *) '                             (geometry written to pref.at, basis set to pref.gto, '
+            write(stdout, *) '                             and dyson orbitals to pref.#.#.ao and pref.#.#.mo)  '
+            write(stdout, '(29x,a,a)') 'default: ', prefix
+            write(stdout, *) '  -p, --print-level p        control output level of program (0 = quiet)           '
+            write(stdout, '(29x,a,i0)') 'default: ', print_level
             stop
-        case('--norm-states')
+        case('--norm-states', '-ns')
             norm = .true.
-        case('--no-norm-states')
+        case('--no-norm-states', '-nns')
             norm = .false.
-        case('--orth-states')
+        case('--orth-states', '-os')
             orth = .true.
-        case('--no-orth-states')
+        case('--no-orth-states', '-nos')
             orth = .false.
-        case('--threshold')
+        case('--threshold', '-t')
             i = i + 1
             call get_command_argument(i, temp)
             read(temp, *) thr
-        case('--prefix')
+        case('--prefix', '-pre')
             i = i + 1
             call get_command_argument(i, temp)
             prefix = trim(adjustl(temp))
-        case('--print-level')
+        case('--print-level', '-p')
             i = i + 1
             call get_command_argument(i, temp)
             read(temp, *) print_level

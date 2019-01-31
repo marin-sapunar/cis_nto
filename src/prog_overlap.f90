@@ -101,82 +101,82 @@ program cis_overlap_prog
         if (i == narg - 1) exit
         if (i == narg) temp = '--help'
         select case(temp)
-        case('--help')
+        case('--help', '-h')
             write(stdout, *) 'usage: cis_overlap.exe [optional arguments] dir1 dir2'
             write(stdout, *)
             write(stdout, *) 'Calculate overlaps between two sets CIS type wave functions.'
             write(stdout, *)
             write(stdout, *) 'positional arguments:'
-            write(stdout, *) '  dir1                  directory containing calculation for bra states      '
-            write(stdout, *) '  dir2                  directory containing calculation for ket states      '
+            write(stdout, *) '  dir1                      directory containing calculation for bra states      '
+            write(stdout, *) '  dir2                      directory containing calculation for ket states      '
             write(stdout, *)
             write(stdout, *) 'optional arguments:'
-            write(stdout, *) '  --help                show this help message and exit                      '
-            write(stdout, *) '  --cis                 use CIS algorithm for calculating overlaps           '
-            write(stdout, *) '                        (very slow, not recommended)                         '
-            write(stdout, *) '  --nto                 use NTO algorithm for calculating overlaps (default) '
-            write(stdout, *) '  --(no-)norm-states    renormalize input states before calculation          '
-            write(stdout, '(25x,a,l1)') 'default: ', norm
-            write(stdout, *) '  --(no-)orth-states    reorthogonalize input states before calculation      '
-            write(stdout, '(25x,a,l1)') 'default: ', orth
-            write(stdout, *) '  --(no-)orth-overlap   orthogonalize overlap matrix                         '
-            write(stdout, '(25x,a,l1)') 'default: ', orth_omat
-            write(stdout, *) '  --(no-)phase-overlap  match phase between assigned bra/ket states          '
-            write(stdout, '(25x,a,l1)') 'default: ', phase_omat
-            write(stdout, *) '  --(no-)recenter-aos   attempt to remove effect of basis set translation by '
-            write(stdout, *) '                        recentering pairs of AOs in AO overlap calculation   '
-            write(stdout, *) '                        (untested, not recommended without further testing)  '
-            write(stdout, '(25x,a,l1)') 'default: ', center2
-            write(stdout, *) '  --freeze-mo-norm t    freeze occupied ket MOs when their norm in bra basis '
-            write(stdout, *) '                        is smaller than given threshold. Same number of bra  '
-            write(stdout, *) '                        MOs with smallest norms in ket basis is also frozen. '
-            write(stdout, *) '                        Used when geometry of a small part of a system is    '
-            write(stdout, *) '                        significantly different between bra and ket states.  '
-            write(stdout, *) '                        (untested)                                           '
-            write(stdout, *) '  --threshold t         truncate wave functions using given threshold        '
-            write(stdout, *) '  --outfile file        output final overlap matrix to file                  '
-            write(stdout, '(25x,a,a)') 'default: ', outfile
-            write(stdout, *) '  --print-level p       control output level of program (0 = quiet)           '
-            write(stdout, '(25x,a,i0)') 'default: ', print_level
+            write(stdout, *) '  -h, --help                 show this help message and exit                      '
+            write(stdout, *) '  -cis, --cis                use CIS algorithm for calculating overlaps           '
+            write(stdout, *) '                             (very slow, not recommended)                         '
+            write(stdout, *) '  -nto, --nto                use NTO algorithm for calculating overlaps (default) '
+            write(stdout, *) '  -ns, --(no-)norm-states    renormalize input states before calculation          '
+            write(stdout, '(29x,a,l1)') 'default: ', norm
+            write(stdout, *) '  -os, --(no-)orth-states    reorthogonalize input states before calculation      '
+            write(stdout, '(29x,a,l1)') 'default: ', orth
+            write(stdout, *) '  -oo, --(no-)orth-overlap   orthogonalize overlap matrix                         '
+            write(stdout, '(29x,a,l1)') 'default: ', orth_omat
+            write(stdout, *) '  -mp, --(no-)match-phase    match phase between assigned bra/ket states          '
+            write(stdout, '(29x,a,l1)') 'default: ', phase_omat
+            write(stdout, *) '  -rao, --(no-)recenter-aos  attempt to remove effect of basis set translation by '
+            write(stdout, *) '                             recentering pairs of AOs in AO overlap calculation   '
+            write(stdout, *) '                             (untested, not recommended without further testing)  '
+            write(stdout, '(29x,a,l1)') 'default: ', center2
+            write(stdout, *) '  -fmn, --freeze-mo-norm t   freeze occupied ket MOs when their norm in bra basis '
+            write(stdout, *) '                             is smaller than given threshold. Same number of bra  '
+            write(stdout, *) '                             MOs with smallest norms in ket basis is also frozen. '
+            write(stdout, *) '                             Used when geometry of a small part of a system is    '
+            write(stdout, *) '                             significantly different between bra and ket states.  '
+            write(stdout, *) '                             (untested)                                           '
+            write(stdout, *) '  -t, --threshold t          truncate wave functions using given threshold        '
+            write(stdout, *) '  -o, --outfile file         output final overlap matrix to file                  '
+            write(stdout, '(29x,a,a)') 'default: ',  outfile
+            write(stdout, *) '  -p, --print-level p        control output level of program (0 = quiet)           '
+            write(stdout, '(29x,a,i0)') 'default: ', print_level
             stop
-        case('--cis')
+        case('--cis', '-cis')
             alg = 1
-        case('--nto')
+        case('--nto', '-nto')
             alg = 2
-        case('--norm-states')
+        case('--norm-states', '-ns')
             norm = .true.
-        case('--no-norm-states')
+        case('--no-norm-states', '-nns')
             norm = .false.
-        case('--orth-states')
+        case('--orth-states', '-os')
             orth = .true.
-        case('--no-orth-states')
+        case('--no-orth-states', '-nos')
             orth = .false.
-        case('--orth-overlap')
+        case('--orth-overlap', '-oo')
             orth_omat = .true.
-        case('--no-orth-overlap')
+        case('--no-orth-overlap', '-noo')
             orth_omat = .false.
-        case('--match-phase')
+        case('--match-phase', '-mp')
             phase_omat = .true.
-        case('--no-match-phase')
+        case('--no-match-phase', '-nmp')
             phase_omat = .false.
-        case('--recenter-aos')
+        case('--recenter-aos', '-rao')
             center2 = .true.
-        case('--no-recenter-aos')
+        case('--no-recenter-aos', '-nrao')
             center2 = .false.
-        case('--freeze-mo-norm')
+        case('--freeze-mo-norm', '-fmn')
             i = i + 1
             call get_command_argument(i, temp)
             read(temp, *) f_by_mo_norm_t
             if (f_by_mo_norm_t > 0.0_dp) f_by_mo_norm = .true.
-        case('--threshold')
+        case('--threshold', '-t')
             i = i + 1
             call get_command_argument(i, temp)
             read(temp, *) thr
-        case('--outfile')
+        case('--outfile', '-o')
             i = i + 1
             call get_command_argument(i, temp)
             outfile = trim(adjustl(temp))
-        case('--print-level')
+        case('--print-level', '-p')
             i = i + 1
             call get_command_argument(i, temp)
             read(temp, *) print_level
