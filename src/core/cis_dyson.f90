@@ -31,17 +31,19 @@ contains
     !> @note The rr, sr, rs and ss blocks for alpha spin are just the corresponding overlap blocks
     !! as the number of alpha electrons is the same.
     !----------------------------------------------------------------------------------------------
-    subroutine cis_dyson(trunc, s_mo, wf_a1, wf_a2, wf_b1, wf_b2, dys_mo)
+    subroutine cis_dyson(trunc, s_mo_a, s_mo_b, wf_a1, wf_a2, wf_b1, wf_b2, dys_mo)
         use blas95, only : gemv, gemm
         use matrix_mod, only : mat_ge_det
         real(dp), intent(in) :: trunc !< Threshold for truncating the wave functions.
-        real(dp), intent(in) :: s_mo(:, :, :) !< Overlaps of alpha/beta molecular orbitals.
+        real(dp), intent(in) :: s_mo_a(:, :) !< Overlaps of alpha molecular orbitals.
+        real(dp), intent(in) :: s_mo_b(:, :) !< Overlaps of beta molecular orbitals.
         real(dp), intent(in) :: wf_a1(:, :, :) !< Bra alpha wave function coefficients.
         real(dp), intent(in) :: wf_a2(:, :, :) !< Ket alpha wave function coefficients.
         real(dp), intent(in) :: wf_b1(:, :, :) !< Bra beta wave function coefficients.
         real(dp), intent(in) :: wf_b2(:, :, :) !< Ket beta wave function coefficients.
         real(dp), allocatable, intent(out) :: dys_mo(:, :, :) !< Dyson orbital in MO basis.
-        integer :: n_2 !< Number of bra orbitals.
+        integer :: n_a2 !< Number of bra alpha orbitals.
+        integer :: n_b2 !< Number of bra beta orbitals.
         integer :: no_a !< Number of occupied alpha orbitals.
         integer :: no_b1 !< Number of occupied beta orbitals.
         integer :: no_b2 !< Number of occupied beta orbitals.
@@ -84,7 +86,8 @@ contains
         end if
 
         ! Get dimensions.
-        n_2 = size(s_mo, 2)
+        n_a2 = size(s_mo_a, 2)
+        n_b2 = size(s_mo_b, 2)
         no_a = size(wf_a2, 2)
         no_b1 = size(wf_b1, 2)
         no_b2 = size(wf_b2, 2)
@@ -94,10 +97,10 @@ contains
         allocate(sr_a(nwf_1), source = 0.0_dp)
         allocate(rs_a(nwf_2), source = 0.0_dp)
         allocate(ss_a(nwf_1, nwf_2), source = 0.0_dp)
-        allocate(rr_b(n_2), source = 0.0_dp)
-        allocate(sr_b(n_2, nwf_1), source = 0.0_dp)
-        allocate(rs_b(n_2, nwf_2), source = 0.0_dp)
-        allocate(ss_b(n_2, nwf_1, nwf_2), source = 0.0_dp)
+        allocate(rr_b(n_b2), source = 0.0_dp)
+        allocate(sr_b(n_b2, nwf_1), source = 0.0_dp)
+        allocate(rs_b(n_b2, nwf_2), source = 0.0_dp)
+        allocate(ss_b(n_b2, nwf_1, nwf_2), source = 0.0_dp)
 
         ! Calculate NTOs.
         time0 = omp_get_wtime()
@@ -134,19 +137,19 @@ contains
             write(stdout, '(5x,a)') 'Computing determinant blocks...'
             write(stdout, '(5x,a)') 'Status:'
         end if
-        rr_a = mat_ge_det(s_mo(1:no_a, 1:no_a, 1))
-        call nto_rr_dys(no_b2, s_mo(:, :, 2), rr_b(1:no_b2))
+        rr_a = mat_ge_det(s_mo_a(1:no_a, 1:no_a))
+        call nto_rr_dys(no_b2, s_mo_b, rr_b(1:no_b2))
 
-        allocate(wrk0_a(no_a*2, n_2))
-        allocate(wrk0_b(no_b1*2, n_2))
+        allocate(wrk0_a(no_a*2, n_a2))
+        allocate(wrk0_b(no_b1*2, n_b2))
         allocate(wrk_a(no_a*2, no_a*2))
         allocate(wrk_b(no_b1*2, no_b2*2))
         allocate(wrk_nto(2*no_b2), source = 0.0_dp)
         do i = 1, nwf_1
             if (print_level >= 2) write(stdout, '(9x,a,i0,a,i0)') 'N-1 el. state ', i, '/', nwf_1
             ! CIS - Ref
-            call gemm(mo_a1(:, :, i), s_mo(:, :, 1), wrk0_a, transa='T')
-            call gemm(mo_b1(:, :, i), s_mo(:, :, 2), wrk0_b, transa='T')
+            call gemm(mo_a1(:, :, i), s_mo_a, wrk0_a, transa='T')
+            call gemm(mo_b1(:, :, i), s_mo_b, wrk0_b, transa='T')
             do j = 1, nwf_2
                 if (print_level >= 2) write(stdout, '(13x,a,i0,a,i0)') 'N el. state ', j, '/', nwf_2
                 call gemm(wrk0_a, mo_a2(:, :, j), wrk_a)
@@ -175,7 +178,7 @@ contains
         deallocate(wrk0_b)
         time_det = omp_get_wtime() - time0
 
-        allocate(dys_mo(n_2, 0:nwf_1, 0:nwf_2))
+        allocate(dys_mo(n_b2, 0:nwf_1, 0:nwf_2))
         dys_mo(:, 0, 0) = rr_b * rr_a
         do i = 1, nwf_1
             dys_mo(:, i, 0) = rr_b * sr_a(i) + sr_b(:, i) * rr_a

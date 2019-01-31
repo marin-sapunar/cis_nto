@@ -9,6 +9,7 @@ program cis_dyson_prog
     use ccg_ao_mod
     use one_el_op_mod
     use cis_dyson_mod
+    use cis_util_mod
     ! I/O
     use read_all_mod
     use write_molden_mod
@@ -48,7 +49,8 @@ program cis_dyson_prog
     logical, allocatable :: act2(:, :) !< Active MO mask 2.
     ! Results
     real(dp), allocatable :: s_ao(:, :) !< Atomic orbital overlaps.
-    real(dp), allocatable :: s_mo(:, :, :) !< Molecular orbital overlaps.
+    real(dp), allocatable :: s_mo_a(:, :) !< Molecular orbital overlaps alpha.
+    real(dp), allocatable :: s_mo_b(:, :) !< Molecular orbital overlaps beta.
     real(dp), allocatable :: dys_mo(:, :, :) !< Dyson orbitals in mo basis.
     real(dp), allocatable :: dys_ao(:, :, :) !< Dyson orbitals.
     real(dp), allocatable :: dys_norm(:, :) !< Norms of the dyson orbitals.
@@ -58,8 +60,10 @@ program cis_dyson_prog
     character(len=:), allocatable :: dir2
     character(len=:), allocatable :: prefix
     real(dp) :: thr
+    real(dp) :: f_by_mo_norm_t
     logical :: norm
     logical :: orth
+    logical :: f_by_mo_norm
     ! Help
     integer :: i, j, narg, outunit
     character(len=1000) :: temp
@@ -78,6 +82,9 @@ program cis_dyson_prog
     thr = 1.0_dp
     norm = .true.
     orth = .false.
+    f_by_mo_norm = .false.
+    f_by_mo_norm_t = -1.0_dp
+
 
     ! CLI
     narg = command_argument_count()
@@ -103,6 +110,12 @@ program cis_dyson_prog
             write(stdout, '(31x,a,l1)') 'default: ', norm
             write(stdout, *) '  -os, --(no-)orth-states     reorthogonalize input states before calculation      '
             write(stdout, '(31x,a,l1)') 'default: ', orth
+            write(stdout, *) '  -fmn, --freeze-mo-norm t    freeze occupied ket MOs when their norm in bra basis '
+            write(stdout, *) '                              is smaller than given threshold. Same number of bra  '
+            write(stdout, *) '                              MOs with smallest norms in ket basis is also frozen. '
+            write(stdout, *) '                              Used when geometry of a small part of a system is    '
+            write(stdout, *) '                              significantly different between bra and ket states.  '
+            write(stdout, *) '                              (untested)                                           '
             write(stdout, *) '  -t, --threshold t           truncate wave functions using given threshold        '
             write(stdout, *) '  -pre, --prefix pref         prefix for output files                              '
             write(stdout, *) '                              (geometry written to pref.at, basis set to pref.gto, '
@@ -119,6 +132,11 @@ program cis_dyson_prog
             orth = .true.
         case('--no-orth-states', '-nos')
             orth = .false.
+        case('--freeze-mo-norm', '-fmn')
+            i = i + 1
+            call get_command_argument(i, temp)
+            read(temp, *) f_by_mo_norm_t
+            if (f_by_mo_norm_t > 0.0_dp) f_by_mo_norm = .true.
         case('--threshold', '-t')
             i = i + 1
             call get_command_argument(i, temp)
@@ -159,37 +177,18 @@ program cis_dyson_prog
         write(stdout, '(5x,a,a)') ' Directory containing calculation for N el. states: ', dir2
     end if
 
-    if (.not. is_dir(dir1)) then
-        write(stderr, *)
-        write(stderr, '(1x,a,a,a)') 'Error. Directory ', dir1, ' not found.'
-        stop
-    end if
+    call need_dir(dir1)
     call read_ccg_ao(input_format, dir1, ccg1, geom=geom1, trans_ao=trans1)
     call read_mo(input_format, dir1, moa_c=moa1, mob_c=mob1)
     call read_cis(input_format, dir1, cisa=cisa1, cisb=cisb1, occ_mo=occ1, act_mo=act1, occ_num=on1, &
     &             norm=norm, orthog=orth)
     nwf1 = size(cisa1, 3)
     if (allocated(cisb1)) rhf1 = 2
-    if (print_level >= 1) then
-        write(stdout, *)
-        write(stdout, '(1x,a)') 'Properties for N-1 el. states:'
-        if (rhf1 == 1) write(stdout, '(5x, a)') 'Restricted calculation.'
-        if (rhf1 == 2) write(stdout, '(5x, a)') 'Unrestricted calculation.'
-        write(stdout, '(5x,a,2(1x,i0))') 'Number of excited states:           ', nwf1
-        write(stdout, '(5x,a,2(1x,i0))') 'Number of basis functions (sphe):   ', size(trans1, 1)
-        write(stdout, '(5x,a,2(1x,i0))') 'Number of basis functions (cart):   ', size(trans1, 2)
-        write(stdout, '(5x,a,2(1x,i0))') 'Number of orbitals:                 ', on2%n
-        write(stdout, '(5x,a,2(1x,i0))') 'Number of occupied orbitals:        ', on1%o(1:rhf1)
-        write(stdout, '(5x,a,2(1x,i0))') 'Number of virtual orbitals:         ', on1%v(1:rhf1)
-        write(stdout, '(5x,a,2(1x,i0))') 'Number of active occupied orbitals: ', on1%ao(1:rhf1)
-        write(stdout, '(5x,a,2(1x,i0))') 'Number of active virtual orbitals:  ', on1%av(1:rhf1)
-    end if
+    call print_calculation_properties('Properties for N-1 el. states:', rhf1, nwf1, size(trans1, 1), &
+    &                                 size(trans1, 2), on1)
 
-    if (.not. is_dir(dir2)) then
-        write(stderr, *)
-        write(stderr, '(1x,a,a,a)') 'Error. Directory ', dir2, ' not found.'
-        stop
-    end if
+
+    call need_dir(dir2)
     call read_geom(input_format, dir2, geom2, atsym, atnum)
     call read_ccg_ao(input_format, dir2, ccg2, geom=geom2, trans_ao=trans2, basis=basis, basis_index=bindex)
     call read_mo(input_format, dir2, moa_c=moa2, mob_c=mob2)
@@ -197,31 +196,15 @@ program cis_dyson_prog
     &             norm=norm, orthog=orth)
     nwf2 = size(cisa2, 3)
     if (allocated(cisb2)) rhf2 = 2
-    if (print_level >= 1) then
-        write(stdout, *)
-        write(stdout, '(1x,a)') 'Properties for N el. states:'
-        if (rhf2 == 1) write(stdout, '(5x, a)') 'Restricted calculation.'
-        if (rhf2 == 2) write(stdout, '(5x, a)') 'Unrestricted calculation.'
-        write(stdout, '(5x,a,2(1x,i0))') 'Number of excited states:           ', nwf2
-        write(stdout, '(5x,a,2(1x,i0))') 'Number of basis functions (sphe):   ', size(trans2, 1)
-        write(stdout, '(5x,a,2(1x,i0))') 'Number of basis functions (cart):   ', size(trans2, 2)
-        write(stdout, '(5x,a,2(1x,i0))') 'Number of orbitals:                 ', on2%n
-        write(stdout, '(5x,a,2(1x,i0))') 'Number of occupied orbitals:        ', on2%o(1:rhf2)
-        write(stdout, '(5x,a,2(1x,i0))') 'Number of virtual orbitals:         ', on2%v(1:rhf2)
-        write(stdout, '(5x,a,2(1x,i0))') 'Number of active occupied orbitals: ', on2%ao(1:rhf2)
-        write(stdout, '(5x,a,2(1x,i0))') 'Number of active virtual orbitals:  ', on2%av(1:rhf2)
-    end if
+    call print_calculation_properties('Properties for N. el. states:', rhf2, nwf2, size(trans2, 1), &
+    &                                 size(trans2, 2), on2)
+
+    ! Check input dimensions.
+    rhf = max(rhf1, rhf2)
+    call check_occ_orb(1, rhf1, rhf2, on1, on2, occ1, occ2, act1, act2, cisa1, cisa2, cisb1, cisb2)
+    call check_rhf(rhf1, rhf2, moa1, moa2, mob1, mob2, cisa1, cisa2, cisb1, cisb2)
+    call remove_pre_frozen_mo(rhf1, rhf2, occ1, occ2, act1, act2, moa1, moa2, mob1, mob2)
     time_io = omp_get_wtime() - time0
-    if ((on1%o(1) /= on2%o(1)) .or. (on1%o(rhf1) /= on2%o(rhf2)-1)) then
-        write(stderr, *)
-        write(stderr, '(1x,a,a,a)') 'Error. Mismatch in number of occupied orbitals.'
-        stop
-    end if
-    if ((on1%ao(1) /= on2%ao(1)) .or. (on1%ao(rhf1) /= on2%ao(rhf2)-1)) then
-        write(stderr, *)
-        write(stderr, '(1x,a,a,a)') 'Error. Mismatch in number of active occupied orbitals.'
-        stop
-    end if
 
     ! Calculate AO overlaps.
     if (print_level >= 2) then
@@ -232,50 +215,26 @@ program cis_dyson_prog
     call one_el_op(ccg1, ccg2, [0,0,0], geom1, geom2, trans1, trans2, s_ao)
     time_ao = omp_get_wtime() - time0
 
-    ! Allocate arrays for mixed restricted/unrestricted calculation.
-    rhf = max(rhf1, rhf2)
-    if (rhf1 /= rhf) then
-        if (print_level >= 1) then
-            write(stdout, *)
-            write(stdout, '(1x,a)') 'Unrestricted N-1 el. and restricted N el. calculation...'
-            write(stdout, '(5x,a)') 'Renormalizing N-1 el. CI coefficients...'
-        end if
-        cisa1 = cisa1 / sqrt(2.0_dp)
-        allocate(mob1, source=moa1)
-        allocate(cisb1, source=cisa1)
-        cisb1 = -cisb1
-    else if (rhf2 /= rhf) then
-        if (print_level >= 1) then
-            write(stdout, *)
-            write(stdout, '(1x,a)') 'Restricted N-1 el. and unrestricted N el. calculation...'
-            write(stdout, '(5x,a)') 'Renormalizing N el. CI coefficients...'
-        end if
-        cisa2 = cisa2 / sqrt(2.0_dp)
-        allocate(mob2, source=moa2)
-        allocate(cisb2, source=cisa2)
-        cisb2 = -cisb2
-    end if
-
-    ! Remove frozen mos and calculate MO overlap matrix.
-    if (print_level >= 1) then
-        if ((.not. all(act1)) .or. (.not. all(act2))) then
-            write(stdout, *)
-            write(stdout, '(1x,a)') 'Removing frozen MOs...'
-        end if
-    end if
-    time0 = omp_get_wtime()
-    call sort_mo(occ1(:, 1), act1(:, 1), moa1, remove_inactive = .true.)
-    call sort_mo(occ2(:, 1), act2(:, 1), moa2, remove_inactive = .true.)
-    if (rhf == 2) call sort_mo(occ1(:, rhf1), act1(:, rhf1), mob1, remove_inactive = .true.)
-    if (rhf == 2) call sort_mo(occ2(:, rhf2), act2(:, rhf2), mob2, remove_inactive = .true.)
+    ! Calculate MO overlap matrix.
     if (print_level >= 2) then
         write(stdout, *)
         write(stdout, '(1x,a)') 'Computing MO overlaps..'
     end if
-    allocate(s_mo(size(moa1, 2), size(moa2, 2), rhf))
-    call mat_ge_mmm(moa1, s_ao, moa2, s_mo(:, :, 1), transa='T')
-    if (rhf == 2) call mat_ge_mmm(mob1, s_ao, mob2, s_mo(:, :, 2), transa='T')
+    allocate(s_mo_a(size(moa1, 2), size(moa2, 2)))
+    call mat_ge_mmm(moa1, s_ao, moa2, s_mo_a, transa='T')
+    if (rhf == 2) then
+        allocate(s_mo_b(size(mob1, 2), size(mob2, 2)))
+        call mat_ge_mmm(mob1, s_ao, mob2, s_mo_b, transa='T')
+    end if
     time_mo = omp_get_wtime() - time0
+
+    ! Remove MO and CI coefficients based on freeze options.
+    call check_mo_norms(s_mo_a, moa1, moa2, cisa1, cisa2, f_by_mo_norm, f_by_mo_norm_t)
+    if (rhf == 2) then
+        call check_mo_norms(s_mo_b, mob1, mob2, cisb1, cisb2, f_by_mo_norm, f_by_mo_norm_t)
+    end if
+    call check_ci_norms(rhf, cisa1, cisb1, 'bra')
+    call check_ci_norms(rhf, cisa2, cisb2, 'ket')
 
     ! Calculate dyson orbitals
     time0 = omp_get_wtime()
@@ -283,7 +242,7 @@ program cis_dyson_prog
         write(stdout, *)
         write(stdout, '(1x,a)') 'Computing Dyson orbitals..'
     end if
-    call cis_dyson(thr, s_mo, cisa1, cisa2, cisb1, cisb2, dys_mo)
+    call cis_dyson(thr, s_mo_a, s_mo_b, cisa1, cisa2, cisb1, cisb2, dys_mo)
     allocate(dys_norm(0:nwf1, 0:nwf2))
     dys_norm = sum(dys_mo(:, :, :)*dys_mo(:, :, :), dim=1)
     if (print_level >= 2) then

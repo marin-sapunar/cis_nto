@@ -41,7 +41,8 @@ contains
         real(dp), intent(in) :: wf_b2(:, :, :) !< Ket beta wave function coefficients.
         real(dp), allocatable, intent(out) :: s_wf(:, :) !< Wave function overlaps.
         logical :: beta !< Restricted/unrestricted calculation.
-        integer :: n_2 !< Number of ket orbitals.
+        integer :: n_a2 !< Number of ket alpha orbitals.
+        integer :: n_b2 !< Number of ket beta orbitals.
         integer :: no_a !< Number of occupied alpha orbitals.
         integer :: no_b !< Number of occupied beta orbitals.
         integer :: nwf_1 !< Number of bra states.
@@ -83,7 +84,8 @@ contains
         ! Get dimensions:
         beta = .false.
         if (rhf == 2) beta = .true.
-        n_2 = size(s_mo_a, 2)
+        n_a2 = size(s_mo_a, 2)
+        n_b2 = size(s_mo_b, 2)
         no_a = size(wf_a1, 2)
         if (beta) no_b = size(wf_b1, 2)
         nwf_1 = size(wf_a1, 3)
@@ -142,7 +144,7 @@ contains
             write(stdout, '(5x,a)') 'Status:'
         end if
         rr_a = mat_ge_det(s_mo_a(1:no_a, 1:no_a))
-        allocate(wrk(no_a*2, n_2))
+        allocate(wrk(no_a*2, n_a2))
         do i = 1, nwf_1
             if (print_level >= 2) write(stdout, '(9x,a,i0,a,i0)') 'bra state ', i, '/', nwf_1
             call gemm(mo_a1(:, :, i), s_mo_a, wrk, transa='T')
@@ -162,7 +164,7 @@ contains
                 write(stdout, '(5x,a)') 'Status:'
             end if
             rr_b = mat_ge_det(s_mo_b(1:no_b, 1:no_b))
-            allocate(wrk(no_b*2, n_2))
+            allocate(wrk(no_b*2, n_b2))
             do i = 1, nwf_1
                 if (print_level >= 2) write(stdout, '(9x,a,i0,a,i0)') 'bra state ', i, '/', nwf_1
                 call gemm(mo_b1(:, :, i), s_mo_b, wrk, transa='T')

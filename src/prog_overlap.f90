@@ -11,7 +11,7 @@ program cis_overlap_prog
     use cis_overlap_cis_mod
     use orthog_mod
     use phase_mod
-    use cis_overlap_util_mod
+    use cis_util_mod
     ! I/O
     use read_all_mod
     implicit none
@@ -42,7 +42,6 @@ program cis_overlap_prog
     logical, allocatable :: occ2(:, :) !< Occupied MO mask 2.
     logical, allocatable :: act1(:, :) !< Active MO mask from el. structure calculation 1.
     logical, allocatable :: act2(:, :) !< Active MO mask from el. structure calculation 2.
-
     ! Results
     real(dp), allocatable :: s_ao(:, :) !< Atomic orbital overlaps.
     real(dp), allocatable :: s_mo_a(:, :) !< Molecular orbital overlaps alpha.
@@ -230,9 +229,9 @@ program cis_overlap_prog
 
     ! Check input dimensions.
     rhf = max(rhf1, rhf2)
-    call check_occ_orb(rhf1, rhf2, on1, on2, occ1, occ2, act1, act2, cisa1, cisa2, cisb1, cisb2)
+    call check_occ_orb(0, rhf1, rhf2, on1, on2, occ1, occ2, act1, act2, cisa1, cisa2, cisb1, cisb2)
     call check_rhf(rhf1, rhf2, moa1, moa2, mob1, mob2, cisa1, cisa2, cisb1, cisb2)
-    call remove_frozen_mo(rhf1, rhf2, occ1, occ2, act1, act2, moa1, moa2, mob1, mob2)
+    call remove_pre_frozen_mo(rhf1, rhf2, occ1, occ2, act1, act2, moa1, moa2, mob1, mob2)
     time_io = omp_get_wtime() - time0
 
     ! Calculate AO overlaps.
