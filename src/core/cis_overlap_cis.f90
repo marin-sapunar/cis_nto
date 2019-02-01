@@ -3,7 +3,6 @@
 !> @author Marin Sapunar, Ruđer Bošković Institute
 !> @date November, 2018
 !
-! DESCRIPTION:
 !> @brief Subroutines for calculating overlaps between CIS wave functions.
 !----------------------------------------------------------------------------------------------
 module cis_overlap_cis_mod

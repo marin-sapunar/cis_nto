@@ -1,3 +1,10 @@
+!--------------------------------------------------------------------------------------------------
+! PROGRAM: cis_overlap_prog
+!> @author Marin Sapunar, Ruđer Bošković Institute
+!> @date August, 2018
+!
+!> @brief Calculate overlap between two sets of CIS type wave functions.
+!--------------------------------------------------------------------------------------------------
 program cis_overlap_prog
     ! General
     use global_defs

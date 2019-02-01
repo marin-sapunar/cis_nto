@@ -1,3 +1,10 @@
+!--------------------------------------------------------------------------------------------------
+! MODULE: matrix_mod
+!> @author Marin Sapunar, Ruđer Bošković Institute
+!> @date August, 2018
+!
+!> @brief LAPACK interfaces and common matrix operations.
+!--------------------------------------------------------------------------------------------------
 module matrix_mod
     use global_defs, only : dp, errstop
     implicit none
@@ -35,8 +42,6 @@ contains
 ! The following subroutines require LAPACK with Fortran95 interface.
     !----------------------------------------------------------------------------------------------
     ! SUBROUTINE: mat_norm
-    !
-    ! DESCRIPTION:
     !> @brief Returns norm of matrix (Frobenius or spectral).
     !----------------------------------------------------------------------------------------------
     pure function mat_norm(mat, norm_type) result(norm)

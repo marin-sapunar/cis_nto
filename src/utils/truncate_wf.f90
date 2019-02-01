@@ -2,6 +2,8 @@
 ! MODULE: truncate_wf_mod
 !> @author Marin Sapunar, Ruđer Bošković Institute
 !> @date November, 2018
+!
+!> @brief Subroutines for truncating a wave function.
 !----------------------------------------------------------------------------------------------
 module truncate_wf_mod
     use global_defs

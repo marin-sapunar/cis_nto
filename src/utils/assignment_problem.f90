@@ -3,7 +3,6 @@
 !> @author Marin Sapunar, Ruđer Bošković Institute
 !> @date March, 2017
 !
-! DESCRIPTION: 
 !> @brief Subroutine for solving the assignment problem.
 !> @details
 !! The (linear) assignment problem:
@@ -39,7 +38,6 @@ contains
     !----------------------------------------------------------------------------------------------
     ! SUBROUTINE: assignment_problem
     !
-    ! DESCRIPTION:
     !> @brief The Kuhn-Munkres algorithm for square matrices.
     !> @details
     !! Input is a real matrix with dimensions n x n. The output is a vector containing the optimal

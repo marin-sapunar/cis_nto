@@ -3,7 +3,6 @@
 !> @author Marin Sapunar, Ruđer Bošković Institute
 !> @date October, 2018
 !
-! DESCRIPTION:
 !> @brief Subroutines for calculating Dyson orbitals from CIS wave functions.
 !----------------------------------------------------------------------------------------------
 module cis_dyson_mod

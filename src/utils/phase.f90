@@ -21,7 +21,6 @@ contains
     !----------------------------------------------------------------------------------------------
     ! SUBROUTINE: phasematch_diagonal
     !
-    ! DESCRIPTION:
     !> @brief Match phase of adiabatic states.
     !> @details 
     !! Phase of adiabatic states is kept constant. Signs of the rows/columns of the overlap matrix
@@ -64,7 +63,6 @@ contains
     !----------------------------------------------------------------------------------------------
     ! SUBROUTINE: phasematch_assigned_rotation
     !
-    ! DESCRIPTION:
     !> @brief Match phase of assigned states while avoiding reflections.
     !> @details 
     !! Each adiabatic state in the current step is matched with a single state in the previous
@@ -135,7 +133,6 @@ contains
     !----------------------------------------------------------------------------------------------
     ! SUBROUTINE: phasematch_assigned
     !
-    ! DESCRIPTION:
     !> @brief Match phase of assigned states.
     !> @details 
     !! Phase of matched states is kept constant. Identities of the states are tracked by solving 

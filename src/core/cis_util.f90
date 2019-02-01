@@ -3,7 +3,6 @@
 !> @author Marin Sapunar, Ruđer Bošković Institute
 !> @date January, 2019
 !
-! DESCRIPTION:
 !> @brief Utilty subroutines for cis_overlap and cis_dyson programs.
 !----------------------------------------------------------------------------------------------
 module cis_util_mod

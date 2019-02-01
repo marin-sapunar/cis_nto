@@ -3,7 +3,6 @@
 !> @author Marin Sapunar, Ruđer Bošković Institute
 !> @date October, 2018
 !
-! DESCRIPTION:
 !> @brief Subroutines for working with natural transition orbitals from CIS wave functions.
 !----------------------------------------------------------------------------------------------
 module cis_nto_mod

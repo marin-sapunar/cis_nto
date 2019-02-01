@@ -1,3 +1,11 @@
+!--------------------------------------------------------------------------------------------------
+! PROGRAM: cis_nto_prog
+!> @author Marin Sapunar, Ruđer Bošković Institute
+!> @date August, 2018
+!
+!> @brief Calculate natural transition orbitals for a CIS type calculation.
+!--------------------------------------------------------------------------------------------------
+program cis_overlap_prog
 program cis_nto_prog
     ! General
     use global_defs
