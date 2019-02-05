@@ -11,12 +11,20 @@ module matrix_mod
 
     private
     public :: genmat_diag
+    public :: vec_outer
 ! The following subroutines require LAPACK with Fortran95 interface.
     public :: mat_norm
     public :: mat_sy_ev
     public :: mat_sy_exp
     public :: mat_ge_det
     public :: mat_ge_mmm
+
+
+    interface vec_outer
+        module procedure vec_outer_int
+        module procedure vec_outer_dp
+    end interface vec_outer
+
 
 
 contains
@@ -37,6 +45,37 @@ contains
         end do
     end function genmat_diag
 
+
+    !----------------------------------------------------------------------------------------------
+    ! FUNCTION: vec_outer_int
+    !> @brief Give outer product of two int vectors.
+    !----------------------------------------------------------------------------------------------
+    function vec_outer_int(vec1, vec2) result(mat)
+        integer, intent(in) :: vec1(:)
+        integer, intent(in) :: vec2(:)
+        integer :: mat(size(vec1), size(vec2))
+        integer :: i
+
+        do i = 1, size(vec2)
+            mat(:, i) = vec2(i) * vec1
+        end do
+    end function vec_outer_int
+
+
+    !----------------------------------------------------------------------------------------------
+    ! FUNCTION: vec_outer_dp
+    !> @brief Give outer product of two dp vectors.
+    !----------------------------------------------------------------------------------------------
+    function vec_outer_dp(vec1, vec2) result(mat)
+        real(dp), intent(in) :: vec1(:)
+        real(dp), intent(in) :: vec2(:)
+        real(dp) :: mat(size(vec1), size(vec2))
+        integer :: i
+
+        do i = 1, size(vec2)
+            mat(:, i) = vec2(i) * vec1
+        end do
+    end function vec_outer_dp
 
 
 ! The following subroutines require LAPACK with Fortran95 interface.

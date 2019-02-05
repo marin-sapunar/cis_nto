@@ -29,7 +29,7 @@ contains
     !----------------------------------------------------------------------------------------------
     subroutine cis_overlap_nto(rhf, trunc, s_mo_a, s_mo_b, wf_a1, wf_a2, wf_b1, wf_b2, s_wf)
         use blas95, only : gemm
-        use matrix_mod, only : mat_ge_det
+        use matrix_mod, only : mat_ge_det, vec_outer
         integer, intent(in) :: rhf !< Restricted (1) or unrestricted (2) calculation.
         real(dp), intent(in) :: trunc !< Threshold for truncating the wave functions.
         real(dp), intent(in) :: s_mo_a(:, :) !< Overlaps of alpha molecular orbitals.
@@ -118,9 +118,9 @@ contains
         ! Truncate wave functions:
         call cis_nto_truncate(beta, trunc, c_a1, c_b1, na_a1, na_b1)
         call cis_nto_truncate(beta, trunc, c_a2, c_b2, na_a2, na_b2)
-        if (trunc < 1.0_dp) then
-            if (print_level >= 1) then
-                write(stdout, *) 
+        if (print_level >= 1) then
+            if (trunc < 1.0_dp) then
+                write(stdout, *)
                 write(stdout, '(5x,a,f0.8)') 'Truncating wave functions based on threshold ', trunc
                 write(stdout, '(5x,a)') 'Number of remaining determinants for bra states:'
                 write(stdout, '(9x,1000(i0,1x))') na_a1
@@ -129,12 +129,22 @@ contains
                 write(stdout, '(9x,1000(i0,1x))') na_a2
                 if (beta) write(stdout, '(9x,1000(i0,1x))') na_b2
             end if
+            write(stdout, *)
+            if (beta) then
+                i = sum(vec_outer(na_a1, na_a2))
+                write(stdout, '(5x,a,i0)') 'Total number of alpha overlap determinants: ', i
+                i = sum(vec_outer(na_b1, na_b2))
+                write(stdout, '(5x,a,i0)') 'Total number of beta overlap determinants: ', i
+            else
+                i = sum(vec_outer(na_a1, na_a2))
+                write(stdout, '(5x,a,i0)') 'Total number of overlap determinants: ', i
+            end if
         end if
 
         ! Calculate determinant blocks:
         time0 = omp_get_wtime()
         if (print_level >= 2) then
-            write(stdout, *) 
+            write(stdout, *)
             if (beta) then
                 write(stdout, '(5x,a)') 'Computing alpha determinant blocks...'
             else

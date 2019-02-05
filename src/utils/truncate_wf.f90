@@ -52,6 +52,12 @@ contains
         allocate(vec(dimt))
         allocate(mask(dimt))
 
+        if (thr >= 1.0_dp) then
+            amask = .true.
+            if (beta) bmask = .true.
+            return
+        end if
+
         do i = 1, nwf
             vec(1:dima) = wfa(:, i)
             if (beta) vec(dima+1:dimt) = wfb(:, i)
