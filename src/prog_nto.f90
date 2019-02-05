@@ -5,7 +5,6 @@
 !
 !> @brief Calculate natural transition orbitals for a CIS type calculation.
 !--------------------------------------------------------------------------------------------------
-program cis_overlap_prog
 program cis_nto_prog
     ! General
     use global_defs
@@ -15,6 +14,7 @@ program cis_nto_prog
     use occupation_mod
     use ccg_ao_mod
     use cis_nto_mod
+    use cis_util_mod
     ! I/O
     use read_all_mod
     use write_molden_mod
@@ -122,11 +122,7 @@ program cis_nto_prog
         write(stdout, '(1x,a)') 'Reading input from turbomole files...'
         write(stdout, '(5x,a,a)') ' Directory containing calculation: ', dir
     end if
-    if (.not. is_dir(dir)) then
-        write(stderr, *)
-        write(stderr, '(1x,a,a,a)') 'Error. Directory ', dir, ' not found.'
-        stop
-    end if
+    call need_dir(dir)
     call read_geom(input_format, dir, geom, atsym, atnum)
     call read_ccg_ao(input_format, dir, ccg1, basis=basis, basis_index=bindex, trans_ao=trans)
     call read_mo(input_format, dir, moa_c=moa, mob_c=mob)
@@ -134,20 +130,8 @@ program cis_nto_prog
     &             orthog=.false., norm=.true.)
     if (allocated(cisb)) beta = .true.
     if (allocated(cisb)) rhf = 2
-    if (print_level >= 1) then
-        write(stdout, *)
-        write(stdout, '(1x,a)') 'Electronic structure calculation properties:'
-        if (rhf == 1) write(stdout, '(5x, a)') 'Restricted calculation.'
-        if (rhf == 2) write(stdout, '(5x, a)') 'Unrestricted calculation.'
-        write(stdout, '(5x,a,2(1x,i0))') 'Number of excited states:           ', size(cisa, 3)
-        write(stdout, '(5x,a,2(1x,i0))') 'Number of basis functions (sphe):   ', size(trans, 1)
-        write(stdout, '(5x,a,2(1x,i0))') 'Number of basis functions (cart):   ', size(trans, 2)
-        write(stdout, '(5x,a,2(1x,i0))') 'Number of orbitals:                 ', on%n
-        write(stdout, '(5x,a,2(1x,i0))') 'Number of occupied orbitals:        ', on%o(1:rhf)
-        write(stdout, '(5x,a,2(1x,i0))') 'Number of virtual orbitals:         ', on%v(1:rhf)
-        write(stdout, '(5x,a,2(1x,i0))') 'Number of active occupied orbitals: ', on%ao(1:rhf)
-        write(stdout, '(5x,a,2(1x,i0))') 'Number of active virtual orbitals:  ', on%av(1:rhf)
-    end if
+    call print_calculation_properties('Electronic structure calculation properties:', rhf,&
+    &                                 size(cisa, 3), size(trans, 1), size(trans, 2), on)
 
     ! Remove frozen mos and transform mos to cartesian basis.
     if (print_level >= 1) then

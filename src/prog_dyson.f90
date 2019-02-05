@@ -5,7 +5,6 @@
 !
 !> @brief Calculate Dyson orbitals from two sets of CIS type wave functions.
 !--------------------------------------------------------------------------------------------------
-program cis_overlap_prog
 program cis_dyson_prog
     ! General
     use global_defs
