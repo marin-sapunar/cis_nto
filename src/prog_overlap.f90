@@ -71,7 +71,7 @@ program cis_overlap_prog
     logical :: center1
     logical :: center2
     logical :: f_by_mo_norm
-    integer :: alg
+    character(len=3) :: alg
     ! Help
     integer :: i, narg, outunit
     character(len=1000) :: temp
@@ -87,7 +87,7 @@ program cis_overlap_prog
     print_level = 2
     outfile = 'omat'
     input_format = 'turbomole'
-    alg = 2
+    alg = 'NTO'
     thr = 1.0_dp
     norm = .true.
     orth = .false.
@@ -146,9 +146,9 @@ program cis_overlap_prog
             write(stdout, '(31x,a,i0)') 'default: ', print_level
             stop
         case('--cis', '-cis')
-            alg = 1
+            alg = 'CIS'
         case('--nto', '-nto')
-            alg = 2
+            alg = 'NTO'
         case('--norm-states', '-ns')
             norm = .true.
         case('--no-norm-states', '-nns')
@@ -208,6 +208,8 @@ program cis_overlap_prog
     ! Read input.
     time0 = omp_get_wtime()
     if (print_level >= 1) then
+        write(stdout, *) 
+        write(stdout, '(1x,a,a,a)') 'Using ', alg, ' algorithm.'
         write(stdout, *) 
         write(stdout, '(1x,a)') 'Reading input from turbomole files...'
         write(stdout, '(5x,a,a)') ' Directory containing calculation for bra states: ', dir1
@@ -280,9 +282,9 @@ program cis_overlap_prog
     end if
     time0 = omp_get_wtime()
     select case(alg)
-    case(1)
+    case('CIS')
         call cis_overlap_cis(rhf, thr, s_mo_a, s_mo_b, cisa1, cisa2, cisb1, cisb2, s_wf)
-    case(2)
+    case('NTO')
         call cis_overlap_nto(rhf, thr, s_mo_a, s_mo_b, cisa1, cisa2, cisb1, cisb2, s_wf)
     end select
     allocate(s_wf_raw, source=s_wf)
