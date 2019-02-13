@@ -74,7 +74,8 @@ program cis_overlap_prog
     logical :: center1
     logical :: center2
     logical :: f_by_mo_norm
-    character(len=3) :: alg
+    logical :: comp_l2m
+    character(len=4) :: overlap_alg
     ! Help
     integer :: i, narg, outunit
     character(len=1000) :: temp
@@ -90,7 +91,7 @@ program cis_overlap_prog
     print_level = 2
     outfile = 'omat'
     input_format = 'turbomole'
-    alg = 'NTO'
+    overlap_alg = 'NTO'
     thr = 1.0_dp
     norm = .true.
     orth = .false.
@@ -100,6 +101,13 @@ program cis_overlap_prog
     center2 = .false.
     f_by_mo_norm = .false.
     f_by_mo_norm_t = -1.0_dp
+    ! Compilation options
+#ifdef L2M
+    comp_l2m = .true.
+#else
+    comp_l2m = .false.
+#endif
+
 
     ! CLI
     narg = command_argument_count()
@@ -121,11 +129,12 @@ program cis_overlap_prog
             write(stdout, *)
             write(stdout, *) 'optional arguments:'
             write(stdout, *) '  -h, --help                  show this help message and exit                      '
-            write(stdout, *) '  -cis, --cis                 use CIS algorithm for calculating overlaps           '
-            write(stdout, *) '                              (very slow, not recommended)                         '
-            write(stdout, *) '  -l2m, --l2m                 use L2M algorithm for calculating overlaps           '
-            write(stdout, *) '                              (slow, not recommended)                         '
-            write(stdout, *) '  -nto, --nto                 use NTO algorithm for calculating overlaps (default) '
+            write(stdout, *) '  -alg, --algorithm ALG       algorithm to use for the overlap calculation         '
+            write(stdout, *) '                              Available options:                                   '
+            write(stdout, *) '                                CIS (very slow, not recommended)                   '
+            write(stdout, *) '                                L2M                                                '
+            write(stdout, *) '                                NTO                                                '
+            write(stdout, '(31x,a,a)') 'default: ', overlap_alg
             write(stdout, *) '  -ns, --(no-)norm-states     renormalize input states before calculation          '
             write(stdout, '(31x,a,l1)') 'default: ', norm
             write(stdout, *) '  -os, --(no-)orth-states     reorthogonalize input states before calculation      '
@@ -150,17 +159,14 @@ program cis_overlap_prog
             write(stdout, *) '  -p, --print-level p         control output level of program (0 = quiet)          '
             write(stdout, '(31x,a,i0)') 'default: ', print_level
             stop
-        case('--cis', '-cis')
-            alg = 'CIS'
-        case('--l2m', '-l2m')
-#ifdef L2M
-            alg = 'L2M'
-#else
-            write(stderr, *) 'Error. Program not compiled with L2M algorithm.'
-            stop
-#endif
-        case('--nto', '-nto')
-            alg = 'NTO'
+        case('--algorithm', '-alg')
+            i = i + 1
+            call get_command_argument(i, temp)
+            overlap_alg = temp
+            if (overlap_alg == 'L2M' .and. (.not. comp_l2m)) then
+                write(stderr, *) 'Error. Program not compiled with L2M algorithm.'
+                stop
+            end if
         case('--norm-states', '-ns')
             norm = .true.
         case('--no-norm-states', '-nns')
@@ -220,8 +226,6 @@ program cis_overlap_prog
     ! Read input.
     time0 = omp_get_wtime()
     if (print_level >= 1) then
-        write(stdout, *) 
-        write(stdout, '(1x,a,a,a)') 'Using ', alg, ' algorithm.'
         write(stdout, *) 
         write(stdout, '(1x,a)') 'Reading input from turbomole files...'
         write(stdout, '(5x,a,a)') ' Directory containing calculation for bra states: ', dir1
@@ -291,13 +295,15 @@ program cis_overlap_prog
     if (print_level >= 2) then
         write(stdout, *) 
         write(stdout, '(1x,a)') 'Computing WF overlaps..'
+        write(stdout, *) 
+        write(stdout, '(5x,a,a,a)') 'Using ', trim(overlap_alg), ' algorithm.'
     end if
     time0 = omp_get_wtime()
-    select case(alg)
+    select case(overlap_alg)
     case('CIS')
         call cis_overlap_cis(rhf, thr, s_mo_a, s_mo_b, cisa1, cisa2, cisb1, cisb2, s_wf)
-    case('L2M')
 #ifdef L2M
+    case('L2M')
         call cis_overlap_l2m(rhf, s_mo_a, s_mo_b, cisa1, cisa2, cisb1, cisb2, s_wf)
 #endif
     case('NTO')
