@@ -47,13 +47,11 @@ void ssblock_lu(double *csc, int no, const int nv1, const int nv2, const int ns1
 	double *msum = NULL;  //Auxiliary matrix to store computed determinants
 	double *tmp = NULL;  // Auxiliary matrix for intermediate results
 	double *l2minors = NULL;
-	double *wf1_packed, *wf2_packed = NULL; // Vectors holding current colums of wf1/wf2 
 	double zero = 0.0, one = 1.0, neg_one = -1.0;
 	int    one_i = 1;
 	double coef;
 	double ss_local;
-	int nv11 = nv1;
-	int nv22 = nv2;
+	int v1;
 	
         /* Timing routines */
         double start, finish;
@@ -66,8 +64,6 @@ void ssblock_lu(double *csc, int no, const int nv1, const int nv2, const int ns1
         /* Set leading dimensions */
         ld_csc =  no + nv1;
         ld_l2minors = no*no*no;
-	//ld_tmp = ((no < nv2) ? nv2 : no);
-	//tmp_cols = (nv2 < nv1) ? nv1 : nv2;
 	ld_tmp = max(no, nv1);
 	tmp_cols = nv2;
 	ld_msum = nv1;
@@ -82,8 +78,6 @@ void ssblock_lu(double *csc, int no, const int nv1, const int nv2, const int ns1
         msum = (double*) malloc (ld_msum * nv2 * sizeof(double));
         tmp = (double*) malloc(ld_tmp * tmp_cols * ns2 * sizeof(double));
 	l2minors = (double*) malloc(ld_l2minors * no * sizeof(double));
-	wf1_packed = (double*) malloc(nv1 * ns1 * sizeof(double));
-	wf2_packed = (double*) malloc(nv2 * ns2 * sizeof(double));
 	times[0] += omp_get_wtime() - start;
 
 #ifdef OPENBLAS
@@ -116,7 +110,8 @@ void ssblock_lu(double *csc, int no, const int nv1, const int nv2, const int ns1
 	for( o1 = 0; o1 < no; o1++ ){
 	    for( o2 = 0; o2 < no; o2++ ){
 
-	        /*printf("[ssblock_lu] Computing block (%d, %d)\n", o1, o2);*/
+	/*	printf("[ssblock_lu] Computing block (%d, %d)\n", o1, o2); */
+
 		/* Apply rows from the right of the ref matrix, cscmat positions (1:no, no+1:np+nv2)
 		 * Compute first product l2minors * csc(1:no, no+1:no+nv2) */
         	start = omp_get_wtime(); 
@@ -143,146 +138,26 @@ void ssblock_lu(double *csc, int no, const int nv1, const int nv2, const int ns1
         	finish = omp_get_wtime();
         	times[3] += finish - start;
 
-/*		if(o1 == 0 && o2 == 0){
-			printf("MSUM:\n");
-			print_mat(nv2, nv1, msum, ld_msum);
-		}
-*/
-		/* Copy columns wf1 to packed form in wf1_packed array */
-		start = omp_get_wtime();
-	        for( st1 = 0; st1 < ns1; st1++ ){
-			cblas_dcopy(nv1, &wf1[st1*no*nv1 + o1*nv1], 1, &wf1_packed[st1*nv1], 1);
-		}
-        	finish = omp_get_wtime();
-		times[8] += finish - start;
 
 		/* Compute ss matrix  */
-	        for( st1 = 0; st1 < ns1; st1++ ){
-
-			/* Copy columns wf1(o1*nv1, st1) to wf1_col, i.e. to a 1-dimensional array */
-			/*start = omp_get_wtime();
-			cblas_dcopy(nv1, &wf1[st1*no*nv1 + o1*nv1], 1, wf1_col, 1);
-        		finish = omp_get_wtime();
-			times[8] += finish - start;
-			*/
-			/* Copy columns of wf2 to packed form in wf2_packed array */
-			start = omp_get_wtime();
-			for( st2 = 0; st2 < ns2; st2++ ){
-				cblas_dcopy(nv2, &wf2[st2*no*nv2 + o2*nv2], 1, &wf2_packed[st2*nv2], 1);
-			}
-			finish = omp_get_wtime();
-			times[8] += finish - start;
-
-/*			if(o1==0 && o2 == 0 && st1 == 0){
-				printf("WF2_packed:\n");
-				print_mat(ns2, nv2, wf2_packed, st2);
-
-				printf("WF1 columns:\n");
-				print_mat(1, nv1, &wf1_packed[st1*nv1], 1);
-			}
-*/
-			/* Set auxiliary matrix tmp to zero
-			 * TMP holds the outer product of wf2 and wf1
-			 */
-			ld_tmp = nv1 * nv2;
-//			ld_tmp = max(no, nv1) * ns2;
-
-			start = omp_get_wtime();
-//			cblas_dgemm(CblasColMajor, CblasNoTrans, CblasNoTrans, ld_tmp, tmp_cols, nv2, zero, wf1, ld_tmp, wf2, nv2, zero, tmp, ld_tmp);
-			//cblas_dgemm(CblasColMajor, CblasNoTrans, CblasNoTrans, ld_tmp, ns2, nv2, zero, wf1, ld_tmp, wf2, nv2, zero, tmp, ld_tmp);
-			cblas_dscal(ld_tmp*ns2, zero, tmp, 1);
-			finish = omp_get_wtime();
-			times[4] += finish - start;
+		for( v1 = 0; v1 < nv1; v1++ ){ 
 
 			/* Compute product wf2 * wf1 */
 			start = omp_get_wtime();
-			//for ( i = 0; i < ns2; i++ ){
-			//	cblas_dger(CblasColMajor, nv2, nv1, one, &wf1_packed[st1*nv1], 1, &wf2_packed[i*nv2], 1, &tmp[i*ld_tmp], nv2);
-			//}
-			cblas_dger(CblasColMajor, nv2, nv1*ns2, one, &wf1_packed[st1*nv1], 1, wf2_packed, 1, tmp, nv2);
 
-/*			if(o1 == 0 && o2 == 0 && st1 == 0){
-				printf("TMP matrix: \n");
-				print_mat(ns2, ld_tmp, tmp, ld_tmp);
-			}
-*/
+			cblas_dgemv( CblasColMajor, CblasTrans, nv2, ns2, one, &wf2[o2*nv2], no*nv2, &msum[v1], nv1, zero, tmp, 1 );
+
         		finish = omp_get_wtime();
 			times[5] += finish - start;
 
 			/* Update ss = msum * wf_prod */
 			start = omp_get_wtime();
 
-			//for (i = 0; i < nv1; i++){
-			//	cblas_dgemv(CblasColMajor, CblasTrans, nv2, ns2, one, &tmp[i*ld_tmp], nv2, &msum[i*ld_msum], 1, one, &ss[st1], ns1);
-			//}
-			cblas_dgemv(CblasColMajor, CblasTrans, nv2*nv1, ns2, one, tmp, ld_tmp, msum, 1, one, &ss[st1], ns1);
+			cblas_dger( CblasColMajor, ns1, ns2, one, &wf1[o1*nv1+v1], no*nv1, tmp, one, ss, ns1 );
 
-/*			if(o1==0 && o2==0 && st1==0){
-				printf("SS:\n");
-				print_mat(ns1, ns2, ss, ns1);
-			}
-*/
 			finish = omp_get_wtime();
 			times[7] +=  finish - start;
-			
-
-//			for( st2 = 0; st2 < ns2; st2++ ){
-
-				/* Copy columns wf2(n2*nv2, st2) to wf2_col */
-			        /*start = omp_get_wtime();
-				cblas_dcopy(nv2, &wf2[st2*no*nv2 + o2*nv2], 1, wf2_col, 1);
-        			finish = omp_get_wtime();
-				times[8] += finish - start;
-				*/
-				/* Set auxiliary matrix tmp to zero
-				 * Tmp holds the outer product of vectors wf2(o1*nv1, *) and wf1(o2*nv2, *)
-				 * */
-			        /*start = omp_get_wtime();
-				cblas_dgemm(CblasColMajor, CblasNoTrans, CblasNoTrans, ld_tmp, tmp_cols, nv2, zero, wf1, ld_tmp, wf2, nv2, zero, tmp, ld_tmp);
-        			finish = omp_get_wtime();
-			        times[4] += finish - start;
-				*/
-				/* Compute wf2 * wf1 */
-        			//start = omp_get_wtime();
-				//cblas_dger(CblasColMajor, nv2, nv1, one, wf2_col, 1, wf1_col, 1, tmp, ld_tmp);
-				//dger_zero_(&nv11, &nv22, &one, wf1_col, &one_i, wf2_col, &one_i, tmp, &ld_tmp);
-				//cblas_dgemm(CblasColMajor, CblasTrans, CblasNoTrans, nv2, nv1, 1, one, wf2_col, 1, wf1_col, 1, zero, tmp, ld_tmp);
-        			//finish = omp_get_wtime();
-			        //times[5] += finish - start;
-
-				/* Local variable to store partial ss sum in omp */
-//				ss_local = zero;
-
-				/* Set openblas/mkl to single-threaded */
-//#ifdef OPENBLAS
-//				openblas_set_num_threads(1);
-//#elif MKL
-//				mkl_set_num_threads(1);
-//#endif
-			        /* Update ss = msum * wf_prod (ddot) */
-//        			start = omp_get_wtime();
-	
-//				#pragma omp parallel default(shared) num_threads(num_threads)
-//				#pragma omp for reduction(+:ss_local)
-//				for(i=0; i<nv1; i++){
-//					ss_local += cblas_ddot(nv2, &msum[i*ld_msum], 1, &tmp[st2*nv2+i], ld_tmp);
-//				}
-//        			finish = omp_get_wtime();
-//			        times[7] +=  finish - start;
-//#ifdef OPENBLAS
-//				openblas_set_num_threads(num_threads);
-//#elif MKL
-//				mkl_set_num_threads(num_threads);
-//#endif
-
-				/* Update ss with local update */
-//				ss[st2*ns1 + st1] += ss_local;
-
-//				if(o1==0 && o2==0 && st1==0){
-//					printf("ss st2 %d: %e\n", st2, ss[st2*ns1+st1]);
-//				}
-//			}
-		}
+		}	
 	    }
 	}
 
@@ -290,8 +165,6 @@ void ssblock_lu(double *csc, int no, const int nv1, const int nv2, const int ns1
 	free(msum);
 	free(tmp);
 	free(l2minors);
-	free(wf1_packed);
-	free(wf2_packed);
 
 	/* Print timings */
         printf("[SSBLOCK] Execution times:\n");
@@ -299,10 +172,8 @@ void ssblock_lu(double *csc, int no, const int nv1, const int nv2, const int ns1
         printf("\tl2minors:      %.7lf sec\n", times[9]),
         printf("\tl2minor * wf2: %.7lf sec\n", times[2]),
         printf("\twf1 * tmp:     %.7lf sec\n", times[3]);
-        printf("\ttmp to zero    %.7lf sec\n", times[4]);
         printf("\twf1 * wf2:     %.7lf sec\n", times[5]);
         printf("\tmsum * tmp:    %.7lf sec\n", times[7]);
-        printf("\tdcopy:         %.7lf sec\n", times[8]);
         printf("\tallocation:    %.7lf sec\n", times[0]);
 
 } 
