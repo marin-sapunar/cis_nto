@@ -1,6 +1,7 @@
 cmake_minimum_required (VERSION 2.8)
 project (NAD_program)
 enable_language (Fortran)
+enable_language (C)
 
 ###################################################################################################
 # Options.                                                                                        #
@@ -11,6 +12,7 @@ enable_language (Fortran)
   endif()
   set_property (CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS Release Debug DebugAll)
 
+  option(L2M "Compile with L2M algorithm, requires C compiler." ON)
 
   set(LINALG MKL CACHE STRING "Linear algebra library, at the moment only MKL is supported")
   set_property(CACHE LINALG PROPERTY STRINGS MKL)
@@ -30,17 +32,28 @@ enable_language (Fortran)
 ###################################################################################################
 # Compiler specific options:                                                                      #
   if(CMAKE_Fortran_COMPILER_ID STREQUAL "Intel")
-    add_compile_options(-fpp)
+    set(dialect "-fpp")
     set(CMAKE_Fortran_FLAGS_RELEASE  "-O3")
     set(CMAKE_Fortran_FLAGS_DEBUG    "-O2 -traceback -g")
     set(CMAKE_Fortran_FLAGS_DEBUGALL "-O0 -traceback -g -check all -debug all")
   elseif(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
-    add_compile_options(-cpp)
-    add_compile_options(-ffree-line-length-0)
+    set(dialect "-cpp -ffree-line-length-0")
     set(CMAKE_Fortran_FLAGS_RELEASE  "-O3")
     set(CMAKE_Fortran_FLAGS_DEBUG "-O2 -fbacktrace -g")
     set(CMAKE_Fortran_FLAGS_DEBUGALL "-O0 -fbacktrace -Wall -pedantic -fcheck=all -fbounds-check -g")
   endif()
+  set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} ${dialect}")
+
+
+# NOT TESTED FOR INTEL!!!!
+  if(CMAKE_C_COMPILER_ID STREQUAL "Intel")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
+  elseif(CMAKE_C_COMPILER_ID STREQUAL "GCC")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
+  endif()
+
 
 
 ###################################################################################################
@@ -72,22 +85,33 @@ enable_language (Fortran)
 
     # Compile flags:
     # F95 Interface:
-    include_directories(${F95ROOT}/include/intel64/ilp64)
-    set(F95_LIBS ${F95ROOT}/lib/intel64/libmkl_blas95_ilp64.a)
-    set(F95_LIBS ${F95_LIBS} ${F95ROOT}/lib/intel64/libmkl_lapack95_ilp64.a)
+    include_directories(${F95ROOT}/include/intel64/lp64)
+    set(F95_LIBS ${F95ROOT}/lib/intel64/libmkl_blas95_lp64.a)
+    set(F95_LIBS ${F95_LIBS} ${F95ROOT}/lib/intel64/libmkl_lapack95_lp64.a)
     set(LINKLIBS ${LINKLIBS} ${F95_LIBS})
-    # MKL libraries:
-    include_directories(${MKLROOT}/include) 
+    # MKL libraries.
     set(MKL_LIBS "-Wl,--no-as-needed -Wl,--start-group")
-    if(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
-      set(MKL_LIBS ${MKL_LIBS} "-lmkl_gf_ilp64")
-      add_compile_options(-fdefault-integer-8 -m64)
-    else()
-      add_compile_options(-i8 -m64)
-      set(MKL_LIBS ${MKL_LIBS} "-lmkl_intel_ilp64")
+    if(CMAKE_Fortran_COMPILER_ID STREQUAL "Intel")
+        set(MKL_LIBS ${MKL_LIBS} "-lmkl_intel_lp64 -lmkl_intel_thread")
+    elseif(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
+        set(MKL_LIBS ${MKL_LIBS} "-lmkl_gf_lp64 -lmkl_gnu_thread")
+        set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -m64")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DMKL_LP64 -m64")
+    elseif(CMAKE_Fortran_COMPILER_ID STREQUAL "PGI")
+        set(MKL_LIBS ${MKL_LIBS} "-lmkl_intel_lp64 -lmkl_pgi_thread")
+        set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -pgf90libs")
     endif()
-    set(MKL_LIBS ${MKL_LIBS} "-lmkl_sequential -lmkl_core -Wl,--end-group -lpthread -lm -ldl")
+    set(MKL_LIBS ${MKL_LIBS} "-lmkl_core -Wl,--end-group -lpthread -lm -ldl")
+    if(CMAKE_Fortran_COMPILER_ID STREQUAL "INTEL")
+        set(MKL_LIBS ${MKL_LIBS} "-liomp5")
+    elseif(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
+        set(MKL_LIBS ${MKL_LIBS} "-lgomp")
+    elseif(CMAKE_Fortran_COMPILER_ID STREQUAL "PGI")
+        set(MKL_LIBS ${MKL_LIBS} "-pgf90libs")
+    endif()
     set(LINKLIBS ${LINKLIBS} ${MKL_LIBS})
+    add_definitions(-DMKL=1)
+    add_definitions(-DLINALG=1)
   endif()
 
   if(OMP)
@@ -106,7 +130,12 @@ enable_language (Fortran)
   add_subdirectory(theochemIO)
   set(LINKLIBS ${LINKLIBS} "-ltheochemio") 
 
-  file(GLOB SOURCES "src/core/*f90" "src/utils/*f90")
+  if (L2M)
+      add_definitions(-DL2M=1)
+      file(GLOB SOURCES "src/core/*f90" "src/utils/*f90" "src/l2m/*f90" "src/l2m/*c")
+  else()
+      file(GLOB SOURCES "src/core/*f90" "src/utils/*f90")
+  endif()
   add_executable(cis_nto.exe "src/prog_nto.f90" ${SOURCES})
   add_executable(cis_overlap.exe "src/prog_overlap.f90" ${SOURCES})
   add_executable(cis_dyson.exe "src/prog_dyson.f90" ${SOURCES})

@@ -16,6 +16,9 @@ program cis_overlap_prog
     use one_el_op_mod
     use cis_overlap_nto_mod
     use cis_overlap_cis_mod
+#ifdef L2M
+    use cis_overlap_l2m_mod
+#endif
     use orthog_mod
     use phase_mod
     use cis_util_mod
@@ -120,6 +123,8 @@ program cis_overlap_prog
             write(stdout, *) '  -h, --help                  show this help message and exit                      '
             write(stdout, *) '  -cis, --cis                 use CIS algorithm for calculating overlaps           '
             write(stdout, *) '                              (very slow, not recommended)                         '
+            write(stdout, *) '  -l2m, --l2m                 use L2M algorithm for calculating overlaps           '
+            write(stdout, *) '                              (slow, not recommended)                         '
             write(stdout, *) '  -nto, --nto                 use NTO algorithm for calculating overlaps (default) '
             write(stdout, *) '  -ns, --(no-)norm-states     renormalize input states before calculation          '
             write(stdout, '(31x,a,l1)') 'default: ', norm
@@ -147,6 +152,13 @@ program cis_overlap_prog
             stop
         case('--cis', '-cis')
             alg = 'CIS'
+        case('--l2m', '-l2m')
+#ifdef L2M
+            alg = 'L2M'
+#else
+            write(stderr, *) 'Error. Program not compiled with L2M algorithm.'
+            stop
+#endif
         case('--nto', '-nto')
             alg = 'NTO'
         case('--norm-states', '-ns')
@@ -284,6 +296,10 @@ program cis_overlap_prog
     select case(alg)
     case('CIS')
         call cis_overlap_cis(rhf, thr, s_mo_a, s_mo_b, cisa1, cisa2, cisb1, cisb2, s_wf)
+    case('L2M')
+#ifdef L2M
+        call cis_overlap_l2m(rhf, s_mo_a, s_mo_b, cisa1, cisa2, cisb1, cisb2, s_wf)
+#endif
     case('NTO')
         call cis_overlap_nto(rhf, thr, s_mo_a, s_mo_b, cisa1, cisa2, cisb1, cisb2, s_wf)
     end select
