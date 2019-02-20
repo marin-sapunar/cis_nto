@@ -52,6 +52,12 @@ void ssblock_lu(double *csc, int no, const int nv1, const int nv2, const int ns1
 	    time00 = omp_get_wtime();
             printf("\n         ---- start ssblock subroutine ----\n");
 	}
+
+	/* Set times to 0 */
+	time_l2m = 0.0;
+	time_det = 0.0;
+	time_sum = 0.0;
+
         /* Set leading dimensions */
         ld_csc =  no + nv1;
         ld_l2minors = no*no*no;
@@ -111,7 +117,7 @@ void ssblock_lu(double *csc, int no, const int nv1, const int nv2, const int ns1
 		for( i = 0; i < nv2; i++ ){
 			cblas_daxpy(nv1, coef, &csc[(no+i)*ld_csc+no], 1, &msum[i*ld_msum], 1);
 		}
-        	time_det = omp_get_wtime() - time0;
+        	time_det += omp_get_wtime() - time0;
 
 
 	        time0 = omp_get_wtime();
@@ -121,7 +127,7 @@ void ssblock_lu(double *csc, int no, const int nv1, const int nv2, const int ns1
 			cblas_dger( CblasColMajor, ns1, ns2, one, &wf1[o1*nv1+v1], no*nv1, tmp, one, ss, ns1 );
 		}	
         	finish = omp_get_wtime();
-		time_sum =  omp_get_wtime() - time0;
+		time_sum +=  omp_get_wtime() - time0;
 	    }
 	}
 

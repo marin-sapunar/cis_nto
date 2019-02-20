@@ -71,20 +71,20 @@ program cis_nto_prog
         if (i > narg) temp = '--help'
         select case(temp)
         case('--help', '-h')
-            write(stdout, *) 'usage: cis_nto.exe [optional arguments] dir'
-            write(stdout, *)
-            write(stdout, *) 'Return natural transition orbitals from a CIS/LR-TDDFT calculation.'
-            write(stdout, *)
-            write(stdout, *) 'positional arguments:'
-            write(stdout, *) '  dir                         directory containing the calculation                 '
-            write(stdout, *)
-            write(stdout, *) 'optional arguments:'
-            write(stdout, *) '  -h, --help                  show this help message and exit                      '
-            write(stdout, *) '  -t, --threshold t           truncate wave functions using given threshold        '
+            write(stdout, '(a)') 'usage: cis_nto.exe [optional arguments] dir'
+            write(stdout, '(a)')
+            write(stdout, '(a)') 'Return natural transition orbitals from a CIS/LR-TDDFT calculation.'
+            write(stdout, '(a)')
+            write(stdout, '(a)') 'positional arguments:'
+            write(stdout, '(a)') '  dir                         directory containing the calculation                 '
+            write(stdout, '(a)')
+            write(stdout, '(a)') 'optional arguments:'
+            write(stdout, '(a)') '  -h, --help                  show this help message and exit                      '
+            write(stdout, '(a)') '  -t, --threshold t           truncate wave functions using given threshold        '
             write(stdout, '(31x,a,f7.4)') 'default: ', thr
-            write(stdout, *) '  -o, --outfile file          output final NTOs to file                            '
+            write(stdout, '(a)') '  -o, --outfile file          output final NTOs to file                            '
             write(stdout, '(31x,a,a)') 'default: ', outfile
-            write(stdout, *) '  -p, --print-level p         control output level of program (0 = quiet)          '
+            write(stdout, '(a)') '  -p, --print-level p         control output level of program (0 = quiet)          '
             write(stdout, '(31x,a,i0)') 'default: ', print_level
             stop
         case('--threshold', '-t')

@@ -103,32 +103,32 @@ program cis_dyson_prog
         if (i == narg) temp = '--help'
         select case(temp)
         case('--help')
-            write(stdout, *) 'usage: cis_overlap.exe [optional arguments] dir1 dir2'
-            write(stdout, *)
-            write(stdout, *) 'Calculate overlaps between two sets CIS type wave functions.'
-            write(stdout, *)
-            write(stdout, *) 'positional arguments:'
-            write(stdout, *) '  dir1                        directory containing calculation for N-1 el. system  '
-            write(stdout, *) '  dir2                        directory containing calculation for N el. system    '
-            write(stdout, *)
-            write(stdout, *) 'optional arguments:'
-            write(stdout, *) '  -h, --help                  show this help message and exit                      '
-            write(stdout, *) '  -ns, --(no-)norm-states     renormalize input states before calculation          '
+            write(stdout, '(a)') 'usage: cis_overlap.exe [optional arguments] dir1 dir2'
+            write(stdout, '(a)')
+            write(stdout, '(a)') 'Calculate overlaps between two sets CIS type wave functions.'
+            write(stdout, '(a)')
+            write(stdout, '(a)') 'positional arguments:'
+            write(stdout, '(a)') '  dir1                        directory containing calculation for N-1 el. system  '
+            write(stdout, '(a)') '  dir2                        directory containing calculation for N el. system    '
+            write(stdout, '(a)')
+            write(stdout, '(a)') 'optional arguments:'
+            write(stdout, '(a)') '  -h, --help                  show this help message and exit                      '
+            write(stdout, '(a)') '  -ns, --(no-)norm-states     renormalize input states before calculation          '
             write(stdout, '(31x,a,l1)') 'default: ', norm
-            write(stdout, *) '  -os, --(no-)orth-states     reorthogonalize input states before calculation      '
+            write(stdout, '(a)') '  -os, --(no-)orth-states     reorthogonalize input states before calculation      '
             write(stdout, '(31x,a,l1)') 'default: ', orth
-            write(stdout, *) '  -fmn, --freeze-mo-norm t    freeze occupied ket MOs when their norm in bra basis '
-            write(stdout, *) '                              is smaller than given threshold. Same number of bra  '
-            write(stdout, *) '                              MOs with smallest norms in ket basis is also frozen. '
-            write(stdout, *) '                              Used when geometry of a small part of a system is    '
-            write(stdout, *) '                              significantly different between bra and ket states.  '
-            write(stdout, *) '                              (untested)                                           '
-            write(stdout, *) '  -t, --threshold t           truncate wave functions using given threshold        '
-            write(stdout, *) '  -pre, --prefix pref         prefix for output files                              '
-            write(stdout, *) '                              (geometry written to pref.at, basis set to pref.gto, '
-            write(stdout, *) '                              and dyson orbitals to pref.#.#.ao and pref.#.#.mo)   '
+            write(stdout, '(a)') '  -fmn, --freeze-mo-norm t    freeze occupied ket MOs when their norm in bra basis '
+            write(stdout, '(a)') '                              is smaller than given threshold. Same number of bra  '
+            write(stdout, '(a)') '                              MOs with smallest norms in ket basis is also frozen. '
+            write(stdout, '(a)') '                              Used when geometry of a small part of a system is    '
+            write(stdout, '(a)') '                              significantly different between bra and ket states.  '
+            write(stdout, '(a)') '                              (untested)                                           '
+            write(stdout, '(a)') '  -t, --threshold t           truncate wave functions using given threshold        '
+            write(stdout, '(a)') '  -pre, --prefix pref         prefix for output files                              '
+            write(stdout, '(a)') '                              (geometry written to pref.at, basis set to pref.gto, '
+            write(stdout, '(a)') '                              and dyson orbitals to pref.#.#.ao and pref.#.#.mo)   '
             write(stdout, '(31x,a,a)') 'default: ', prefix
-            write(stdout, *) '  -p, --print-level p         control output level of program (0 = quiet)          '
+            write(stdout, '(a)') '  -p, --print-level p         control output level of program (0 = quiet)          '
             write(stdout, '(31x,a,i0)') 'default: ', print_level
             stop
         case('--norm-states', '-ns')
