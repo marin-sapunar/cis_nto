@@ -35,16 +35,15 @@ subroutine getlvl2minors_lu(n, nv2, csc, ld_csc, l2minor, ld_l2minor)
         ! Auxiliary variables
         integer :: num_thr
         integer, external :: omp_get_num_threads
-        real(dp), external :: omp_get_wtime
         integer :: i
         integer :: num_cols, nc_minor
         integer :: ipiv1(n-2), ipiv2(n-2)
         integer :: info
 
         ! Timing variables
-        real(dp) :: startc1, endc1
-        real(dp) :: startr1, endr1
-        real(dp) :: totalc1, totalr1
+        real(dp), external :: omp_get_wtime
+        real(dp) :: time0
+        real(dp) :: time_orb
 
         ! External functions
         integer, external :: mkl_get_max_threads
@@ -57,6 +56,9 @@ subroutine getlvl2minors_lu(n, nv2, csc, ld_csc, l2minor, ld_l2minor)
 !       Execution part
 !
 ! ************************************************************************************
+        if (print_level >= 2) then
+            write(stdout, '(9x,a)') 'Computing level 2 minors...'
+        end if
 
         l2minor = 0.0_dp
 
@@ -72,22 +74,14 @@ subroutine getlvl2minors_lu(n, nv2, csc, ld_csc, l2minor, ld_l2minor)
             l2minor = 1.0_dp
             return
         end if
-        do r1 = 1, n
-            seq(r1) = r1
-        end do
+        seq = [ (i, i=1, n) ]
 
         n2 = n * n
         n3 = n2 * n
 
-        write(*,*) 'Getlvl2minors - computing minors using updated LU factorization'
-        write(*,*) '____________________________'
-        write(*,101) 'Outer loop pass', 'time(sec)'
-        write(*,*) '____________________________'
- 101    format(A17, A11)
-
         do r1 = n, 1, -1
 
-                startr1 = omp_get_wtime()
+                time0 = omp_get_wtime()
 
                 ! Remove row r1
 
@@ -240,15 +234,12 @@ subroutine getlvl2minors_lu(n, nv2, csc, ld_csc, l2minor, ld_l2minor)
                         !$omp end do
                         !$omp end parallel
                 end do
-                endr1 = omp_get_wtime()
-                totalr1 = endr1 - startr1
-                !write(*,102) '[getlvl2minors] r1: ', r1, ' time (sec): ', totalr1
-                write(*,102) r1, ' ', totalr1
+                if (print_level >= 2) then
+                    time_orb = omp_get_wtime() - time0
+                    write(stdout, '(13x,2(a,i0),a,f0.4)') 'occupied orbital ', n-r1+1, '/', n, &
+                    &                                     ' time: ', time_orb
+                end if
         end do
-
- 102    FORMAT(I10, A9, F7.4)
-        write(*,*) '____________________________'
-        write(*,*) ''
 
         ! Restore the original number of threads
         call mkl_set_num_threads(num_thr)

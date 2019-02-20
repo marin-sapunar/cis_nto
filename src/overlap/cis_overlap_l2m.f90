@@ -63,9 +63,9 @@ contains
         ! External routines
         external :: ssblock
         integer, external :: mkl_get_max_threads
-        real(dp), external :: omp_get_wtime
         integer :: num_threads
         integer :: i
+        real(dp), external :: omp_get_wtime
         real(dp) :: time00, time0
         real(dp) :: time_l1m, time_rs_sr, time_ss, time_tot
 
@@ -131,17 +131,19 @@ contains
             else
                 write(stdout, '(5x,a)') 'Computing determinant blocks...'
             end if
+            write(stdout, '(5x,a)') 'Status:'
         end if
         time0 = omp_get_wtime()
         rr_a = mat_ge_det(ref)
+        if (print_level >= 2) write(stdout, '(9x,a)') 'RS block...'
         call rsblock(s_mo_a, no_a, nv_a2, nwf_2, wf_a2, l1cminor, rs_a)
-        if (print_level >= 2) write(stdout, '(9x,a)') 'RS block done.'
+        if (print_level >= 2) write(stdout, '(9x,a)') 'SR block...'
         call srblock(s_mo_a, no_a, nv_a1, nwf_1, wf_a1, l1rminor, sr_a)
-        if (print_level >= 2) write(stdout, '(9x,a)') 'SR block done.'
         time_rs_sr = omp_get_wtime() - time0
        !call mkl_set_num_threads(num_threads)
         time0 = omp_get_wtime()
-        call ssblock(s_mo_a, no_a, nv_a1, nv_a2, nwf_1, nwf_2, wf_a1, wf_a2, l1rminor, ss_a)
+        if (print_level >= 2) write(stdout, '(9x,a)') 'SS block...'
+        call ssblock(s_mo_a, no_a, nv_a1, nv_a2, nwf_1, nwf_2, wf_a1, wf_a2, l1rminor, ss_a, print_level)
         time_ss = omp_get_wtime() - time0
         deallocate(l1cminor)
         deallocate(l1rminor)
@@ -169,14 +171,14 @@ contains
             end if
             time0 = omp_get_wtime()
             rr_b = mat_ge_det(ref)
-            if (print_level >= 2) write(stdout, '(9x,a)') 'RS block done.'
+            if (print_level >= 2) write(stdout, '(9x,a)') 'RS block...'
             call rsblock(s_mo_b, no_b, nv_b2, nwf_2, wf_b2, l1cminor, rs_b)
-            if (print_level >= 2) write(stdout, '(9x,a)') 'SR block done.'
+            if (print_level >= 2) write(stdout, '(9x,a)') 'SR block...'
             call srblock(s_mo_b, no_b, nv_b1, nwf_1, wf_b1, l1rminor, sr_b)
             time_rs_sr = time_rs_sr + omp_get_wtime() - time0
-           !call mkl_set_num_threads(num_threads)
             time0 = omp_get_wtime()
-            call ssblock(s_mo_b, no_b, nv_b1, nv_b2, nwf_1, nwf_2, wf_b1, wf_b2, l1rminor, ss_b)
+            if (print_level >= 2) write(stdout, '(9x,a)') 'SS block...'
+            call ssblock(s_mo_b, no_b, nv_b1, nv_b2, nwf_1, nwf_2, wf_b1, wf_b2, l1rminor, ss_b, print_level)
             time_ss = time_ss + omp_get_wtime() - time0
             deallocate(l1cminor)
             deallocate(l1rminor)
