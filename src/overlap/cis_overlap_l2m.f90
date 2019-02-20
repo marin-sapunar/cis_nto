@@ -1,24 +1,27 @@
 module cis_overlap_l2m_mod
     use global_defs
     use matrix_mod, only : mat_ge_det
-
     implicit none
     
     private
     public :: cis_overlap_l2m
 
+
 contains
 
 
+    !----------------------------------------------------------------------------------------------
+    ! SUBROUTINE: cis_overlap_l2m
+    !
+    !> @brief Calculate overlap matrix between two sets of CIS wave functions.
+    !> @details
+    !! Calculates overlap matrix by calculating all level 2 minors of the reference determinants
+    !! using the minors to calculate all excited determinants.
+    !
+    !> @note The overlaps between the bra(ket) reference and ket(bra) CIS states are returned as
+    !! s_wf(0, :) and s_wf(:, 0), respectively.
+    !----------------------------------------------------------------------------------------------
     subroutine cis_overlap_l2m(rhf, s_mo_a, s_mo_b, cis_a1, cis_a2, cis_b1, cis_b2, s_wf)
-     !  real(dp), intent(in) :: csc(:, :, :) ! MO overlap matrix.
-     !  integer, intent(in) :: no(:) !< Number of occupied orbitals.
-     !  integer, intent(in) :: nv1(:) !< Number of virtual orbitals (bra).
-     !  integer, intent(in) :: nv2(:) !< Number of virtual orbitals (ket).
-     !  type(rmat), intent(inout) :: wf1(:) !< Ket wave function coefficients.
-     !  type(rmat), intent(inout) :: wf2(:) !< Bra wave function coefficients.
-     !  real(dp), allocatable, intent(out) :: omat(:, :) !< Overlap matrix.
-
         integer, intent(in) :: rhf !< Restricted (1) or unrestricted (2) calculation.
         real(dp), intent(in) :: s_mo_a(:, :) !< Overlaps of alpha molecular orbitals.
         real(dp), intent(in) :: s_mo_b(:, :) !< Overlaps of beta molecular orbitals.
@@ -27,7 +30,6 @@ contains
         real(dp), intent(in) :: cis_b1(:, :, :) !< CIS matrix beta 1.
         real(dp), intent(in) :: cis_b2(:, :, :) !< CIS matrix beta 2.
         real(dp), allocatable, intent(out) :: s_wf(:, :) !< Wave function overlaps.
-
         logical :: beta !< Restricted/unrestricted calculation.
         integer :: n_1 !< Number of bra orbitals.
         integer :: n_2 !< Number of ket orbitals.
@@ -43,7 +45,6 @@ contains
         real(dp), allocatable :: wf_a2(:, :) !< Ket alpha wave function coefficients.
         real(dp), allocatable :: wf_b1(:, :) !< Bra beta wave function coefficients.
         real(dp), allocatable :: wf_b2(:, :) !< Ket beta wave function coefficients.
-
         real(dp) :: rr_a !< RR determinant alpha.
         real(dp) :: rr_b !< RR determinant beta.
         real(dp), allocatable :: sr_a(:) !< SR block alpha.
@@ -52,7 +53,6 @@ contains
         real(dp), allocatable :: rs_b(:) !< RS block beta.
         real(dp), allocatable :: ss_a(:, :) !< SS block alpha.
         real(dp), allocatable :: ss_b(:, :) !< SS block beta.
-
         real(dp), allocatable :: ref(:, :)
         real(dp), allocatable :: l1cminor(:, :)
         real(dp), allocatable :: l1rminor(:, :)
@@ -60,17 +60,16 @@ contains
         real(dp) :: start, finish
         real(dp) :: starttot, finishtot, total
         real(dp) :: wfbt, rrat, l1minort, l2minort, rsblkt, srblkt, ssblkt, omatt 
-
         ! External routines
         external :: ssblock
         integer, external :: mkl_get_max_threads
-        integer :: num_threads
-
-        integer :: i
         real(dp), external :: omp_get_wtime
+        integer :: num_threads
+        integer :: i
         real(dp) :: time00, time0
         real(dp) :: time_l1m, time_rs_sr, time_ss, time_tot
 
+#ifdef L2M
         time00 = omp_get_wtime()
         if (print_level >= 2) then
             write(stdout, *)
@@ -224,6 +223,11 @@ contains
             write(stdout, *)
             write(stdout, '(5x,a)') '---- end cis_overlap_l2m subroutine ----'
         end if
+#else
+        write(stderr, *) 'Error. Program not compiled with L2M algorithm.'
+        write(stderr, *) '       Recompile with -DL2M=ON cmake option.'
+        stop
+#endif
     end subroutine cis_overlap_l2m
 
 
@@ -300,6 +304,7 @@ contains
         !$omp end do
         !$omp end parallel
     end subroutine rsblock
+
 
     !----------------------------------------------------------------------------------------------
     ! SUBROUTINE: GetLvl1Minors

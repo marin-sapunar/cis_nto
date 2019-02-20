@@ -16,9 +16,7 @@ program cis_overlap_prog
     use one_el_op_mod
     use cis_overlap_nto_mod
     use cis_overlap_cis_mod
-#ifdef L2M
     use cis_overlap_l2m_mod
-#endif
     use orthog_mod
     use phase_mod
     use cis_util_mod
@@ -74,7 +72,6 @@ program cis_overlap_prog
     logical :: center1
     logical :: center2
     logical :: f_by_mo_norm
-    logical :: comp_l2m
     character(len=4) :: overlap_alg
     ! Help
     integer :: i, narg, outunit
@@ -101,12 +98,6 @@ program cis_overlap_prog
     center2 = .false.
     f_by_mo_norm = .false.
     f_by_mo_norm_t = -1.0_dp
-    ! Compilation options
-#ifdef L2M
-    comp_l2m = .true.
-#else
-    comp_l2m = .false.
-#endif
 
 
     ! CLI
@@ -163,10 +154,6 @@ program cis_overlap_prog
             i = i + 1
             call get_command_argument(i, temp)
             overlap_alg = temp
-            if (overlap_alg == 'L2M' .and. (.not. comp_l2m)) then
-                write(stderr, *) 'Error. Program not compiled with L2M algorithm.'
-                stop
-            end if
         case('--norm-states', '-ns')
             norm = .true.
         case('--no-norm-states', '-nns')
@@ -302,10 +289,8 @@ program cis_overlap_prog
     select case(overlap_alg)
     case('CIS')
         call cis_overlap_cis(rhf, thr, s_mo_a, s_mo_b, cisa1, cisa2, cisb1, cisb2, s_wf)
-#ifdef L2M
     case('L2M')
         call cis_overlap_l2m(rhf, s_mo_a, s_mo_b, cisa1, cisa2, cisb1, cisb2, s_wf)
-#endif
     case('NTO')
         call cis_overlap_nto(rhf, thr, s_mo_a, s_mo_b, cisa1, cisa2, cisb1, cisb2, s_wf)
     end select
