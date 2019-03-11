@@ -26,7 +26,7 @@ contains
     !! s_wf(0, :) and s_wf(:, 0), respectively.
     !----------------------------------------------------------------------------------------------
     subroutine cis_overlap_cis(rhf, trunc, s_mo_a, s_mo_b, cis_a1, cis_a2, cis_b1, cis_b2, s_wf)
-        use blas95, only : gemm
+        use blas_lapack_wrap_mod, only : gemm
         use matrix_mod, only : mat_ge_det
         use truncate_wf_mod
         integer, intent(in) :: rhf !< Restricted (1) or unrestricted (2) calculation.

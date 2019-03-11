@@ -28,7 +28,7 @@ contains
     !! s_wf(0, :) and s_wf(:, 0), respectively.
     !----------------------------------------------------------------------------------------------
     subroutine cis_overlap_nto(rhf, trunc, s_mo_a, s_mo_b, wf_a1, wf_a2, wf_b1, wf_b2, s_wf)
-        use blas95, only : gemm
+        use blas_lapack_wrap_mod, only : gemm
         use matrix_mod, only : mat_ge_det, vec_outer
         integer, intent(in) :: rhf !< Restricted (1) or unrestricted (2) calculation.
         real(dp), intent(in) :: trunc !< Threshold for truncating the wave functions.
@@ -238,7 +238,7 @@ contains
     !----------------------------------------------------------------------------------------------
     subroutine nto_rs(n, na, s_nto, c, rs, row)
         use matrix_mod, only : mat_ge_det
-        use blas95, only : dot
+        use blas_lapack_wrap_mod, only : dot
         integer, intent(in) :: n !< Number of occupied orbitals.
         integer, intent(in) :: na !< Number of active excitations.
         real(dp), intent(in) :: s_nto(:, :) !< Overlap matrix between NTOs.
@@ -276,7 +276,7 @@ contains
     !----------------------------------------------------------------------------------------------
     subroutine nto_ss(n, na1, na2, s_nto, c1, c2, ss)
         use matrix_mod, only : mat_ge_det
-        use blas95, only : gemv, dot
+        use blas_lapack_wrap_mod, only : gemv, dot
         integer, intent(in) :: n !< Number of occupied orbitals.
         integer, intent(in) :: na1 !< Number of active bra excitations.
         integer, intent(in) :: na2 !< Number of active ket excitations.

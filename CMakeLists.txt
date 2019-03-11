@@ -10,12 +10,12 @@ enable_language (C)
          "Choose the type of build, options are: Release, Debug and DebugAll ..."
          FORCE)
   endif()
-  set_property (CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS Release Debug DebugAll)
+  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS Release Debug DebugAll)
 
   option(L2M "Compile with L2M algorithm, requires C compiler." ON)
 
-  set(LINALG MKL CACHE STRING "Linear algebra library, at the moment only MKL is supported")
-  set_property(CACHE LINALG PROPERTY STRINGS MKL)
+  set(LINALG MKL CACHE STRING "Linear algebra library.")
+  set_property(CACHE LINALG PROPERTY STRINGS MKL OpenBLAS)
 
   option(OMP "Use OMP." ON)
   option(STATIC "Create a static executable." OFF)
@@ -32,7 +32,7 @@ enable_language (C)
 ###################################################################################################
 # Compiler specific options:                                                                      #
   if(CMAKE_Fortran_COMPILER_ID STREQUAL "Intel")
-    set(dialect "-fpp")
+    set(dialect "-fpp -assume realloc_lhs")
     set(CMAKE_Fortran_FLAGS_RELEASE  "-O3")
     set(CMAKE_Fortran_FLAGS_DEBUG    "-O2 -traceback -g")
     set(CMAKE_Fortran_FLAGS_DEBUGALL "-O0 -traceback -g -check all -debug all")
@@ -58,32 +58,30 @@ enable_language (C)
 
 ###################################################################################################
 # Libraries.                                                                                      #
-  add_definitions(-DLINALG)
+  add_definitions(-DLINALG=1)
   # CMake FindBLAS/FindLAPACK modules don't work for ilp64 version of MKL or for MKL F95 interface.
   # Set everything manually.
   if(LINALG STREQUAL "MKL")
-    set (MKLROOT "" CACHE PATH "MKL root directory.")
-    set (F95ROOT "" CACHE PATH "MKL F95 interface root directory.")
-    if (MKLROOT STREQUAL "")
-      set (MKLROOT $ENV{MKLROOT})
-      if (NOT MKLROOT)
-        message (FATAL_ERROR 
-                 "When using MKL, set MKLROOT environment variable "
-                 "or call cmake with -DMKLROOT=/path/to/mklroot_dir")
+    set(MKLROOT "" CACHE PATH "MKL root directory.")
+    set(F95ROOT "" CACHE PATH "MKL F95 interface root directory.")
+    if(MKLROOT STREQUAL "")
+      set(MKLROOT $ENV{MKLROOT})
+      if(NOT MKLROOT)
+        message(FATAL_ERROR 
+                "When using MKL, set MKLROOT environment variable "
+                "or call cmake with -DMKLROOT=/path/to/mklroot_dir")
       endif()
     endif()
-    if (F95ROOT STREQUAL "")
-      set (F95ROOT $ENV{F95ROOT})
-      if (NOT F95ROOT)
-        message (FATAL_ERROR 
-                 "When using MKL, set F95ROOT environment variable "
-                 "or call cmake with -DF95ROOT=/path/to/f95root_dir")
+    if(F95ROOT STREQUAL "")
+      set(F95ROOT $ENV{F95ROOT})
+      if(NOT F95ROOT)
+        message(FATAL_ERROR 
+                "When using MKL, set F95ROOT environment variable "
+                "or call cmake with -DF95ROOT=/path/to/f95root_dir")
       endif()
     endif()
-    message (STATUS "MKLROOT = ${MKLROOT}")
-    message (STATUS "F95ROOT = ${F95ROOT}")
-
-    # Compile flags:
+    message(STATUS "MKLROOT = ${MKLROOT}")
+    message(STATUS "F95ROOT = ${F95ROOT}")
     # F95 Interface:
     include_directories(${F95ROOT}/include/intel64/lp64)
     set(F95_LIBS ${F95ROOT}/lib/intel64/libmkl_blas95_lp64.a)
@@ -111,12 +109,21 @@ enable_language (C)
     endif()
     set(LINKLIBS ${LINKLIBS} ${MKL_LIBS})
     add_definitions(-DMKL=1)
-    add_definitions(-DLINALG=1)
+    add_definitions(-DLINALG_95=1)
+  elseif(LINALG STREQUAL "OpenBLAS")
+    find_package(OpenBLAS)
+    include_directories(${OpenBLAS_INCLUDE_DIRS})
+    message(STATUS BLAS found: ${OpenBLAS_LIBRARIES} )
+    set(LINKLIBS ${LINKLIBS} ${OpenBLAS_LIBRARIES})
+    add_definitions(-DOPENBLAS=1)
   endif()
+
 
   if(OMP)
     find_package(OpenMP REQUIRED)
     set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} ${OpenMP_Fortran_FLAGS}")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
     message(STATUS "OpenMP libraries:  ${OpenMP_Fortran_LIB_NAMES}")
   endif()
 
@@ -128,7 +135,7 @@ enable_language (C)
 ################################################################################
 # Build                                                                        #
   add_subdirectory(theochemIO)
-  set(LINKLIBS ${LINKLIBS} "-ltheochemio") 
+  set(LINKLIBS "-ltheochemio" ${LINKLIBS}) 
 
   file(GLOB SOURCES_NTO "src/core/*f90" "src/utils/*f90")
   file(GLOB SOURCES_OVL "src/overlap/*f90")

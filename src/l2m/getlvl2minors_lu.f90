@@ -13,7 +13,6 @@ subroutine getlvl2minors_lu(n, nv2, csc, ld_csc, l2minor, ld_l2minor)
         
         integer :: r1, r2
         integer :: c1, c2
-        integer :: tmp, c11
         integer :: n2, n3
         integer :: r1_2, r1_3
         integer :: r2_2, r2_3
@@ -46,7 +45,12 @@ subroutine getlvl2minors_lu(n, nv2, csc, ld_csc, l2minor, ld_l2minor)
         real(dp) :: time_orb
 
         ! External functions
+#ifdef OPENBLAS
+        external openblas_set_num_threads
+        integer, external :: openblas_get_num_threads
+#elif MKL
         integer, external :: mkl_get_max_threads
+#endif
 
         ! External LAPACK function
         external DGETRF
@@ -65,8 +69,13 @@ subroutine getlvl2minors_lu(n, nv2, csc, ld_csc, l2minor, ld_l2minor)
         ref = csc(1:n,1:n)
 
         ! Set the number of BLAS threads to 1
+#ifdef OPENBLAS
+        num_thr = openblas_get_num_threads()
+        call openblas_set_num_threads(1)
+#elif MKL        
         num_thr = mkl_get_max_threads()
         call mkl_set_num_threads(1)
+#endif
 
         if (n <= 2) then
             ! Matrices of size <= 2 don't have lvl 2 minors.
@@ -242,7 +251,11 @@ subroutine getlvl2minors_lu(n, nv2, csc, ld_csc, l2minor, ld_l2minor)
         end do
 
         ! Restore the original number of threads
+#ifdef OPENBLAS
+        call openblas_set_num_threads(num_thr)
+#elif MKL
         call mkl_set_num_threads(num_thr)
+#endif
 
 end subroutine getlvl2minors_lu
 

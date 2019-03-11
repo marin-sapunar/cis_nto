@@ -31,7 +31,7 @@ contains
     !! as the number of alpha electrons is the same.
     !----------------------------------------------------------------------------------------------
     subroutine cis_dyson(trunc, s_mo_a, s_mo_b, wf_a1, wf_a2, wf_b1, wf_b2, dys_mo)
-        use blas95, only : gemv, gemm
+        use blas_lapack_wrap_mod, only : gemv, gemm
         use matrix_mod, only : mat_ge_det
         real(dp), intent(in) :: trunc !< Threshold for truncating the wave functions.
         real(dp), intent(in) :: s_mo_a(:, :) !< Overlaps of alpha molecular orbitals.
@@ -331,7 +331,7 @@ contains
     !----------------------------------------------------------------------------------------------
     subroutine nto_ss_dys(nn, na1, na2, s_nto, c1, c2, ss)
         use matrix_mod, only : mat_ge_det
-        use blas95, only : gemv, dot
+        use blas_lapack_wrap_mod, only : gemv, dot
         integer, intent(in) :: nn !< Number of occupied orbitals in neutral.
         integer, intent(in) :: na1 !< Number of active bra excitations.
         integer, intent(in) :: na2 !< Number of active ket excitations.

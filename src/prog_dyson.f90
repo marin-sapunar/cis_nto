@@ -10,6 +10,7 @@ program cis_dyson_prog
     use global_defs
     use file_mod
     use matrix_mod
+    use blas_lapack_wrap_mod, only : gemm
     ! Chem
     use atom_basis_mod
     use occupation_mod
@@ -20,8 +21,6 @@ program cis_dyson_prog
     ! I/O
     use read_all_mod
     use write_molden_mod
-    ! External
-    use blas95, only : gemm
     implicit none
 
     ! System
@@ -96,41 +95,15 @@ program cis_dyson_prog
     ! CLI
     narg = command_argument_count()
     i = 0
+    if (narg == 0) call print_help()
     do while (i < narg)
         i = i + 1
+        if (i == narg) call print_help()
         call get_command_argument(i, temp)
         if (i == narg - 1) exit
-        if (i == narg) temp = '--help'
         select case(temp)
         case('--help')
-            write(stdout, '(a)') 'usage: cis_overlap.exe [optional arguments] dir1 dir2'
-            write(stdout, '(a)')
-            write(stdout, '(a)') 'Calculate overlaps between two sets CIS type wave functions.'
-            write(stdout, '(a)')
-            write(stdout, '(a)') 'positional arguments:'
-            write(stdout, '(a)') '  dir1                        directory containing calculation for N-1 el. system  '
-            write(stdout, '(a)') '  dir2                        directory containing calculation for N el. system    '
-            write(stdout, '(a)')
-            write(stdout, '(a)') 'optional arguments:'
-            write(stdout, '(a)') '  -h, --help                  show this help message and exit                      '
-            write(stdout, '(a)') '  -ns, --(no-)norm-states     renormalize input states before calculation          '
-            write(stdout, '(31x,a,l1)') 'default: ', norm
-            write(stdout, '(a)') '  -os, --(no-)orth-states     reorthogonalize input states before calculation      '
-            write(stdout, '(31x,a,l1)') 'default: ', orth
-            write(stdout, '(a)') '  -fmn, --freeze-mo-norm t    freeze occupied ket MOs when their norm in bra basis '
-            write(stdout, '(a)') '                              is smaller than given threshold. Same number of bra  '
-            write(stdout, '(a)') '                              MOs with smallest norms in ket basis is also frozen. '
-            write(stdout, '(a)') '                              Used when geometry of a small part of a system is    '
-            write(stdout, '(a)') '                              significantly different between bra and ket states.  '
-            write(stdout, '(a)') '                              (untested)                                           '
-            write(stdout, '(a)') '  -t, --threshold t           truncate wave functions using given threshold        '
-            write(stdout, '(a)') '  -pre, --prefix pref         prefix for output files                              '
-            write(stdout, '(a)') '                              (geometry written to pref.at, basis set to pref.gto, '
-            write(stdout, '(a)') '                              and dyson orbitals to pref.#.#.ao and pref.#.#.mo)   '
-            write(stdout, '(31x,a,a)') 'default: ', prefix
-            write(stdout, '(a)') '  -p, --print-level p         control output level of program (0 = quiet)          '
-            write(stdout, '(31x,a,i0)') 'default: ', print_level
-            stop
+            call print_help()
         case('--norm-states', '-ns')
             norm = .true.
         case('--no-norm-states', '-nns')
@@ -303,6 +276,44 @@ program cis_dyson_prog
         write(stdout, '(1x,a)') 'cis_dyson done                                               '
         write(stdout, '(1x,a)') '-------------------------------------------------------------'
     end if
+
+contains
+
+
+    !----------------------------------------------------------------------------------------------
+    ! SUBROUTINE: print_help
+    !> @brief Print help message and exit program.
+    !----------------------------------------------------------------------------------------------
+    subroutine print_help()
+        write(stdout, '(a)') 'usage: cis_overlap.exe [optional arguments] dir1 dir2'
+        write(stdout, '(a)')
+        write(stdout, '(a)') 'Calculate overlaps between two sets CIS type wave functions.'
+        write(stdout, '(a)')
+        write(stdout, '(a)') 'positional arguments:'
+        write(stdout, '(a)') '  dir1                        directory containing calculation for N-1 el. system  '
+        write(stdout, '(a)') '  dir2                        directory containing calculation for N el. system    '
+        write(stdout, '(a)')
+        write(stdout, '(a)') 'optional arguments:'
+        write(stdout, '(a)') '  -h, --help                  show this help message and exit                      '
+        write(stdout, '(a)') '  -ns, --(no-)norm-states     renormalize input states before calculation          '
+        write(stdout, '(32x,a,l1)') 'default: ', norm
+        write(stdout, '(a)') '  -os, --(no-)orth-states     reorthogonalize input states before calculation      '
+        write(stdout, '(32x,a,l1)') 'default: ', orth
+        write(stdout, '(a)') '  -fmn, --freeze-mo-norm t    freeze occupied ket MOs when their norm in bra basis '
+        write(stdout, '(a)') '                              is smaller than given threshold. Same number of bra  '
+        write(stdout, '(a)') '                              MOs with smallest norms in ket basis is also frozen. '
+        write(stdout, '(a)') '                              Used when geometry of a small part of a system is    '
+        write(stdout, '(a)') '                              significantly different between bra and ket states.  '
+        write(stdout, '(a)') '                              (untested)                                           '
+        write(stdout, '(a)') '  -t, --threshold t           truncate wave functions using given threshold        '
+        write(stdout, '(a)') '  -pre, --prefix pref         prefix for output files                              '
+        write(stdout, '(a)') '                              (geometry written to pref.at, basis set to pref.gto, '
+        write(stdout, '(a)') '                              and dyson orbitals to pref.#.#.ao and pref.#.#.mo)   '
+        write(stdout, '(32x,a,a)') 'default: ', prefix
+        write(stdout, '(a)') '  -p, --print-level p         control output level of program (0 = quiet)          '
+        write(stdout, '(32x,a,i0)') 'default: ', print_level
+        stop
+    end subroutine print_help
 
 
 end program cis_dyson_prog

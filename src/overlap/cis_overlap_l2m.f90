@@ -56,14 +56,10 @@ contains
         real(dp), allocatable :: ref(:, :)
         real(dp), allocatable :: l1cminor(:, :)
         real(dp), allocatable :: l1rminor(:, :)
-        ! Timing variables
-        real(dp) :: start, finish
-        real(dp) :: starttot, finishtot, total
-        real(dp) :: wfbt, rrat, l1minort, l2minort, rsblkt, srblkt, ssblkt, omatt 
         ! External routines
         external :: ssblock
-        integer, external :: mkl_get_max_threads
-        integer :: num_threads
+      ! integer, external :: mkl_get_max_threads
+      ! integer :: num_threads
         integer :: i
         real(dp), external :: omp_get_wtime
         real(dp) :: time00, time0

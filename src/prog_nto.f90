@@ -19,7 +19,7 @@ program cis_nto_prog
     use read_all_mod
     use write_molden_mod
     ! External
-    use blas95, only : gemm
+    use blas_lapack_wrap_mod
     implicit none
 
     ! System
@@ -65,28 +65,14 @@ program cis_nto_prog
     ! CLI
     narg = command_argument_count()
     i = 0
+    if (narg == 0) call print_help()
     do while (i < narg)
         i = i + 1
+        if (i > narg) call print_help()
         call get_command_argument(i, temp)
-        if (i > narg) temp = '--help'
         select case(temp)
         case('--help', '-h')
-            write(stdout, '(a)') 'usage: cis_nto.exe [optional arguments] dir'
-            write(stdout, '(a)')
-            write(stdout, '(a)') 'Return natural transition orbitals from a CIS/LR-TDDFT calculation.'
-            write(stdout, '(a)')
-            write(stdout, '(a)') 'positional arguments:'
-            write(stdout, '(a)') '  dir                         directory containing the calculation                 '
-            write(stdout, '(a)')
-            write(stdout, '(a)') 'optional arguments:'
-            write(stdout, '(a)') '  -h, --help                  show this help message and exit                      '
-            write(stdout, '(a)') '  -t, --threshold t           truncate wave functions using given threshold        '
-            write(stdout, '(31x,a,f7.4)') 'default: ', thr
-            write(stdout, '(a)') '  -o, --outfile file          output final NTOs to file                            '
-            write(stdout, '(31x,a,a)') 'default: ', outfile
-            write(stdout, '(a)') '  -p, --print-level p         control output level of program (0 = quiet)          '
-            write(stdout, '(31x,a,i0)') 'default: ', print_level
-            stop
+            call print_help()
         case('--threshold', '-t')
             i = i + 1
             call get_command_argument(i, temp)
@@ -193,5 +179,33 @@ program cis_nto_prog
         write(stdout, '(1x,a)') 'cis_nto done                                             '
         write(stdout, '(1x,a)') '-------------------------------------------------------------'
     end if
+
+
+contains
+
+
+    !----------------------------------------------------------------------------------------------
+    ! SUBROUTINE: print_help
+    !> @brief Print help message and exit program.
+    !----------------------------------------------------------------------------------------------
+    subroutine print_help()
+        write(stdout, '(a)') 'usage: cis_nto.exe [optional arguments] dir'
+        write(stdout, '(a)')
+        write(stdout, '(a)') 'Return natural transition orbitals from a CIS/LR-TDDFT calculation.'
+        write(stdout, '(a)')
+        write(stdout, '(a)') 'positional arguments:'
+        write(stdout, '(a)') '  dir                         directory containing the calculation                 '
+        write(stdout, '(a)')
+        write(stdout, '(a)') 'optional arguments:'
+        write(stdout, '(a)') '  -h, --help                  show this help message and exit                      '
+        write(stdout, '(a)') '  -t, --threshold t           truncate wave functions using given threshold        '
+        write(stdout, '(32x,a,f7.4)') 'default: ', thr
+        write(stdout, '(a)') '  -o, --outfile file          output final NTOs to file                            '
+        write(stdout, '(32x,a,a)') 'default: ', outfile
+        write(stdout, '(a)') '  -p, --print-level p         control output level of program (0 = quiet)          '
+        write(stdout, '(32x,a,i0)') 'default: ', print_level
+        stop
+    end subroutine print_help
+
 
 end program cis_nto_prog
