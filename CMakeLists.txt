@@ -7,12 +7,10 @@ enable_language (C)
 # Options.                                                                                        #
   if(NOT DEFINED CMAKE_BUILD_TYPE OR "${CMAKE_BUILD_TYPE}" STREQUAL "")
     set(CMAKE_BUILD_TYPE "Release" CACHE STRING
-         "Choose the type of build, options are: Release, Debug and DebugAll ..."
-         FORCE)
+        "Choose the type of build, options are: Release, Debug and DebugAll ..."
+        FORCE)
   endif()
   set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS Release Debug DebugAll)
-
-  option(L2M "Compile with L2M algorithm, requires C compiler." ON)
 
   set(LINALG MKL CACHE STRING "Linear algebra library.")
   set_property(CACHE LINALG PROPERTY STRINGS MKL OpenBLAS)
@@ -113,7 +111,7 @@ enable_language (C)
   elseif(LINALG STREQUAL "OpenBLAS")
     find_package(OpenBLAS)
     include_directories(${OpenBLAS_INCLUDE_DIRS})
-    message(STATUS BLAS found: ${OpenBLAS_LIBRARIES} )
+    message(STATUS BLAS found: ${OpenBLAS_LIBRARIES})
     set(LINKLIBS ${LINKLIBS} ${OpenBLAS_LIBRARIES})
     add_definitions(-DOPENBLAS=1)
   endif()
@@ -135,22 +133,32 @@ enable_language (C)
 ################################################################################
 # Build                                                                        #
   add_subdirectory(theochemIO)
-  set(LINKLIBS "-ltheochemio" ${LINKLIBS}) 
+  set(LINKLIBS ${LINKLIBS})
 
-  file(GLOB SOURCES_NTO "src/core/*f90" "src/utils/*f90")
-  file(GLOB SOURCES_OVL "src/overlap/*f90")
-  if (L2M)
-      add_definitions(-DL2M=1)
-      file(GLOB SOURCES_OVL ${SOURCES_OVL} "src/l2m/*f90" "src/l2m/*c")
-  endif()
-  add_executable(cis_nto.exe "src/prog_nto.f90" ${SOURCES_NTO})
-  add_executable(cis_overlap.exe "src/prog_overlap.f90" ${SOURCES_NTO} ${SOURCES_OVL})
-  add_executable(cis_dyson.exe "src/prog_dyson.f90" ${SOURCES_NTO} ${SOURCES_OVL})
+  file(GLOB SOURCES
+      "src/core/*f90"
+      "src/utils/*f90"
+      "src/overlap/*f90"
+      "src/l2m/*f90"
+      )
+  file(GLOB SOURCES_OVLC "src/l2m/*c")
+  add_library(cis_nto_lib ${SOURCES})
+  add_dependencies(cis_nto_lib theochemio)
+  add_executable(cis_nto.exe "src/prog_nto.f90")
+  add_executable(cis_overlap.exe "src/prog_overlap.f90" ${SOURCES_OVLC})
+  add_executable(cis_dyson.exe "src/prog_dyson.f90" ${SOURCES_OVLC})
 
-  add_dependencies(cis_nto.exe theochemio)
-  add_dependencies(cis_overlap.exe theochemio)
-  add_dependencies(cis_dyson.exe theochemio)
 
-  target_link_libraries(cis_nto.exe ${LINKLIBS})
-  target_link_libraries(cis_overlap.exe ${LINKLIBS})
-  target_link_libraries(cis_dyson.exe ${LINKLIBS})
+  target_link_libraries(cis_nto.exe cis_nto_lib theochemio ${LINKLIBS})
+  target_link_libraries(cis_overlap.exe cis_nto_lib theochemio ${LINKLIBS})
+  target_link_libraries(cis_dyson.exe cis_nto_lib theochemio ${LINKLIBS})
+
+################################################################################
+# Check                                                                        #
+  file(GLOB SOURCES_TEST "test/*f90")
+  add_custom_target(check COMMAND
+                    ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/cis_test.exe)
+  add_executable(cis_test.exe EXCLUDE_FROM_ALL ${SOURCES_TEST} ${SOURCES_OVLC})
+  add_dependencies(check cis_test.exe)
+  target_link_libraries(cis_test.exe cis_nto_lib theochemio ${LINKLIBS})
+
