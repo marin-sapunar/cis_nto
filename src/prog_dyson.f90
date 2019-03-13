@@ -10,7 +10,7 @@ program cis_dyson_prog
     use global_defs
     use file_mod
     use matrix_mod
-    use blas_lapack_wrap_mod, only : gemm
+    use linalg_wrapper_mod, only : gemm
     ! Chem
     use atom_basis_mod
     use occupation_mod

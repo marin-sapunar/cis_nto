@@ -9,6 +9,7 @@ program cis_nto_prog
     ! General
     use global_defs
     use file_mod
+    use linalg_wrapper_mod
     ! Chem
     use atom_basis_mod
     use occupation_mod
@@ -18,8 +19,6 @@ program cis_nto_prog
     ! I/O
     use read_all_mod
     use write_molden_mod
-    ! External
-    use blas_lapack_wrap_mod
     implicit none
 
     ! System

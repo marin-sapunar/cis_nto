@@ -10,6 +10,7 @@ program cis_overlap_prog
     use global_defs
     use file_mod
     use matrix_mod
+    use assignment_problem_mod
     ! Chem
     use occupation_mod
     use ccg_ao_mod
@@ -57,6 +58,7 @@ program cis_overlap_prog
     real(dp), allocatable :: s_wf(:, :) !< Wave function overlaps.
     real(dp), allocatable :: s_wf_raw(:, :) !< Non-orthogonalized wave function overlaps.
     real(dp) :: angle !< Angle between raw and orthogonalized overlap matrix.
+    integer, allocatable :: cmatch(:) !< Assignment vector.
     ! Options
     character(len=:), allocatable :: out_fmt_s
     character(len=:), allocatable :: input_format
@@ -287,7 +289,7 @@ program cis_overlap_prog
     end if
 
     if (phase_omat) then
-        call phasematch_assigned(s_wf)
+        call phasematch_assigned_rotation(s_wf)
         if (print_level >= 1) then
             write(stdout, *) 
             write(stdout, '(1x,a)') 'Overlap matrix with phase matching between assigned bra/ket states:'
@@ -295,6 +297,10 @@ program cis_overlap_prog
                 write(stdout, out_fmt_s) s_wf(i, :)
             end do
         end if
+        allocate(cmatch(nwf2+1))
+        call assignment_problem(nwf2+1, -abs(s_wf), cmatch)
+        write(stdout, '(5x,a)') 'Assignment vector (column assigned to each row): '
+        write(stdout, '(9x,1000(i0, x))') cmatch
     end if
 
     open(newunit=outunit, file=outfile, action='write')

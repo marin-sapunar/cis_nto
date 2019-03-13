@@ -32,7 +32,7 @@ contains
     !! NTO pair corresponding to the smallest singular value.
     !----------------------------------------------------------------------------------------------
     subroutine cis_nto_1state(nv, no, wf, nto_c, nto_mo)
-        use blas_lapack_wrap_mod, only : gesvd
+        use linalg_wrapper_mod, only : gesvd
         use matrix_mod, only : mat_ge_det
         integer, intent(in) :: nv !< Number of virtual orbitals.
         integer, intent(in) :: no !< Number of occupied orbitals.
@@ -82,7 +82,7 @@ contains
     !> @brief Generate NTOs and convert to different basis.
     !----------------------------------------------------------------------------------------------
     subroutine cis_nto_and_convert_basis(mo, wf, nto_c, nto_bas)
-        use blas_lapack_wrap_mod, only : gemm
+        use linalg_wrapper_mod, only : gemm
         real(dp), intent(in) :: mo(:, :) !< MO coefficients in target basis.
         real(dp), intent(in) :: wf(:, :, :) !< CIS wave function coefficients.
         real(dp), allocatable, intent(out) :: nto_c(:, :) !< NTO coefficients.
