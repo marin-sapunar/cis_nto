@@ -84,12 +84,12 @@ contains
         use ivec_mod
         real(dp), intent(inout) :: olap(:, :)
         integer, allocatable :: cmatch(:)
+        integer, allocatable :: rmatch(:)
         logical, allocatable, save :: swap(:)
         type(ivec), allocatable :: loops(:)
         integer :: st, i, n1
 
         n1 = size(olap, 1)
-        allocate(cmatch(n1))
         if (.not. allocated(swap)) then
             ! In first step, allocate swap array.
             allocate(swap(n1))
@@ -105,7 +105,7 @@ contains
         swap = .false. ! Reset swap array.
 
         ! Match states of current and previous step.
-        call assignment_problem(n1, -abs(olap), cmatch)
+        call assignment_problem(-olap**2, rmatch, cmatch)
 
         ! Match phase based on assignment.
         do st = 1, n1
@@ -150,11 +150,11 @@ contains
         use assignment_problem_mod
         real(dp), intent(inout) :: olap(:, :)
         integer, allocatable :: cmatch(:)
+        integer, allocatable :: rmatch(:)
         integer :: st, n1
         logical, allocatable, save :: swap(:)
 
         n1 = size(olap, 1)
-        allocate(cmatch(n1))
         if (.not. allocated(swap)) then
             ! In first step, allocate swap array.
             allocate(swap(n1))
@@ -170,7 +170,7 @@ contains
         swap = .false. ! Reset swap array.
 
         ! Match states of current and previous step.
-        call assignment_problem(n1, -abs(olap), cmatch)
+        call assignment_problem(-olap**2, rmatch, cmatch)
 
 
         do st = 1, n1

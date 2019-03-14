@@ -31,6 +31,18 @@ module assignment_problem_mod
 
     real(dp), parameter :: tinydp = 1.e-15_dp
 
+    integer :: m
+    integer :: n
+    integer :: k
+    real(dp), allocatable :: cm(:, :)
+    logical, allocatable :: zmat(:, :)
+    logical, allocatable :: rowc(:)
+    logical, allocatable :: colc(:)
+    logical, allocatable :: star(:, :)
+    logical, allocatable :: prim(:, :)
+    integer :: cpos(2)
+    integer :: step
+
 
 contains
 
@@ -46,22 +58,28 @@ contains
     !!
     !! The algorithm is split into steps, each contained in a separate helper subroutine.
     !----------------------------------------------------------------------------------------------
-    subroutine assignment_problem(n, m, row2col, transform)
-        integer, intent(in) :: n
-        real(dp), intent(in) :: m(n, n)
-        integer, intent(out) :: row2col(n)
-        integer, intent(out), optional :: transform(n, n)
+    subroutine assignment_problem(matrix, assigned_rows, assigned_cols)
+        real(dp), intent(in) :: matrix(:, :)
+        integer, allocatable, intent(out) :: assigned_rows(:)
+        integer, allocatable, intent(out) :: assigned_cols(:)
+        integer :: i, j
 
-        integer :: step, i, j
-        real(dp) :: cm(n, n)
-        logical :: zero(n, n)
-        logical :: rowc(n)
-        logical :: colc(n)
-        logical :: star(n, n)
-        logical :: prim(n, n)
-        integer :: p(2)
+        if (size(matrix, 1) > size(matrix, 2)) then
+            allocate(cm, source=transpose(matrix)) 
+        else
+            allocate(cm, source=matrix)
+        end if
+        m = size(cm, 1)
+        n = size(cm, 2)
+        k = min(m, n)
+        allocate(zmat(m, n))
+        allocate(star(m, n))
+        allocate(prim(m, n))
+        allocate(rowc(m))
+        allocate(colc(n))
+        if (.not. allocated(assigned_rows)) allocate(assigned_rows(k))
+        if (.not. allocated(assigned_cols)) allocate(assigned_cols(k))
 
-        cm = m ! The input matrix isn't modified by the suboutine.
         step = 1
         colc = .false.
         rowc = .false.
@@ -70,31 +88,33 @@ contains
         do 
             select case(step)
             case(1)
-                call step1(step, n, cm, zero)
+                call step1()
             case(2)
-                call step2(step, n, zero, star)
+                call step2()
             case(3)
-                call step3(step, n, colc, star)
+                call step3()
             case(4)
-                call step4(step, n, zero, colc, rowc, star, prim, p)
+                call step4()
             case(5)
-                call step5(step, n, colc, rowc, star, prim, p)
+                call step5()
             case(6)
-                call step6(step, n, cm, zero, colc, rowc)
+                call step6()
             case(7)
-                call step7(n, star, row2col)
+                if (size(matrix, 1) /= m) then
+                    call step7(transpose(star), assigned_rows, assigned_cols)
+                else
+                    call step7(star, assigned_rows, assigned_cols)
+                end if
                 exit
             end select
         end do
 
-        if (present(transform)) then
-            transform = 0
-            do i=1,n
-               do j=1,n
-                  if (star(i,j)) transform(j,i) = 1
-               end do
-            end do
-        end if
+        deallocate(cm)
+        deallocate(zmat)
+        deallocate(star)
+        deallocate(prim)
+        deallocate(rowc)
+        deallocate(colc)
     end subroutine assignment_problem
 
 
@@ -106,20 +126,12 @@ contains
     !! its row. Repeat for columns. Create a logical matrix which is .true. where the value of the
     !! input matrix is zero. Go to Step 2. 
     !----------------------------------------------------------------------------------------------
-    subroutine step1(step, n, cm, zero)
-        integer, intent(out) :: step
-        integer, intent(in) :: n
-        real(dp), intent(inout) :: cm(n, n)
-        logical, intent(out) :: zero(n, n)
-        integer :: i
-
-        do i = 1, n
+    subroutine step1()
+        integer :: i, j
+        do i = 1, m
             cm(i, :) = cm(i, :) - minval(cm(i, :))
         end do
-        do i = 1, n
-            cm(:, i) = cm(:, i) - minval(cm(:, i))
-        end do
-        zero = (cm < tinydp)
+        zmat = (cm < tinydp)
         step = 2
     end subroutine step1
 
@@ -131,19 +143,13 @@ contains
     !! Cycle through the zeroes. If there is no starred zero in the row or column of a zero, star 
     !! it. Go to Step 3.
     !----------------------------------------------------------------------------------------------
-    subroutine step2(step, n, zero, star)
-        integer, intent(out) :: step
-        integer, intent(in) :: n
-        logical, intent(in) :: zero(n, n)
-        logical, intent(out) :: star(n, n)
-        integer :: i
-        integer :: j
-
+    subroutine step2()
+        integer :: i, j
         star = .false.
-        do i = 1, n
+        do i = 1, m
             if (any(star(i, :))) cycle
             do j = 1, n
-                if (.not. zero(i,j)) cycle
+                if (.not. zmat(i, j)) cycle
                 if (any(star(:, j))) cycle
                 star(i, j) = .true.
                 exit
@@ -157,25 +163,20 @@ contains
     ! SUBROUTINE: Step3
     !
     !> @details
-    !! Cover each column containing a starred zero. If n columns are covered, the starred zeros 
+    !! Cover each column containing a starred zero. If k columns are covered, the starred zeros 
     !! describe a complete set of unique assignments (go to step 7). If not, go to step 4.  
     !----------------------------------------------------------------------------------------------
-    subroutine step3(step, n, colc, star)
-        integer, intent(out) :: step
-        integer, intent(in) :: n
-        logical, intent(inout) :: colc(n)
-        logical, intent(inout) :: star(n, n)
-        integer :: i
-        integer :: k
+    subroutine step3()
+        integer :: j, c
 
-        k = 0
-        do i = 1, n
-            if (.not. any(star(:, i))) cycle
-            colc(i) = .true.
-            k = k + 1
+        c = 0
+        do j = 1, n
+            if (.not. any(star(:, j))) cycle
+            colc(j) = .true.
+            c = c + 1
         end do
 
-        if (k == n) then
+        if (c == k) then
             step = 7
         else
             step = 4
@@ -192,46 +193,33 @@ contains
     !! row and uncover the column containing the starred zero. Repeat. If there are no uncovered 
     !! zeros left, go to Step 6.
     !----------------------------------------------------------------------------------------------
-    subroutine step4(step, n, zero, colc, rowc, star, prim, p)
-        integer, intent(out) :: step
-        integer, intent(in) :: n
-        logical, intent(in) :: zero(n, n)
-        logical, intent(inout) :: colc(n)
-        logical, intent(inout) :: rowc(n)
-        logical, intent(in) :: star(n, n)
-        logical, intent(inout) :: prim(n, n)
-        integer, intent(out) :: p(2)
-        integer :: i
-        integer :: j
+    subroutine step4()
+        integer :: i, j
         logical :: starincol
 
         do
-            p = [0, 0]
+            cpos = [0, 0]
             starincol = .false.
-outer:      do i = 1, n
+outer:      do i = 1, m
                 if (rowc(i)) cycle
 inner:          do j = 1, n
                     if (colc(j)) cycle
-                    if (.not. zero(i,j)) cycle
-                    prim(i,j) = .true.
-                    p = [i, j]
+                    if (.not. zmat(i, j)) cycle
+                    prim(i, j) = .true.
+                    cpos = [i, j]
                     exit outer
                 end do inner
             end do outer
-            
-            if (p(1) == 0) then
+            if (cpos(1) == 0) then
                 step = 6
                 return
             end if
-            
-
-            do i = 1, n
-                if (.not. star(p(1), i)) cycle
-                colc(i) = .false.
-                rowc(p(1)) = .true.
+            do j = 1, n
+                if (.not. star(cpos(1), j)) cycle
+                colc(j) = .false.
+                rowc(cpos(1)) = .true.
                 starincol = .true.
             end do
-
             if (.not. starincol) then
                 step = 5
                 return
@@ -251,38 +239,31 @@ inner:          do j = 1, n
     !! starred zeros and star all primed zeros. When no starred zeros are present in the column of
     !! a primed zero, uncover all lines of the matrix, unprime all zeros and go to Step 3.
     !----------------------------------------------------------------------------------------------
-    subroutine step5(step, n, colc, rowc, star, prim, p)
-        integer, intent(out) :: step
-        integer, intent(in) :: n
-        logical, intent(out) :: colc(n)
-        logical, intent(out) :: rowc(n)
-        logical, intent(inout) :: star(n, n)
-        logical, intent(inout) :: prim(n, n)
-        integer, intent(inout) :: p(2)
-        integer :: i
+    subroutine step5()
+        integer :: i, j
         logical :: starincol
 
         do
             starincol = .false.
-            do i = 1, n
-                if (.not. star(i, p(2))) cycle
+            do i = 1, m
+                if (.not. star(i, cpos(2))) cycle
                 starincol = .true.
-                star(p(1), p(2)) = .true.
-                p(1) = i
+                star(cpos(1), cpos(2)) = .true.
+                cpos(1) = i
                 exit
             end do
             if (.not. starincol) then
-                star(p(1), p(2)) = .true.
+                star(cpos(1), cpos(2)) = .true.
                 prim = .false.
                 rowc = .false.
                 colc = .false.
                 step = 3
                 return
             end if
-            do i = 1, n
-                if (.not. prim(p(1), i)) cycle
-                star(p(1), p(2)) = .false.
-                p(2) = i
+            do j = 1, n
+                if (.not. prim(cpos(1), j)) cycle
+                star(cpos(1), cpos(2)) = .false.
+                cpos(2) = j
                 exit
             end do
         end do
@@ -296,29 +277,26 @@ inner:          do j = 1, n
     !! Find the smallest uncovered value. Add this value to every element of each covered row, and
     !! subtract it from every element of each uncovered column. Return to Step 4.
     !----------------------------------------------------------------------------------------------
-    subroutine step6(step, n, cm, zero, colc, rowc)
-        integer, intent(out) :: step
-        integer, intent(in) :: n
-        real(dp), intent(inout) :: cm(n, n)
-        logical, intent(out) :: zero(n, n)
-        logical, intent(in) :: colc(n)
-        logical, intent(in) :: rowc(n)
+    subroutine step6()
         real(dp) :: mval
-        logical :: mask(n, n)
-        integer :: i
+        logical :: mask(m, n)
+        integer :: i, j
 
         mask = .true.
-        do i = 1, n
+        do i = 1, m
             if (rowc(i)) mask(i, :) = .false.
-            if (colc(i)) mask(:, i) = .false.
+        end do
+        do j = 1, n
+            if (colc(j)) mask(:, j) = .false.
         end do
         mval = minval(cm, mask)
-
-        do i = 1, n
+        do i = 1, m
             if (rowc(i)) cm(i, :) = cm(i, :) + mval
-            if (.not. colc(i)) cm(:, i) = cm(:, i) - mval
         end do
-        zero = (cm < tinydp)
+        do j = 1, n
+            if (.not. colc(j)) cm(:, j) = cm(:, j) - mval
+        end do
+        zmat = (cm < tinydp)
         step = 4
     end subroutine step6
 
@@ -329,16 +307,20 @@ inner:          do j = 1, n
     !> @details
     !! Construct the output vector from the matrix of starred zeros.
     !----------------------------------------------------------------------------------------------
-    subroutine step7(n, star, row2col)
-        integer, intent(in) :: n
-        logical, intent(in) :: star(n, n)
-        integer, intent(out) :: row2col(n)
-        integer :: i
-        integer :: j
+    subroutine step7(solution, assigned_rows, assigned_cols)
+        logical, intent(in) :: solution(:, :)
+        integer, intent(out) :: assigned_rows(:)
+        integer, intent(out) :: assigned_cols(:)
+        integer :: i, j, c
 
-        do i = 1, n
-            do j = 1, n
-                if (star(i, j)) row2col(i) = j
+        c = 0
+        do i = 1, size(solution, 1)
+            do j = 1, size(solution, 2)
+                if (solution(i, j)) then
+                    c = c + 1
+                    assigned_rows(c) = i
+                    assigned_cols(c) = j
+                end if
             end do
         end do
     end subroutine step7
