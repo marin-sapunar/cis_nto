@@ -1,19 +1,123 @@
 !----------------------------------------------------------------------------------------------
-! MODULE: cis_util_mod
+! MODULE: cis_overlap_mod
 !> @author Marin Sapunar, Ruđer Bošković Institute
-!> @date January, 2019
+!> @date March, 2019
 !
-!> @brief Utilty subroutines for cis_overlap and cis_dyson programs.
+!> @brief Subroutine for calculating overlap matrix between two sets of molecular orbitals..
 !----------------------------------------------------------------------------------------------
-module cis_util_mod
-    ! General
+module cis_overlap_mod
     use global_defs
-    ! Chem
     use occupation_mod
     implicit none
+    private
+
+
+    public cis_overlap
+
+
+    integer :: a_el_d !< Difference in number of alpha electrons between two calculations
+    integer :: b_el_d !< Difference in number of beta electrons between two calculations
+    integer :: rhf !< Restricted (1) or unrestricted (2) calculation
+    integer :: rhf1 !< Restricted (1) or unrestricted (2) calculation 1
+    integer :: rhf2 !< Restricted (1) or unrestricted (2) calculation 2
+    type(occupation_numbers) :: on1 !< Occupation numbers 1
+    type(occupation_numbers) :: on2 !< Occupation numbers 2
+    logical, allocatable :: occ1(:, :) !< Occupied MO mask 1
+    logical, allocatable :: occ2(:, :) !< Occupied MO mask 2
+    logical, allocatable :: act1(:, :) !< Active MO mask from el. structure calculation 1
+    logical, allocatable :: act2(:, :) !< Active MO mask from el. structure calculation 2
+    real(dp), allocatable :: cisa1(:, :, :) !< CIS matrix alpha 1
+    real(dp), allocatable :: cisa2(:, :, :) !< CIS matrix alpha 2
+    real(dp), allocatable :: cisb1(:, :, :) !< CIS matrix beta 1
+    real(dp), allocatable :: cisb2(:, :, :) !< CIS matrix beta 2
 
 
 contains
+
+
+    !----------------------------------------------------------------------------------------------
+    ! SUBROUTINE: cis_overlap
+    !> @brief Calculate overlap matrix between two sets of CIS wave functions.
+    !----------------------------------------------------------------------------------------------
+    subroutine cis_overlap(path1, format1, path2, format2, s_mo_a, s_mo_b, alg, s_wf, norm_states,&
+    &                      orth_states, wf_trunc_t, f_by_mo_norm, f_by_mo_norm_t)
+        use cis_overlap_nto_mod
+        use cis_overlap_cis_mod
+        use cis_overlap_l2m_mod
+        use read_all_mod
+        character(len=*), intent(in) :: path1 !< Path for bra input
+        character(len=*), intent(in) :: format1 !< Bra input format
+        character(len=*), intent(in) :: path2 !< Path for ket input
+        character(len=*), intent(in) :: format2 !< Ket input format
+        character(len=*), intent(in) :: alg !< Chosen algorithm.
+        real(dp), allocatable, intent(inout) :: s_mo_a(:, :) !< MO overlaps alpha
+        real(dp), allocatable, intent(inout) :: s_mo_b(:, :) !< MO overlaps beta
+        real(dp), allocatable, intent(out) :: s_wf(:, :) !< WF overlaps.
+        logical, intent(in) :: norm_states !< Normalize states before overlap calculation
+        logical, intent(in) :: orth_states !< Orthogonalize states before overlap calculation
+        real(dp), intent(in), optional :: wf_trunc_t !< Threshold for truncating WFs
+        logical, intent(in), optional :: f_by_mo_norm !< Freeze MOs with low norms
+        real(dp), intent(in), optional :: f_by_mo_norm_t !< Threshold for freezing MOs
+        logical :: f_mo_norm
+        real(dp) :: f_mo_norm_t
+        real(dp) :: wf_thr
+
+        a_el_d = 0
+        b_el_d = 0
+        rhf1 = 1
+        rhf2 = 1
+        f_mo_norm = .false.
+        f_mo_norm_t = 0.0_dp
+        if (present(f_by_mo_norm)) f_mo_norm = f_by_mo_norm
+        if (present(f_by_mo_norm_t)) f_mo_norm_t = f_by_mo_norm_t
+        if (present(wf_trunc_t)) wf_thr = wf_trunc_t
+        if (allocated(s_wf)) deallocate(s_wf)
+
+        ! Read CIS WFs.
+        call read_cis(format1, path1, cisa=cisa1, cisb=cisb1, occ_mo=occ1, act_mo=act1, occ_num=on1, &
+        &             norm=norm_states, orthog=orth_states)
+        if (allocated(cisb1)) rhf1 = 2
+        call print_calculation_properties('Properties for bra states:', rhf1, size(cisa1, 3), on1)
+
+        call read_cis(format2, path2, cisa=cisa2, cisb=cisb2, occ_mo=occ2, act_mo=act2, occ_num=on2, &
+        &             norm=norm_states, orthog=orth_states)
+        if (allocated(cisb2)) rhf2 = 2
+        call print_calculation_properties('Properties for ket states:', rhf2, size(cisa2, 3), on2)
+        rhf = max(rhf1, rhf2)
+
+        ! Dimension checks
+        call check_occ_orb()
+        call check_rhf()
+        call remove_pre_frozen_mo(s_mo_a, s_mo_b)
+        call check_mo_norms(s_mo_a, cisa1, cisa2, f_mo_norm, f_mo_norm_t)
+        if (rhf == 2) call check_mo_norms(s_mo_b, cisb1, cisb2, f_mo_norm, f_mo_norm_t)
+        call check_ci_norms(rhf, cisa1, cisb1, 'bra')
+        call check_ci_norms(rhf, cisa2, cisb2, 'ket')
+        deallocate(occ1)
+        deallocate(occ2)
+        deallocate(act1)
+        deallocate(act2)
+
+        ! Calculate overlaps.
+        if (print_level >= 2) then
+            write(stdout, *)
+            write(stdout, '(1x,a)') 'Computing WF overlaps...'
+            write(stdout, *)
+            write(stdout, '(5x,a,a,a)') 'Using ', trim(alg), ' algorithm.'
+        end if
+        select case(alg)
+        case('CIS')
+            call cis_overlap_cis(rhf, wf_thr, s_mo_a, s_mo_b, cisa1, cisa2, cisb1, cisb2, s_wf)
+        case('L2M')
+            call cis_overlap_l2m(rhf, s_mo_a, s_mo_b, cisa1, cisa2, cisb1, cisb2, s_wf)
+        case('NTO')
+            call cis_overlap_nto(rhf, wf_thr, s_mo_a, s_mo_b, cisa1, cisa2, cisb1, cisb2, s_wf)
+        end select
+        deallocate(cisa1)
+        deallocate(cisa2)
+        if (allocated(cisb1)) deallocate(cisb1)
+        if (allocated(cisb2)) deallocate(cisb2)
+    end subroutine cis_overlap
 
 
     !----------------------------------------------------------------------------------------------
@@ -21,12 +125,10 @@ contains
     !
     !> @brief Print dimensions of an electronic structure calculation to stdout.
     !----------------------------------------------------------------------------------------------
-    subroutine print_calculation_properties(msg, rhf, n_ex_state, n_sphe, n_cart, on)
+    subroutine print_calculation_properties(msg, rhf, n_ex_state, on)
         character(len=*), intent(in) :: msg
         integer, intent(in) :: rhf
         integer, intent(in) :: n_ex_state
-        integer, intent(in) :: n_sphe
-        integer, intent(in) :: n_cart
         type(occupation_numbers), intent(in) :: on
 
         if (print_level >= 1) then
@@ -35,8 +137,6 @@ contains
             if (rhf == 1) write(stdout, '(5x, a)') 'Restricted calculation.'
             if (rhf == 2) write(stdout, '(5x, a)') 'Unrestricted calculation.'
             write(stdout, '(5x,a,2(1x,i0))') 'Number of excited states:           ', n_ex_state
-            write(stdout, '(5x,a,2(1x,i0))') 'Number of basis functions (sphe):   ', n_sphe
-            write(stdout, '(5x,a,2(1x,i0))') 'Number of basis functions (cart):   ', n_cart
             write(stdout, '(5x,a,2(1x,i0))') 'Number of orbitals:                 ', on%n
             write(stdout, '(5x,a,2(1x,i0))') 'Number of occupied orbitals:        ', on%o(1:rhf)
             write(stdout, '(5x,a,2(1x,i0))') 'Number of virtual orbitals:         ', on%v(1:rhf)
@@ -44,7 +144,7 @@ contains
             write(stdout, '(5x,a,2(1x,i0))') 'Number of active virtual orbitals:  ', on%av(1:rhf)
         end if
     end subroutine print_calculation_properties
-        
+
 
     !----------------------------------------------------------------------------------------------
     ! SUBROUTINE: check_occ_orb
@@ -57,29 +157,16 @@ contains
     !! converted to active orbitals and CI arrays are expanded with excitations from the new active
     !! orbitals (with all coefficients equal to zero).
     !----------------------------------------------------------------------------------------------
-    subroutine check_occ_orb(d, rhf1, rhf2, on1, on2, occ1, occ2, act1, act2, cisa1, cisa2, cisb1, cisb2)
-        integer, intent(in) :: d !< Overlap (0) or Dyson orbital (1) calculation.
-        integer, intent(in) :: rhf1 !< Restricted (1) or unrestricted (2) calculation 1.
-        integer, intent(in) :: rhf2 !< Restricted (1) or unrestricted (2) calculation 2.
-        type(occupation_numbers), intent(inout) :: on1 !< Occupation numbers 1.
-        type(occupation_numbers), intent(inout) :: on2 !< Occupation numbers 2.
-        logical, intent(in) :: occ1(:, :) !< Occupied MO mask 1.
-        logical, intent(in) :: occ2(:, :) !< Occupied MO mask 2.
-        logical, intent(inout) :: act1(:, :) !< Active MO mask 1.
-        logical, intent(inout) :: act2(:, :) !< Active MO mask 2.
-        real(dp), allocatable, intent(inout) :: cisa1(:, :, :) !< CIS matrix alpha 1.
-        real(dp), allocatable, intent(inout) :: cisa2(:, :, :) !< CIS matrix alpha 2.
-        real(dp), allocatable, intent(inout) :: cisb1(:, :, :) !< CIS matrix beta 1.
-        real(dp), allocatable, intent(inout) :: cisb2(:, :, :) !< CIS matrix beta 2.
-
-
-        if ((on1%o(1) /= on2%o(1)) .or. (on1%o(rhf1) + d /= on2%o(rhf2))) then
+    subroutine check_occ_orb()
+        ! Check number of occupied orbitals. This has to be compatible.
+        if ((on1%o(1) + a_el_d /= on2%o(1)) .or. (on1%o(rhf1) + b_el_d /= on2%o(rhf2))) then
             write(stderr, *)
             write(stderr, '(1x,a,a,a)') 'Error. Mismatch in number of occupied orbitals.'
             stop
         end if
 
-        if ((on1%ao(1) /= on2%ao(1)) .or. (on1%ao(rhf1) + d /= on2%ao(rhf2))) then
+        ! Check number of active occupied orbitals.
+        if ((on1%ao(1) + a_el_d /= on2%ao(1)) .or. (on1%ao(rhf1) + b_el_d /= on2%ao(rhf2))) then
             if (print_level >= 1) then
                 write(stdout, *)
                 write(stdout, '(1x,a,a,a)') 'Warning. Mismatch in number of active occupied orbitals.'
@@ -111,52 +198,60 @@ contains
     !! In case of mixed restricted/unrestricted calculation, the restricted MO and CI coefficients
     !! are used for both alpha and beta spin, and the CI coefficients are renormalized.
     !----------------------------------------------------------------------------------------------
-    subroutine check_rhf(rhf1, rhf2, moa1, moa2, mob1, mob2, cisa1, cisa2, cisb1, cisb2)
-        integer, intent(in) :: rhf1 !< Restricted (1) or unrestricted (2) calculation 1.
-        integer, intent(in) :: rhf2 !< Restricted (1) or unrestricted (2) calculation 2.
-        real(dp), allocatable, intent(in) :: moa1(:, :) !< MO coefficients alpha 1.
-        real(dp), allocatable, intent(in) :: moa2(:, :) !< MO coefficients alpha 2.
-        real(dp), allocatable, intent(inout) :: mob1(:, :) !< MO coefficients beta 1.
-        real(dp), allocatable, intent(inout) :: mob2(:, :) !< MO coefficients beta 2.
-        real(dp), allocatable, intent(inout) :: cisa1(:, :, :) !< CIS matrix alpha 1.
-        real(dp), allocatable, intent(inout) :: cisa2(:, :, :) !< CIS matrix alpha 2.
-        real(dp), allocatable, intent(inout) :: cisb1(:, :, :) !< CIS matrix beta 1.
-        real(dp), allocatable, intent(inout) :: cisb2(:, :, :) !< CIS matrix beta 2.
-        integer :: rhf
-
-        rhf = max(rhf1, rhf2)
-        if (rhf1 /= rhf) then
+    subroutine check_rhf()
+        if (rhf2 /= rhf) then
             if (print_level >= 1) then
                 write(stdout, *)
-                write(stdout, '(1x,a)') 'Unrestricted bra and restricted ket calculation...'
-                write(stdout, '(5x,a)') 'Renormalizing bra CI coefficients...'
-            end if
-            cisa1 = cisa1 / sqrt(2.0_dp)
-            allocate(mob1, source=moa1)
-            allocate(cisb1, source=cisa1)
-            cisb1 = -cisb1
-        else if (rhf2 /= rhf) then
-            if (print_level >= 1) then
-                write(stdout, *)
-                write(stdout, '(1x,a)') 'Restricted bra and unrestricted ket calculation...'
+                write(stdout, '(1x,a)') 'Unrestricted bra and restricted ket MOs...'
                 write(stdout, '(5x,a)') 'Renormalizing ket CI coefficients...'
             end if
             cisa2 = cisa2 / sqrt(2.0_dp)
-            allocate(mob2, source=moa2)
             allocate(cisb2, source=cisa2)
             cisb2 = -cisb2
+        else if (rhf1 /= rhf) then
+            if (print_level >= 1) then
+                write(stdout, *)
+                write(stdout, '(1x,a)') 'Restricted bra and unrestricted ket MOs...'
+                write(stdout, '(5x,a)') 'Renormalizing ket CI coefficients...'
+            end if
+            cisa1 = cisa1 / sqrt(2.0_dp)
+            allocate(cisb1, source=cisa1)
+            cisb1 = -cisb1
         end if
     end subroutine check_rhf
+
+
+    !----------------------------------------------------------------------------------------------
+    ! SUBROUTINE: remove_pre_frozen_mo
+    !
+    !> @brief Remove MOs frozen during electronic structure calculation.
+    !> @details
+    !! These MOs are removed from the array of MO coefficients and are not used for the remainder
+    !! of the calculation.
+    !----------------------------------------------------------------------------------------------
+    subroutine remove_pre_frozen_mo(s_mo_a, s_mo_b)
+        real(dp), allocatable, intent(inout) :: s_mo_a(:, :) !< MO overlaps alpha
+        real(dp), allocatable, intent(inout) :: s_mo_b(:, :) !< MO overlaps beta
+
+        if (print_level >= 1) then
+            if ((.not. all(act1)) .or. (.not. all(act2))) then
+                write(stdout, *)
+                write(stdout, '(1x,a)') 'Removing MOs frozen in electronic structure calculation...'
+            end if
+        end if
+        call sort_mo(occ1(:, 1), act1(:, 1), s_mo_a, remove_inactive=.true., row=.true.)
+        call sort_mo(occ2(:, 1), act2(:, 1), s_mo_a, remove_inactive=.true.)
+        if (rhf1 == 2) call sort_mo(occ1(:, 2), act1(:, 2), s_mo_b, remove_inactive=.true., row=.true.)
+        if (rhf2 == 2) call sort_mo(occ2(:, 2), act2(:, 2), s_mo_b, remove_inactive=.true.)
+    end subroutine remove_pre_frozen_mo
 
 
     !----------------------------------------------------------------------------------------------
     ! SUBROUTINE: check_mo_norms
     !> @brief Check bra/ket MO norms in ket/bra basis and freeze MOs with low norms if requested
     !----------------------------------------------------------------------------------------------
-    subroutine check_mo_norms(s_mo, mo1, mo2, cis1, cis2, freeze, freeze_threshold)
+    subroutine check_mo_norms(s_mo, cis1, cis2, freeze, freeze_threshold)
         real(dp), allocatable, intent(inout) :: s_mo(:, :) !< MO overlap matrix.
-        real(dp), allocatable, intent(inout) :: mo1(:, :) !< MO coefficients 1.
-        real(dp), allocatable, intent(inout) :: mo2(:, :) !< MO coefficients 2.
         real(dp), allocatable, intent(inout) :: cis1(:, :, :) !< CIS matrix 1.
         real(dp), allocatable, intent(inout) :: cis2(:, :, :) !< CIS matrix 2.
         logical, intent(in) :: freeze
@@ -170,7 +265,6 @@ contains
         real(dp), allocatable :: ket_norms(:)
         real(dp), allocatable :: s2(:, :)
         integer :: i
-
 
         no1 = size(cis1, 2)
         no2 = size(cis2, 2)
@@ -202,12 +296,38 @@ contains
             active_bra(na1+1:) = [ (i, i=no1+1, no1+size(cis1, 1)) ]
             active_ket(na2+1:) = [ (i, i=no2+1, no2+size(cis2, 1)) ]
             call remove_frozen_mo_s(active_bra, active_ket, s_mo)
-            call remove_frozen_mo_mo(active_bra, mo1)
-            call remove_frozen_mo_mo(active_ket, mo2)
             call remove_frozen_occ_cis(active_occ_bra, cis1)
             call remove_frozen_occ_cis(active_occ_ket, cis2)
         end if
     end subroutine check_mo_norms
+
+
+    !----------------------------------------------------------------------------------------------
+    ! SUBROUTINE: check_ci_norms
+    !> @brief Check norms of CI vectors after freezing MOs. Warn if norm of any state becomes low.
+    !----------------------------------------------------------------------------------------------
+    subroutine check_ci_norms(rhf, cisa, cisb, set_name)
+        integer, intent(in) :: rhf !< Restricted (1) or unrestricted (2) calculation.
+        real(dp), allocatable, intent(in) :: cisa(:, :, :) !< CIS matrix alpha.
+        real(dp), allocatable, intent(in) :: cisb(:, :, :) !< CIS matrix beta.
+        character(len=*), intent(in) :: set_name
+        real(dp), allocatable :: norms(:)
+        real(dp), parameter :: thr = 0.1_dp
+
+        allocate(norms(1:size(cisa, 3)))
+        norms = sum(sum(cisa**2, 1), 1)
+        if (rhf == 2) norms = norms + sum(sum(cisb**2, 1), 1)
+
+        if (print_level >= 2) then
+            write(stdout, *)
+            write(stdout, '(3x,a,a,a)') 'Initial norms of ', set_name,' excited states:'
+            write(stdout, '(5x,8es11.3)') norms
+            if (any(norms < thr)) then
+                write(stdout, '(5x,a)') 'Warning. States with very low initial norm present.'
+                write(stdout, '(5x,a)') '         Check for excitations to/from frozen orbitals.'
+            end if
+        end if
+    end subroutine check_ci_norms
 
 
     !----------------------------------------------------------------------------------------------
@@ -220,7 +340,7 @@ contains
         integer, allocatable, intent(out) :: active_index(:)
         logical, allocatable :: active_mask(:)
         integer, allocatable :: seq(:)
-        integer :: n,i 
+        integer :: n, i
 
         n = size(norms)
         allocate(seq(1:n), source=[ (i, i=1, n) ])
@@ -245,7 +365,7 @@ contains
             end if
         end if
     end subroutine freeze_mo_below_threshold
-        
+
 
     !----------------------------------------------------------------------------------------------
     ! SUBROUTINE: freeze_mo_n_lowest_norm
@@ -282,69 +402,6 @@ contains
 
 
     !----------------------------------------------------------------------------------------------
-    ! SUBROUTINE: check_ci_norms
-    !> @brief Check norms of CI vectors after freezing MOs. Warn if norm of any state becomes low.
-    !----------------------------------------------------------------------------------------------
-    subroutine check_ci_norms(rhf, cisa, cisb, set_name)
-        integer, intent(in) :: rhf !< Restricted (1) or unrestricted (2) calculation.
-        real(dp), allocatable, intent(in) :: cisa(:, :, :) !< CIS matrix alpha.
-        real(dp), allocatable, intent(in) :: cisb(:, :, :) !< CIS matrix beta.
-        character(len=*), intent(in) :: set_name
-        real(dp), allocatable :: norms(:)
-        real(dp), parameter :: thr = 0.1_dp
-
-        allocate(norms(1:size(cisa, 3)))
-        norms = sum(sum(cisa**2, 1), 1)
-        if (rhf == 2) norms = norms + sum(sum(cisb**2, 1), 1)
-
-        if (print_level >= 2) then
-            write(stdout, *)
-            write(stdout, '(3x,a,a,a)') 'Initial norms of ', set_name,' excited states:'
-            write(stdout, '(5x,8es11.3)') norms
-            if (any(norms < thr)) then
-                write(stdout, '(5x,a)') 'Warning. States with very low initial norm present.'
-                write(stdout, '(5x,a)') '         Check for excitations to/from frozen orbitals.'
-            end if
-        end if
-    end subroutine check_ci_norms
-
-
-    !----------------------------------------------------------------------------------------------
-    ! SUBROUTINE: remove_pre_frozen_mo
-    !
-    !> @brief Remove MOs frozen during electronic structure calculation.
-    !> @details
-    !! These MOs are removed from the array of MO coefficients and are not used for the remainder
-    !! of the calculation.
-    !----------------------------------------------------------------------------------------------
-    subroutine remove_pre_frozen_mo(rhf1, rhf2, occ1, occ2, act1, act2, moa1, moa2, mob1, mob2)
-        integer, intent(in) :: rhf1 !< Restricted (1) or unrestricted (2) calculation 1.
-        integer, intent(in) :: rhf2 !< Restricted (1) or unrestricted (2) calculation 2.
-        logical, intent(in) :: occ1(:, :) !< Occupied MO mask 1.
-        logical, intent(in) :: occ2(:, :) !< Occupied MO mask 2.
-        logical, intent(in) :: act1(:, :) !< Active MO mask 1.
-        logical, intent(in) :: act2(:, :) !< Active MO mask 2.
-        real(dp), allocatable, intent(inout) :: moa1(:, :) !< MO coefficients alpha 1.
-        real(dp), allocatable, intent(inout) :: moa2(:, :) !< MO coefficients alpha 2.
-        real(dp), allocatable, intent(inout) :: mob1(:, :) !< MO coefficients beta 1.
-        real(dp), allocatable, intent(inout) :: mob2(:, :) !< MO coefficients beta 2.
-        integer :: rhf
-
-        rhf = max(rhf1, rhf2)
-        if (print_level >= 1) then
-            if ((.not. all(act1)) .or. (.not. all(act2))) then
-                write(stdout, *)
-                write(stdout, '(1x,a)') 'Removing MOs frozen in electronic structure calculation...'
-            end if
-        end if
-        call sort_mo(occ1(:, 1), act1(:, 1), moa1, remove_inactive=.true.)
-        call sort_mo(occ2(:, 1), act2(:, 1), moa2, remove_inactive=.true.)
-        if (rhf == 2) call sort_mo(occ1(:, rhf1), act1(:, rhf1), mob1, remove_inactive=.true.)
-        if (rhf == 2) call sort_mo(occ2(:, rhf2), act2(:, rhf2), mob2, remove_inactive=.true.)
-    end subroutine remove_pre_frozen_mo
-
-
-    !----------------------------------------------------------------------------------------------
     ! SUBROUTINE: remove_frozen_mo_s
     !> @brief Remove frozen orbitals from MO overlap matrix.
     !----------------------------------------------------------------------------------------------
@@ -360,22 +417,7 @@ contains
 
 
     !----------------------------------------------------------------------------------------------
-    ! SUBROUTINE: remove_frozen_mo_mo
-    !> @brief Remove frozen orbitals from MO coefficients array.
-    !----------------------------------------------------------------------------------------------
-    subroutine remove_frozen_mo_mo(act, mo)
-        integer, intent(in) :: act(:) !< List of active orbitals.
-        real(dp), allocatable, intent(inout) :: mo(:, :) !< MO coefficients.
-        real(dp), allocatable :: tmp_mo(:, :) !< Work array for MO.
-
-        allocate(tmp_mo(1:size(mo, 1), 1:size(act)), source=mo(:, act))
-        deallocate(mo)
-        allocate(mo, source=tmp_mo)
-    end subroutine remove_frozen_mo_mo
-
-        
-    !----------------------------------------------------------------------------------------------
-    ! SUBROUTINE: remove_frozen_occ_ciss
+    ! SUBROUTINE: remove_frozen_occ_cis
     !> @brief Remove frozen occupied orbitals from CIS matrix.
     !----------------------------------------------------------------------------------------------
     subroutine remove_frozen_occ_cis(act, ci)
@@ -386,6 +428,7 @@ contains
         deallocate(ci)
         allocate(ci, source=tmp_ci)
     end subroutine remove_frozen_occ_cis
+
 
     !----------------------------------------------------------------------------------------------
     ! SUBROUTINE: prepend_zero_occ_cis
@@ -403,4 +446,4 @@ contains
     end subroutine prepend_zero_occ_cis
 
 
-end module cis_util_mod
+end module cis_overlap_mod

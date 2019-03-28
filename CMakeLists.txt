@@ -132,26 +132,24 @@ enable_language (C)
 
 ################################################################################
 # Build                                                                        #
-  add_subdirectory(theochemIO)
+  add_subdirectory(TheoChemUtil)
   set(LINKLIBS ${LINKLIBS})
 
   file(GLOB SOURCES
-      "src/core/*f90"
-      "src/utils/*f90"
       "src/overlap/*f90"
       "src/l2m/*f90"
       )
   file(GLOB SOURCES_OVLC "src/l2m/*c")
   add_library(cis_nto_lib ${SOURCES})
-  add_dependencies(cis_nto_lib theochemio)
-  add_executable(cis_nto.exe "src/prog_nto.f90")
+  add_dependencies(cis_nto_lib theochemutil)
+ #add_executable(cis_nto.exe "src/prog_nto.f90")
   add_executable(cis_overlap.exe "src/prog_overlap.f90" ${SOURCES_OVLC})
-  add_executable(cis_dyson.exe "src/prog_dyson.f90" ${SOURCES_OVLC})
+ #add_executable(cis_dyson.exe "src/prog_dyson.f90" ${SOURCES_OVLC})
 
 
-  target_link_libraries(cis_nto.exe cis_nto_lib theochemio ${LINKLIBS})
-  target_link_libraries(cis_overlap.exe cis_nto_lib theochemio ${LINKLIBS})
-  target_link_libraries(cis_dyson.exe cis_nto_lib theochemio ${LINKLIBS})
+ #target_link_libraries(cis_nto.exe cis_nto_lib theochemutil ${LINKLIBS})
+  target_link_libraries(cis_overlap.exe cis_nto_lib theochemutil ${LINKLIBS})
+ #target_link_libraries(cis_dyson.exe cis_nto_lib theochemutil ${LINKLIBS})
 
 ################################################################################
 # Check                                                                        #
@@ -160,5 +158,5 @@ enable_language (C)
                     ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/cis_test.exe)
   add_executable(cis_test.exe EXCLUDE_FROM_ALL ${SOURCES_TEST} ${SOURCES_OVLC})
   add_dependencies(check cis_test.exe)
-  target_link_libraries(cis_test.exe cis_nto_lib theochemio ${LINKLIBS})
+  target_link_libraries(cis_test.exe cis_nto_lib theochemutil ${LINKLIBS})
 

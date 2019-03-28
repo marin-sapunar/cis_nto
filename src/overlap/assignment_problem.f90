@@ -62,7 +62,6 @@ contains
         real(dp), intent(in) :: matrix(:, :)
         integer, allocatable, intent(out) :: assigned_rows(:)
         integer, allocatable, intent(out) :: assigned_cols(:)
-        integer :: i, j
 
         if (size(matrix, 1) > size(matrix, 2)) then
             allocate(cm, source=transpose(matrix)) 
@@ -127,7 +126,7 @@ contains
     !! input matrix is zero. Go to Step 2. 
     !----------------------------------------------------------------------------------------------
     subroutine step1()
-        integer :: i, j
+        integer :: i
         do i = 1, m
             cm(i, :) = cm(i, :) - minval(cm(i, :))
         end do

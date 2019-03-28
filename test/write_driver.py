@@ -6,6 +6,7 @@ import FRUIT
 TEST_MODULES = [
                 "linalg_test.f90",
                 "assignment_test.f90",
+                "ang_mom_defs_test.f90",
                 "l2m_test.f90",
                 ]
 
