@@ -59,6 +59,8 @@ contains
         if (print_level >= 2) then
             write(stdout, *)
             write(stdout, '(1x,a)') 'Computing MO overlaps...'
+            write(stdout, '(5x,a,2(1x,i0))') 'Number of bra of AOs/MOs:', shape(moa1)
+            write(stdout, '(5x,a,2(1x,i0))') 'Number of ket of AOs/MOs:', shape(moa2)
         end if
         allocate(s_mo_a(size(moa1, 2), size(moa2, 2)))
         call mat_ge_mmm(moa1, s_ao, moa2, s_mo_a, transa='T')

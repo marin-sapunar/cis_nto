@@ -26,6 +26,7 @@ contains
         use basis_set_mod
         use one_el_op_mod
         use read_all_mod
+        integer :: i
 
         time0 = omp_get_wtime()
         call read_geom(input_format_1, path1, geom1)
@@ -38,9 +39,29 @@ contains
         if (print_level >= 2) then
             write(stdout, *)
             write(stdout, '(1x,a)') 'Computing AO overlaps...'
+            write(stdout, '(5x,a,2(1x,i0))') 'Number of bra cartesian/spherical AOs:',             &
+            &                                 bs1%n_bf_cart, bs1%n_bf_sphe
+            write(stdout, '(5x,a,2(1x,i0))') 'Number of ket cartesian/spherical AOs:',             &
+            &                                 bs2%n_bf_cart, bs2%n_bf_sphe
+        end if
+        if (print_level >= 4) then
+            if (bs1%sphe_mo) then
+                write(*,*) 'Expecting bra MOs written in terms of spherical AOs.'
+            else
+                write(*,*) 'Expecting bra MOs written in terms of cartesian AOs.'
+            end if
+            if (bs2%sphe_mo) then
+                write(*,*) 'Expecting ket MOs written in terms of spherical AOs.'
+            else
+                write(*,*) 'Expecting ket MOs written in terms of cartesian AOs.'
+            end if
         end if
         call one_el_op(geom1, geom2, bs1, bs2, [0,0,0], bs1%sphe_mo, bs2%sphe_mo, .true., .true.,  &
         &              s_ao, center_atoms, center_pairs)
+        if (print_level >= 3) then
+            write(stdout, '(5x,a)') 'Diagonal of the AO overlap matrix: '
+            write(stdout, '(6x,15f8.4)') [ ( s_ao(i, i), i=1, size(s_ao, 1) ) ]
+        end if
         time_ao = omp_get_wtime() - time0
     end subroutine overlap_ao
 
