@@ -8,23 +8,18 @@
 program cis_overlap_prog
     ! General
     use global_defs
+    ! Variables
+    use overlap_variables
     ! I/O
     use overlap_output_mod
     use overlap_input_mod
     ! Calculation
-    use ao_overlap_mod
-    use mo_overlap_mod
-    use cis_overlap_mod
-    ! Output
-    use overlap_output_mod
+    use overlap_ao_mod
+    use overlap_mo_mod
+    use overlap_cis_mod
     implicit none
 
-    ! Results
-    real(dp), allocatable :: s_ao(:, :) !< Atomic orbital overlaps.
-    real(dp), allocatable :: s_mo_a(:, :) !< Molecular orbital overlaps alpha.
-    real(dp), allocatable :: s_mo_b(:, :) !< Molecular orbital overlaps beta.
-    real(dp), allocatable :: s_wf(:, :) !< Wave function overlaps.
-    ! Option and timing variables are defined in overlap_input_mod
+    ! All program variables are defined in overlap_variables_mod
 
 
     ! Begin run.
@@ -50,33 +45,30 @@ program cis_overlap_prog
     end if
 
     ! Calculate AO overlaps.
-    time0 = omp_get_wtime()
-    call ao_overlap(path1, input_format_1, path2, input_format_2, s_ao, center_atoms, center_pairs)
+    call overlap_ao()
     call output_ao(outfile_ao, s_ao)
-    time_ao = omp_get_wtime() - time0
     if (ao_stop) goto 999
 
     ! Calculate MO overlaps.
-    time0 = omp_get_wtime()
-    call mo_overlap(path1, input_format_1, path2, input_format_2, s_ao, s_mo_a, s_mo_b)
+    call overlap_mo()
     call output_mo(outfile_mo, s_mo_a, s_mo_b)
-    time_mo = omp_get_wtime() - time0
     if (mo_stop) goto 999
 
-    ! Calculate CIS overlaps.
-    time0 = omp_get_wtime()
-    call cis_overlap(path1, input_format_1, path2, input_format_2, s_mo_a, s_mo_b, cis_algorithm,  &
-    &                s_wf, norm_states, orth_states, wf_threshold, freeze_mo_norm, freeze_mo_norm_t)
-    call output_orth(orth_overlap, s_wf)
-    call output_phase(match_phase, s_wf)
-    call output_wf(outfile_wf, s_wf)
-    time_wf = omp_get_wtime() - time0
+    ! Calculate CIS overlaps/dyson orbitals.
+    call overlap_cis()
+    if (dyson_c) then
+    else
+        call output_orth(orth_overlap, s_wf)
+        call output_phase(match_phase, s_wf)
+        call output_wf(outfile_wf, s_wf)
+    end if
 
     ! Timings
     999 time_tot = omp_get_wtime() - time00
     if (print_level >= 2) then
         write(stdout, *) 
         write(stdout,'(1x,a)') 'Program time:'
+        write(stdout, '(5x, a40, f14.4)') 'Input                     - time (sec):', time_in
         write(stdout, '(5x, a40, f14.4)') 'AO overlap                - time (sec):', time_ao
         write(stdout, '(5x, a40, f14.4)') 'MO overlap                - time (sec):', time_mo
         write(stdout, '(5x, a40, f14.4)') 'WF overlap                - time (sec):', time_wf

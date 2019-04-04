@@ -1,40 +1,30 @@
 !----------------------------------------------------------------------------------------------
-! MODULE: mo_overlap_mod
+! MODULE: overlap_mo_mod
 !> @author Marin Sapunar, Ruđer Bošković Institute
 !> @date March, 2019
 !
 !> @brief Subroutine for calculating overlap matrix between two sets of molecular orbitals..
 !----------------------------------------------------------------------------------------------
-module mo_overlap_mod
+module overlap_mo_mod
     use global_defs
     implicit none
+
+
     private
-
-
-    public mo_overlap
+    public overlap_mo
 
 
 contains
 
 
     !----------------------------------------------------------------------------------------------
-    ! SUBROUTINE: mo_overlap
+    ! SUBROUTINE: overlap_mo
     !> @brief Calculate overlap matrix between two sets of molecular orbitals.
     !----------------------------------------------------------------------------------------------
-    subroutine mo_overlap(path1, format1, path2, format2, s_ao, s_mo_a, s_mo_b)
+    subroutine overlap_mo()
+        use overlap_variables
         use matrix_mod, only : mat_ge_mmm
         use read_all_mod
-        character(len=*), intent(in) :: path1 !< Path for bra input
-        character(len=*), intent(in) :: format1 !< Bra input format
-        character(len=*), intent(in) :: path2 !< Path for ket input
-        character(len=*), intent(in) :: format2 !< Ket input format
-        real(dp), intent(in) :: s_ao(:, :) !< AO overlaps
-        real(dp), allocatable, intent(out) :: s_mo_a(:, :) !< MO overlaps alpha
-        real(dp), allocatable, intent(out) :: s_mo_b(:, :) !< MO overlaps beta
-        real(dp), allocatable :: moa1(:, :) !< MO coefficients alpha 1
-        real(dp), allocatable :: moa2(:, :) !< MO coefficients alpha 2
-        real(dp), allocatable :: mob1(:, :) !< MO coefficients beta 1
-        real(dp), allocatable :: mob2(:, :) !< MO coefficients beta 2
         logical :: uhf1, uhf2
         integer :: i
 
@@ -42,8 +32,9 @@ contains
         if (allocated(s_mo_b)) deallocate(s_mo_b)
 
         ! Read MOs.
-        call read_mo(format1, path1, moa_c=moa1, mob_c=mob1)
-        call read_mo(format2, path2, moa_c=moa2, mob_c=mob2)
+        time0 =  omp_get_wtime()
+        call read_mo(input_format_1, path1, moa_c=moa1, mob_c=mob1)
+        call read_mo(input_format_2, path2, moa_c=moa2, mob_c=mob2)
 
         ! Check unrestricted/restricted calculations.
         uhf1 = allocated(mob1)
@@ -61,8 +52,10 @@ contains
             end if
             allocate(mob1, source=moa1)
         end if
+        time_in =  time_in + omp_get_wtime() - time0
 
         ! Calculate overlaps.
+        time0 = omp_get_wtime()
         if (print_level >= 2) then
             write(stdout, *)
             write(stdout, '(1x,a)') 'Computing MO overlaps...'
@@ -73,7 +66,16 @@ contains
             allocate(s_mo_b(size(mob1, 2), size(mob2, 2)))
             call mat_ge_mmm(mob1, s_ao, mob2, s_mo_b, transa='T')
         end if
-    end subroutine mo_overlap
+        if (print_level >= 3) then
+            write(stdout, '(5x,a)') 'Diagonal of the alpha MO overlap matrix: '
+            write(stdout, '(6x,15f8.4)') [ ( s_mo_a(i, i), i=1, size(s_mo_a, 1) ) ]
+            if (allocated(s_mo_b)) then
+                write(stdout, '(5x,a)') 'Diagonal of the beta MO overlap matrix: '
+                write(stdout, '(10x,15(f10.5))') [ ( s_mo_b(i, i), i=1, size(s_mo_b, 1) ) ]
+            end if
+        end if
+        time_mo = omp_get_wtime() - time0
+    end subroutine overlap_mo
 
 
-end module mo_overlap_mod
+end module overlap_mo_mod

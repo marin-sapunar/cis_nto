@@ -1,22 +1,25 @@
 !----------------------------------------------------------------------------------------------
-! MODULE: cis_dyson_mod
+! MODULE: cis_dyson_nto_mod
 !> @author Marin Sapunar, Ruđer Bošković Institute
 !> @date October, 2018
 !
 !> @brief Subroutines for calculating Dyson orbitals from CIS wave functions.
 !----------------------------------------------------------------------------------------------
-module cis_dyson_mod
+module cis_dyson_nto_mod
     use global_defs
     use cis_nto_mod
     use cis_overlap_nto_mod
     implicit none
 
 
+    public cis_dyson_nto
+
+
 contains
 
 
     !----------------------------------------------------------------------------------------------
-    ! SUBROUTINE: cis_dyson
+    ! SUBROUTINE: cis_dyson_nto
     !
     !> @brief Calculate Dyson orbitals between two sets of CIS wave functions.
     !> @details
@@ -30,7 +33,7 @@ contains
     !> @note The rr, sr, rs and ss blocks for alpha spin are just the corresponding overlap blocks
     !! as the number of alpha electrons is the same.
     !----------------------------------------------------------------------------------------------
-    subroutine cis_dyson(trunc, s_mo_a, s_mo_b, wf_a1, wf_a2, wf_b1, wf_b2, dys_mo)
+    subroutine cis_dyson_nto(trunc, s_mo_a, s_mo_b, wf_a1, wf_a2, wf_b1, wf_b2, dys_mo)
         use linalg_wrapper_mod, only : gemv, gemm
         use matrix_mod, only : mat_ge_det
         real(dp), intent(in) :: trunc !< Threshold for truncating the wave functions.
@@ -177,6 +180,7 @@ contains
         deallocate(wrk0_b)
         time_det = omp_get_wtime() - time0
 
+        if (allocated(dys_mo)) deallocate(dys_mo)
         allocate(dys_mo(n_b2, 0:nwf_1, 0:nwf_2))
         dys_mo(:, 0, 0) = rr_b * rr_a
         do i = 1, nwf_1
@@ -205,7 +209,7 @@ contains
             write(stdout, *)
             write(stdout, '(5x,a)') '---- end cis_dyson subroutine ----'
         end if
-    end subroutine cis_dyson
+    end subroutine cis_dyson_nto
 
 
     !----------------------------------------------------------------------------------------------
@@ -380,4 +384,4 @@ contains
     end subroutine nto_ss_dys
 
 
-end module cis_dyson_mod
+end module cis_dyson_nto_mod

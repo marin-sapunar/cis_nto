@@ -3,37 +3,18 @@
 !> @author Marin Sapunar, Ruđer Bošković Institute
 !> @date August, 2018
 !
-!> @brief Hold options for overlap program and subroutines for reading them.
+!> @brief Hold subroutines for overlap program input handling.
 !--------------------------------------------------------------------------------------------------
 module overlap_input_mod
     use global_defs
+    use overlap_variables
     implicit none
 
-    ! Options
-    character(len=:), allocatable :: path1
-    character(len=:), allocatable :: path2
-    character(len=:), allocatable :: input_format_1
-    character(len=:), allocatable :: input_format_2
-    logical :: ao_stop
-    logical :: mo_stop
-    character(len=4) :: cis_algorithm
-    real(dp) :: wf_threshold
-    logical :: norm_states
-    logical :: orth_states
-    logical :: orth_overlap
-    logical :: match_phase
-    logical :: center_atoms
-    logical :: center_pairs
-    logical :: freeze_mo_norm
-    real(dp) :: freeze_mo_norm_t
-    character(len=:), allocatable :: outfile_ao
-    character(len=:), allocatable :: outfile_mo
-    character(len=:), allocatable :: outfile_wf
-    ! Help
-    integer, external :: omp_get_max_threads
-    real(dp), external :: omp_get_wtime
-    real(dp) :: time00, time0
-    real(dp) :: time_ao, time_mo, time_wf, time_tot
+
+    private
+    public :: print_help
+    public :: set_defaults
+    public :: command_line_interface
 
 
 contains
@@ -126,6 +107,7 @@ contains
         outfile_wf = 's_wf'
         print_level = 2
         ! Set timings to 0
+        time_in = 0.0_dp
         time_ao = 0.0_dp
         time_mo = 0.0_dp
         time_wf = 0.0_dp
