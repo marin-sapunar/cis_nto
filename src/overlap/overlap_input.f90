@@ -48,6 +48,7 @@ contains
         write(stdout, '(a)') '                                NTO                                                '
         write(stdout, '(32x,a,a)') 'default: ', cis_algorithm
         write(stdout, '(a)') '  -t, --wf-threshold t        truncate wave functions using given threshold        '
+        write(stdout, '(a)') '  -tnex, --truncate-nex n     truncate wave functions to n dominant excitations    '
         write(stdout, '(a)') '  -ns, --(no-)norm-states     renormalize input states before calculation          '
         write(stdout, '(32x,a,l1)') 'default: ', norm_states
         write(stdout, '(a)') '  -os, --(no-)orth-states     reorthogonalize input states before calculation      '
@@ -94,6 +95,7 @@ contains
         mo_stop = .false.
         cis_algorithm = 'NTO'
         wf_threshold = 1.0_dp
+        truncate_nex = 0
         norm_states = .true.
         orth_states = .false.
         orth_overlap = .false.
@@ -155,6 +157,10 @@ contains
                 i = i + 1
                 call get_command_argument(i, temp)
                 read(temp, *) wf_threshold
+            case('--truncate-nex', '-tnex')
+                i = i + 1
+                call get_command_argument(i, temp)
+                read(temp, *) truncate_nex
             case('--norm-states', '-ns')
                 norm_states = .true.
             case('--no-norm-states', '-nns')

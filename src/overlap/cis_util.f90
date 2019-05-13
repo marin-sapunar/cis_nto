@@ -261,7 +261,7 @@ contains
         real(dp), allocatable, intent(in) :: cisb(:, :, :) !< CIS matrix beta.
         character(len=*), intent(in) :: set_name
         real(dp), allocatable :: norms(:)
-        real(dp), parameter :: thr = 0.1_dp
+        real(dp), parameter :: thr = 0.5_dp
 
         allocate(norms(1:size(cisa, 3)))
         norms = sum(sum(cisa**2, 1), 1)

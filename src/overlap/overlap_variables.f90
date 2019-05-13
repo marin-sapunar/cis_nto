@@ -22,6 +22,7 @@ module overlap_variables
     logical :: dyson_c
     character(len=4) :: cis_algorithm
     real(dp) :: wf_threshold
+    integer :: truncate_nex
     logical :: norm_states
     logical :: orth_states
     logical :: orth_overlap

@@ -27,48 +27,50 @@ contains
     !> @note The overlaps between the bra(ket) reference and ket(bra) CIS states are returned as
     !! s_wf(0, :) and s_wf(:, 0), respectively.
     !----------------------------------------------------------------------------------------------
-    subroutine cis_overlap_nto(rhf, trunc, s_mo_a, s_mo_b, wf_a1, wf_a2, wf_b1, wf_b2, s_wf)
+    subroutine cis_overlap_nto(rhf, trunc_norm, trunc_nex, s_mo_a, s_mo_b, wf_a1, wf_a2, wf_b1,    &
+    &                          wf_b2, s_wf)
         use linalg_wrapper_mod, only : gemm
         use matrix_mod, only : mat_ge_det, vec_outer
-        integer, intent(in) :: rhf !< Restricted (1) or unrestricted (2) calculation.
-        real(dp), intent(in) :: trunc !< Threshold for truncating the wave functions.
-        real(dp), intent(in) :: s_mo_a(:, :) !< Overlaps of alpha molecular orbitals.
-        real(dp), intent(in) :: s_mo_b(:, :) !< Overlaps of beta molecular orbitals.
-        real(dp), intent(in) :: wf_a1(:, :, :) !< Bra alpha wave function coefficients.
-        real(dp), intent(in) :: wf_a2(:, :, :) !< Ket alpha wave function coefficients.
-        real(dp), intent(in) :: wf_b1(:, :, :) !< Bra beta wave function coefficients.
-        real(dp), intent(in) :: wf_b2(:, :, :) !< Ket beta wave function coefficients.
-        real(dp), allocatable, intent(out) :: s_wf(:, :) !< Wave function overlaps.
-        logical :: beta !< Restricted/unrestricted calculation.
-        integer :: n_a2 !< Number of ket alpha orbitals.
-        integer :: n_b2 !< Number of ket beta orbitals.
-        integer :: no_a !< Number of occupied alpha orbitals.
-        integer :: no_b !< Number of occupied beta orbitals.
-        integer :: nwf_1 !< Number of bra states.
-        integer :: nwf_2 !< Number of ket states.
-        real(dp), allocatable :: c_a1(:, :) !< Bra NTO coefficients alpha.
-        real(dp), allocatable :: c_a2(:, :) !< Ket NTO coefficients alpha.
-        real(dp), allocatable :: c_b1(:, :) !< Bra NTO coefficients beta.
-        real(dp), allocatable :: c_b2(:, :) !< Ket NTO coefficients beta.
-        real(dp), allocatable :: mo_a1(:, :, :) !< Bra NTOs in MO basis alpha.
-        real(dp), allocatable :: mo_a2(:, :, :) !< Ket NTOs in MO basis alpha.
-        real(dp), allocatable :: mo_b1(:, :, :) !< Bra NTOs in MO basis beta.
-        real(dp), allocatable :: mo_b2(:, :, :) !< Ket NTOs in MO basis beta.
-        real(dp), allocatable :: s_nto_a(:, :) !< NTO overlaps alpha.
-        real(dp), allocatable :: s_nto_b(:, :) !< NTO overlaps beta.
-        real(dp), allocatable :: wrk(:, :) !< Work array.
-        real(dp) :: rr_a !< RR block alpha.
-        real(dp) :: rr_b !< RR block beta.
-        real(dp), allocatable :: sr_a(:) !< SR block alpha.
-        real(dp), allocatable :: sr_b(:) !< SR block beta.
-        real(dp), allocatable :: rs_a(:) !< RS block alpha.
-        real(dp), allocatable :: rs_b(:) !< RS block beta.
-        real(dp), allocatable :: ss_a(:, :) !< SS block alpha.
-        real(dp), allocatable :: ss_b(:, :) !< SS block beta.
-        integer, allocatable :: na_a1(:) !< Number of active bra orbitals alpha.
-        integer, allocatable :: na_a2(:) !< Number of active ket orbitals alpha.
-        integer, allocatable :: na_b1(:) !< Number of active bra orbitals beta.
-        integer, allocatable :: na_b2(:) !< Number of active ket orbitals beta.
+        integer, intent(in) :: rhf !< Restricted (1) or unrestricted (2) calculation
+        real(dp), intent(in) :: trunc_norm !< Threshold for norm based truncation of wave functions
+        integer, intent(in) :: trunc_nex !< Truncation to fixed number of dominant excitations
+        real(dp), intent(in) :: s_mo_a(:, :) !< Overlaps of alpha molecular orbitals
+        real(dp), intent(in) :: s_mo_b(:, :) !< Overlaps of beta molecular orbitals
+        real(dp), intent(in) :: wf_a1(:, :, :) !< Bra alpha wave function coefficients
+        real(dp), intent(in) :: wf_a2(:, :, :) !< Ket alpha wave function coefficients
+        real(dp), intent(in) :: wf_b1(:, :, :) !< Bra beta wave function coefficients
+        real(dp), intent(in) :: wf_b2(:, :, :) !< Ket beta wave function coefficients
+        real(dp), allocatable, intent(out) :: s_wf(:, :) !< Wave function overlaps
+        logical :: beta !< Restricted/unrestricted calculation
+        integer :: n_a2 !< Number of ket alpha orbitals
+        integer :: n_b2 !< Number of ket beta orbitals
+        integer :: no_a !< Number of occupied alpha orbitals
+        integer :: no_b !< Number of occupied beta orbitals
+        integer :: nwf_1 !< Number of bra states
+        integer :: nwf_2 !< Number of ket states
+        real(dp), allocatable :: c_a1(:, :) !< Bra NTO coefficients alpha
+        real(dp), allocatable :: c_a2(:, :) !< Ket NTO coefficients alpha
+        real(dp), allocatable :: c_b1(:, :) !< Bra NTO coefficients beta
+        real(dp), allocatable :: c_b2(:, :) !< Ket NTO coefficients beta
+        real(dp), allocatable :: mo_a1(:, :, :) !< Bra NTOs in MO basis alpha
+        real(dp), allocatable :: mo_a2(:, :, :) !< Ket NTOs in MO basis alpha
+        real(dp), allocatable :: mo_b1(:, :, :) !< Bra NTOs in MO basis beta
+        real(dp), allocatable :: mo_b2(:, :, :) !< Ket NTOs in MO basis beta
+        real(dp), allocatable :: s_nto_a(:, :) !< NTO overlaps alpha
+        real(dp), allocatable :: s_nto_b(:, :) !< NTO overlaps beta
+        real(dp), allocatable :: wrk(:, :) !< Work array
+        real(dp) :: rr_a !< RR block alpha
+        real(dp) :: rr_b !< RR block beta
+        real(dp), allocatable :: sr_a(:) !< SR block alpha
+        real(dp), allocatable :: sr_b(:) !< SR block beta
+        real(dp), allocatable :: rs_a(:) !< RS block alpha
+        real(dp), allocatable :: rs_b(:) !< RS block beta
+        real(dp), allocatable :: ss_a(:, :) !< SS block alpha
+        real(dp), allocatable :: ss_b(:, :) !< SS block beta
+        integer, allocatable :: na_a1(:) !< Number of active bra orbitals alpha
+        integer, allocatable :: na_a2(:) !< Number of active ket orbitals alpha
+        integer, allocatable :: na_b1(:) !< Number of active bra orbitals beta
+        integer, allocatable :: na_b2(:) !< Number of active ket orbitals beta
         integer :: i, j
         real(dp), external :: omp_get_wtime
         real(dp) :: time00, time0
@@ -116,18 +118,26 @@ contains
         time_nto = omp_get_wtime() - time0
 
         ! Truncate wave functions:
-        call cis_nto_truncate(beta, trunc, c_a1, c_b1, na_a1, na_b1)
-        call cis_nto_truncate(beta, trunc, c_a2, c_b2, na_a2, na_b2)
+        call cis_nto_truncate(beta, trunc_norm, trunc_nex, c_a1, c_b1, na_a1, na_b1)
+        call cis_nto_truncate(beta, trunc_norm, trunc_nex, c_a2, c_b2, na_a2, na_b2)
         if (print_level >= 1) then
-            if (trunc < 1.0_dp) then
+            if (trunc_norm < 1.0_dp) then
                 write(stdout, *)
-                write(stdout, '(5x,a,f0.8)') 'Truncating wave functions based on threshold ', trunc
+                write(stdout, '(5x,a,f0.8)') 'Truncating wfs based on norm threshold: ', trunc_norm
                 write(stdout, '(5x,a)') 'Number of remaining determinants for bra states:'
                 write(stdout, '(9x,1000(i0,1x))') na_a1
                 if (beta) write(stdout, '(9x,1000(i0,1x))') na_b1
                 write(stdout, '(5x,a)') 'Number of remaining determinants for ket states:'
                 write(stdout, '(9x,1000(i0,1x))') na_a2
                 if (beta) write(stdout, '(9x,1000(i0,1x))') na_b2
+            end if
+            if (trunc_nex > 0) then
+                write(stdout, *)
+                write(stdout, '(5x,a,i0,a)') 'Using ', trunc_nex, ' dominant excitations per state.'
+                write(stdout, '(5x,a)') 'Norms of states after truncation:'
+                write(stdout,'(5x,8es11.3)') cis_norms_nto(beta, c_a1, c_b1, na_a1, na_b1)
+                write(stdout, '(5x,a)') 'Norms of states after truncation:'
+                write(stdout,'(5x,8es11.3)') cis_norms_nto(beta, c_a2, c_b2, na_a2, na_b2)
             end if
             write(stdout, *)
             if (beta) then

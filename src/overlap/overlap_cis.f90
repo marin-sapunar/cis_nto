@@ -111,7 +111,7 @@ contains
             case('L2M')
                 call cis_overlap_l2m(rhf, s_mo_a, s_mo_b, cisa1, cisa2, cisb1, cisb2, s_wf)
             case('NTO')
-                call cis_overlap_nto(rhf, wf_threshold, s_mo_a, s_mo_b, cisa1, cisa2, cisb1, cisb2, s_wf)
+                call cis_overlap_nto(rhf, wf_threshold, truncate_nex, s_mo_a, s_mo_b, cisa1, cisa2, cisb1, cisb2, s_wf)
             case default
                 write(stderr, *)
                 write(stderr, *) 'Error. Selected algorithm not implemented.'
