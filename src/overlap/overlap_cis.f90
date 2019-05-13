@@ -68,7 +68,7 @@ contains
         call check_occ_orb(diff_b, 2, on1, on2, cisa1, cisa2)
         ! -- Remove MOs frozen from el. struct. calculation.
         call remove_frozen_mo(on1%fo(1), on1%fv(1), 1, moa1, s_mo_a)
-        call remove_frozen_mo(on2%fo(1), on2%fv(1), 2, moa2, s_mo_b)
+        call remove_frozen_mo(on2%fo(1), on2%fv(1), 2, moa2, s_mo_a)
         call remove_frozen_mo(on1%fo(2), on1%fv(2), 1, mob1, s_mo_b)
         call remove_frozen_mo(on2%fo(2), on2%fv(2), 2, mob2, s_mo_b)
         ! -- Freeze additional MOs based on norm threshold.

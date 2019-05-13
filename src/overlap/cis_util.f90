@@ -143,10 +143,11 @@ contains
         logical, allocatable :: act(:)
         integer :: n
 
+        if (.not. allocated(mo)) return
         n = size(mo, 2)
         allocate(act(n), source=.true.)
         if (fo > 0) act(1:fo) = .false.
-        if (fv > 0) act(n-fo:n) = .false.
+        if (fv > 0) act(n-fv:n) = .false.
         if (allocated(mo)) call mo_reshape(.false., .true., act=act, mo_dim=2, a2=mo)
         if (allocated(s_mo)) call mo_reshape(.false., .true., act=act, mo_dim=mo_dim, a2=s_mo)
     end subroutine remove_frozen_mo
