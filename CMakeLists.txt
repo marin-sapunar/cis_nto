@@ -140,15 +140,18 @@ enable_language (C)
       "src/l2m/*f90"
       )
   file(GLOB SOURCES_OVLC "src/l2m/*c")
+  file(GLOB SOURCES_CONV "src/convert/*f90")
+  file(GLOB SOURCES_GNTO "src/nto/*f90")
   add_library(cis_nto_lib ${SOURCES})
   add_dependencies(cis_nto_lib theochemutil)
- #add_executable(cis_nto.exe "src/prog_nto.f90")
   add_executable(cis_overlap.exe "src/prog_overlap.f90" ${SOURCES_OVLC})
- #add_executable(cis_dyson.exe "src/prog_dyson.f90" ${SOURCES_OVLC})
+  add_executable(cis_nto.exe ${SOURCES_GNTO})
+  add_executable(convert.exe ${SOURCES_CONV})
 
 
- #target_link_libraries(cis_nto.exe cis_nto_lib theochemutil ${LINKLIBS})
+  target_link_libraries(cis_nto.exe cis_nto_lib theochemutil ${LINKLIBS})
   target_link_libraries(cis_overlap.exe cis_nto_lib theochemutil ${LINKLIBS})
+  target_link_libraries(convert.exe cis_nto_lib theochemutil ${LINKLIBS})
  #target_link_libraries(cis_dyson.exe cis_nto_lib theochemutil ${LINKLIBS})
 
 ################################################################################

@@ -92,7 +92,7 @@ contains
             end if
             select case(cis_algorithm)
             case('NTO')
-                call cis_dyson_nto(wf_threshold, s_mo_a, s_mo_b, cisa1, cisa2, cisb1, cisb2, dyson_mo)
+                call cis_dyson_nto(wf_threshold, truncate_nex, s_mo_a, s_mo_b, cisa1, cisa2, cisb1, cisb2, dyson_mo)
             case default
                 write(stderr, *)
                 write(stderr, *) 'Error. Selected algorithm not implemented.'

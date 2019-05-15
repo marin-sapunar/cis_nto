@@ -121,9 +121,9 @@ contains
         call cis_nto_truncate(.true., trunc_norm, trunc_nex, c_a1, c_b1, na_a1, na_b1)
         call cis_nto_truncate(.true., trunc_norm, trunc_nex, c_a2, c_b2, na_a2, na_b2)
         if (print_level >= 1) then
-            if (trunc < 1.0_dp) then
+            if (trunc_norm < 1.0_dp) then
                 write(stdout, *)
-                write(stdout, '(5x,a,f0.8)') 'Truncating wave functions based on threshold ', trunc
+                write(stdout, '(5x,a,f0.8)') 'Truncating wave functions based on threshold ', trunc_norm
                 write(stdout, '(5x,a)') 'Number of remaining determinants for N-1 el. states:'
                 write(stdout, '(9x,1000(i0,1x))') na_a1
                 write(stdout, '(9x,1000(i0,1x))') na_b1
