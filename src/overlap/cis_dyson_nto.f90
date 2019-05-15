@@ -33,10 +33,11 @@ contains
     !> @note The rr, sr, rs and ss blocks for alpha spin are just the corresponding overlap blocks
     !! as the number of alpha electrons is the same.
     !----------------------------------------------------------------------------------------------
-    subroutine cis_dyson_nto(trunc, s_mo_a, s_mo_b, wf_a1, wf_a2, wf_b1, wf_b2, dys_mo)
+    subroutine cis_dyson_nto(trunc_norm, trunc_nex, s_mo_a, s_mo_b, wf_a1, wf_a2, wf_b1, wf_b2, dys_mo)
         use linalg_wrapper_mod, only : gemv, gemm
         use matrix_mod, only : mat_ge_det
-        real(dp), intent(in) :: trunc !< Threshold for truncating the wave functions.
+        real(dp), intent(in) :: trunc_norm !< Threshold for norm based truncation of wave functions
+        integer, intent(in) :: trunc_nex !< Truncation to fixed number of dominant excitations
         real(dp), intent(in) :: s_mo_a(:, :) !< Overlaps of alpha molecular orbitals.
         real(dp), intent(in) :: s_mo_b(:, :) !< Overlaps of beta molecular orbitals.
         real(dp), intent(in) :: wf_a1(:, :, :) !< Bra alpha wave function coefficients.
@@ -117,10 +118,10 @@ contains
         time_nto = omp_get_wtime() - time0
 
         ! Truncate wave functions.
-        call cis_nto_truncate(.true., trunc, c_a1, c_b1, na_a1, na_b1)
-        call cis_nto_truncate(.true., trunc, c_a2, c_b2, na_a2, na_b2)
-        if (trunc < 1.0_dp) then
-            if (print_level >= 1) then
+        call cis_nto_truncate(.true., trunc_norm, trunc_nex, c_a1, c_b1, na_a1, na_b1)
+        call cis_nto_truncate(.true., trunc_norm, trunc_nex, c_a2, c_b2, na_a2, na_b2)
+        if (print_level >= 1) then
+            if (trunc < 1.0_dp) then
                 write(stdout, *)
                 write(stdout, '(5x,a,f0.8)') 'Truncating wave functions based on threshold ', trunc
                 write(stdout, '(5x,a)') 'Number of remaining determinants for N-1 el. states:'
