@@ -33,24 +33,24 @@ contains
 
         ! Read MOs.
         time0 =  omp_get_wtime()
-        call read_mo(input_format_1, path1, moa_c=moa1, mob_c=mob1)
-        call read_mo(input_format_2, path2, moa_c=moa2, mob_c=mob2)
+        call read_mo(input_format_1, path1, mos1)
+        call read_mo(input_format_2, path2, mos2)
 
         ! Check unrestricted/restricted calculations.
-        uhf1 = allocated(mob1)
-        uhf2 = allocated(mob2)
+        uhf1 = (mos1%n_mo_b > 0)
+        uhf2 = (mos2%n_mo_b > 0)
         if (uhf1 .and. (.not. uhf2)) then
             if (print_level >= 1) then
                 write(stdout, *)
                 write(stdout, '(1x,a)') 'Unrestricted bra and restricted ket MOs...'
             end if
-            allocate(mob2, source=moa2)
+            allocate(mos2%cb, source=mos2%ca)
         else if (uhf2 .and. (.not. uhf1)) then
             if (print_level >= 1) then
                 write(stdout, *)
                 write(stdout, '(1x,a)') 'Restricted bra and unrestricted ket MOs...'
             end if
-            allocate(mob1, source=moa1)
+            allocate(mos1%cb, source=mos1%ca)
         end if
         time_in =  time_in + omp_get_wtime() - time0
 
@@ -59,14 +59,14 @@ contains
         if (print_level >= 2) then
             write(stdout, *)
             write(stdout, '(1x,a)') 'Computing MO overlaps...'
-            write(stdout, '(5x,a,2(1x,i0))') 'Number of bra of AOs/MOs:', shape(moa1)
-            write(stdout, '(5x,a,2(1x,i0))') 'Number of ket of AOs/MOs:', shape(moa2)
+            write(stdout, '(5x,a,2(1x,i0))') 'Number of bra of AOs/MOs:', shape(mos1%ca)
+            write(stdout, '(5x,a,2(1x,i0))') 'Number of ket of AOs/MOs:', shape(mos2%ca)
         end if
-        allocate(s_mo_a(size(moa1, 2), size(moa2, 2)))
-        call mat_ge_mmm(moa1, s_ao, moa2, s_mo_a, transa='T')
+        allocate(s_mo_a(mos1%n_mo_a, mos2%n_mo_a))
+        call mat_ge_mmm(mos1%ca, s_ao, mos2%ca, s_mo_a, transa='T')
         if (uhf1 .or. uhf2) then
-            allocate(s_mo_b(size(mob1, 2), size(mob2, 2)))
-            call mat_ge_mmm(mob1, s_ao, mob2, s_mo_b, transa='T')
+            allocate(s_mo_b(mos1%n_mo_b, mos2%n_mo_b))
+            call mat_ge_mmm(mos1%cb, s_ao, mos2%cb, s_mo_b, transa='T')
         end if
         if (print_level >= 3) then
             write(stdout, '(5x,a)') 'Diagonal of the alpha MO overlap matrix: '

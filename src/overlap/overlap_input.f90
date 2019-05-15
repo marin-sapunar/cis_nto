@@ -131,7 +131,7 @@ contains
             i = i + 1
             if (i == narg) call print_help()
             call get_command_argument(i, temp)
-            if (i == narg - 1) exit
+            if ((i == narg - 1) .and. (temp /= '--help') .and. (temp /= '-h')) exit
             select case(temp)
             case('--help', '-h')
                 call print_help()

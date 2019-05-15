@@ -8,6 +8,7 @@
 module overlap_variables
     use global_defs
     use basis_set_mod
+    use molecular_orbitals_mod
     use occupation_mod
     implicit none
 
@@ -39,10 +40,8 @@ module overlap_variables
     real(dp), allocatable :: geom2(:) !< Geometry 2
     type(basis_set) :: bs1 !< Atomic orbitals 1
     type(basis_set) :: bs2 !< Atomic orbitals 2
-    real(dp), allocatable :: moa1(:, :) !< MO coefficients alpha 1
-    real(dp), allocatable :: moa2(:, :) !< MO coefficients alpha 2
-    real(dp), allocatable :: mob1(:, :) !< MO coefficients beta 1
-    real(dp), allocatable :: mob2(:, :) !< MO coefficients beta 2
+    type(molecular_orbitals) :: mos1 !< Molecular orbitals 1
+    type(molecular_orbitals) :: mos2 !< Molecular orbitals 2
     integer :: rhf !< Restricted (1) or unrestricted (2) calculation
     integer :: rhf1 !< Restricted (1) or unrestricted (2) calculation 1
     integer :: rhf2 !< Restricted (1) or unrestricted (2) calculation 2
