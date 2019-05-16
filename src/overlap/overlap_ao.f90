@@ -29,7 +29,7 @@ contains
         integer :: i
 
         time0 = omp_get_wtime()
-        call read_geom(input_format_1, path1, geom1)
+        call read_geom(input_format_1, path1, geom1, atom_symbol, atom_number)
         call read_geom(input_format_2, path2, geom2)
         call read_basis(input_format_1, path1, bs1)
         call read_basis(input_format_2, path2, bs2)

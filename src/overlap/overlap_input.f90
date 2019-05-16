@@ -47,6 +47,8 @@ contains
         write(stdout, '(a)') '                                L2M                                                '
         write(stdout, '(a)') '                                NTO                                                '
         write(stdout, '(32x,a,a)') 'default: ', cis_algorithm
+        write(stdout, '(a)') '  -dys, --dyson               calculate Dyson orbitals instead of overlaps         '
+        write(stdout, '(32x,a,l1)') 'default: ', dyson_c
         write(stdout, '(a)') '  -t, --wf-threshold t        truncate wave functions using given threshold        '
         write(stdout, '(a)') '  -tnex, --truncate-nex n     truncate wave functions to n dominant excitations    '
         write(stdout, '(a)') '  -ns, --(no-)norm-states     renormalize input states before calculation          '
@@ -94,6 +96,7 @@ contains
         ao_stop = .false.
         mo_stop = .false.
         cis_algorithm = 'NTO'
+        dyson_c = .false.
         wf_threshold = 1.0_dp
         truncate_nex = 0
         norm_states = .true.
@@ -107,6 +110,7 @@ contains
         outfile_ao = 'None'
         outfile_mo = 'None'
         outfile_wf = 's_wf'
+        prefix_dyson = 'dys'
         print_level = 2
         ! Set timings to 0
         time_in = 0.0_dp
@@ -153,6 +157,10 @@ contains
                 i = i + 1
                 call get_command_argument(i, temp)
                 cis_algorithm = temp(1:4)
+            case('--dyson', '-dys')
+                dyson_c = .true.
+            case('--no-dyson', '-ndys')
+                dyson_c = .false.
             case('--wf-threshold', '-t')
                 i = i + 1
                 call get_command_argument(i, temp)

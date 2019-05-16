@@ -189,7 +189,7 @@ contains
         integer :: i, ns, na, nb
         ns = size(c_a, 2)
         na = size(c_a, 1)
-        nb = size(c_a, 1)
+        if (beta) nb = size(c_b, 1)
         if (.not. allocated(n_a)) allocate(n_a(ns))
         if (beta .and. (.not. allocated(n_b))) allocate(n_b(ns))
         if (trunc_nex > 0) then

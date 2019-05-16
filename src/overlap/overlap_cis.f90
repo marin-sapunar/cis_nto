@@ -29,10 +29,10 @@ contains
         use cis_dyson_nto_mod
         use cis_util_mod
         use read_all_mod
-        integer :: n_freeze_a
-        integer :: n_freeze_b
-        integer :: diff_a
-        integer :: diff_b
+        use linalg_wrapper_mod, only : gemm
+        integer :: n_freeze_a, n_freeze_b
+        integer :: diff_a, diff_b
+        integer :: i
 
         diff_a = 0
         diff_b = 0
@@ -98,6 +98,16 @@ contains
                 write(stderr, *) 'Error. Selected algorithm not implemented.'
                 stop
             end select
+            allocate(dyson_norm(0:size(cisa1, 3), 0:size(cisa2, 3)))
+            allocate(dyson_ao(1:size(mos2%cb, 1), 0:size(cisa1, 3), 0:size(cisa2, 3)))
+            dyson_norm = sum(dyson_mo**2, dim=1)
+            if (print_level >= 2) then
+                write(stdout, *)
+                write(stdout, '(5x,a)') 'Transforming Dyson orbitals to AO basis..'
+            end if
+            do i = 0, size(cisa2, 3)
+                call gemm(mos2%cb, dyson_mo(:, :, i), dyson_ao(:, :, i))
+            end do
         else
             if (print_level >= 2) then
                 write(stdout, *)

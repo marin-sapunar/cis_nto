@@ -109,11 +109,13 @@ contains
         real(dp), allocatable, intent(inout) :: array(:, :, :)
         integer, intent(in) :: bf_dim
         real(dp), allocatable :: wrk(:, :, :)
-        integer :: i
+        integer :: i, lb(3), ub(3)
 
+        lb = lbound(array)
+        ub = ubound(array)
         if (bf_dim == 1) then
-            allocate(wrk(self%n2, size(array, 2), size(array, 3)))
-            do i =1, size(array, 3)
+            allocate(wrk(self%n2, lb(2):ub(2), lb(3):ub(3)))
+            do i = lbound(array, 3), ubound(array, 3)
                 call gemm(self%trans, array(:, :, i), wrk(:, :, i), transa='T')
             end do
         else

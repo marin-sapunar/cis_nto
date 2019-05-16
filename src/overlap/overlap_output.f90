@@ -17,6 +17,7 @@ module overlap_output_mod
     public :: output_wf
     public :: output_orth
     public :: output_phase
+    public :: output_dyson
 
 
     character(len=*), parameter :: out_fmt_s = '(5x,1000f10.6)'
@@ -149,6 +150,41 @@ contains
             write(stdout, '(9x,a,1000(i0, 1x))') 'Cols: ', assigned_cols
         end if
     end subroutine output_phase
+
+
+    subroutine output_dyson()
+        use overlap_variables
+        use basis_transform_mod, only : basis_transform
+        use write_molden_mod
+        integer :: i, j, outunit
+        type(basis_transform) :: trans
+        character(len=1000) :: temp
+
+        call trans%init(bs2, bs2%source_format, 'molden_cart')
+        call trans%transform(dyson_ao, 1)
+
+        open(newunit=outunit, file=prefix_dyson//'.at', action='write')
+        call write_molden_atoms(outunit, geom1, atom_symbol, atom_number)
+        close(outunit)
+        open(newunit=outunit, file=prefix_dyson//'.gto', action='write')
+        call write_molden_gto(outunit, bs1)
+        close(outunit)
+        do i = 0, size(cisa1, 3)
+            do j = 0, size(cisa2, 3)
+                ! Write MO basis dyson orbital.
+                write(temp, '(a,a,i3.3,a,i3.3,a)') prefix_dyson, '.', i, '.', j, '.mo'
+                open(newunit=outunit, file=temp, action='write')
+                write(outunit, '(1e13.5)') dyson_mo(:, i, j)
+                close(outunit)
+                ! Write AO basis dyson orbital.
+                write(temp, '(a,a,i3.3,a,i3.3,a)') prefix_dyson, '.', i, '.', j, '.ao'
+                open(newunit=outunit, file=temp, action='write')
+                call write_molden_mo_single(outunit, 1000*i+j, 'a   ', 1, 0.0_dp, dyson_norm(i, j),      &
+                &                           dyson_ao(:, i, j))
+                close(outunit)
+            end do
+        end do
+    end subroutine output_dyson
 
 
 end module overlap_output_mod

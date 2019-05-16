@@ -116,8 +116,8 @@ contains
                 if (s == 2) ab = 'beta'
                 write(stdout, *)
                 write(stdout, '(1x,a,a,a)') 'Warning. Mismatch in number of active orbitals.'
-                write(stdout, '(3x,i0,a,i0,a)') on1%ao(s), ' bra and ', on2%ao(s), ' ket ', ab, &
-                &                               ' active occupied orbitals.'
+                write(stdout, '(3x,i0,a,i0,a)') on1%ao(s), ' bra and ', on2%ao(s), ' ket '// ab // &
+                &                                 ' active occupied orbitals.'
                 write(stdout, '(3x,a)') 'Using previously frozen orbitals as active orbitals.'
             end if
             call prepend_zero_occ_cis(on1%fo(s), cis1)

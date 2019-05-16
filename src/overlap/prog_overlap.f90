@@ -57,6 +57,7 @@ program cis_overlap_prog
     ! Calculate CIS overlaps/dyson orbitals.
     call overlap_cis()
     if (dyson_c) then
+        call output_dyson()
     else
         call output_orth(orth_overlap, s_wf)
         call output_phase(match_phase, s_wf)
