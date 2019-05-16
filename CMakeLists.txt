@@ -132,27 +132,22 @@ enable_language (C)
 
 ################################################################################
 # Build                                                                        #
-  add_subdirectory(TheoChemUtil)
-  set(LINKLIBS ${LINKLIBS})
+  file(GLOB SOURCES_UTIL "src/util_chem/*/*f90" "src/util_fort/*f90")
+  add_library(theochemutil ${SOURCES_UTIL})
 
-  file(GLOB SOURCES
-      "src/overlap/*f90"
-      "src/l2m/*f90"
-      )
-  file(GLOB SOURCES_OVLC "src/l2m/*c")
+
+  file(GLOB SOURCES_OLAP "src/overlap/*f90" "src/l2m/*c")
   file(GLOB SOURCES_CONV "src/convert/*f90")
   file(GLOB SOURCES_GNTO "src/nto/*f90")
-  add_library(cis_nto_lib ${SOURCES})
-  add_dependencies(cis_nto_lib theochemutil)
-  add_executable(cis_overlap.exe "src/prog_overlap.f90" ${SOURCES_OVLC})
+
+  add_executable(cis_overlap.exe ${SOURCES_OLAP})
   add_executable(cis_nto.exe ${SOURCES_GNTO})
   add_executable(convert.exe ${SOURCES_CONV})
 
 
-  target_link_libraries(cis_nto.exe cis_nto_lib theochemutil ${LINKLIBS})
-  target_link_libraries(cis_overlap.exe cis_nto_lib theochemutil ${LINKLIBS})
-  target_link_libraries(convert.exe cis_nto_lib theochemutil ${LINKLIBS})
- #target_link_libraries(cis_dyson.exe cis_nto_lib theochemutil ${LINKLIBS})
+  target_link_libraries(cis_nto.exe theochemutil ${LINKLIBS})
+  target_link_libraries(cis_overlap.exe theochemutil ${LINKLIBS})
+  target_link_libraries(convert.exe theochemutil ${LINKLIBS})
 
 ################################################################################
 # Check                                                                        #
