@@ -32,7 +32,7 @@ module molecular_orbitals_mod
         integer, allocatable :: nb(:) !< MO numbers beta
     contains
         procedure :: init => init_molecular_orbitals
-
+        procedure :: to_unrestricted
     end type molecular_orbitals
 
 
@@ -95,6 +95,18 @@ contains
             end if
         end if
     end subroutine init_molecular_orbitals
+
+
+    subroutine to_unrestricted(self)
+        class(molecular_orbitals), intent(inout) :: self
+
+        if (self%n_mo_b == self%n_mo_a) return
+        self%n_mo_b = self%n_mo_a
+        self%cb = self%ca
+        self%ob = self%oa
+        self%eb = self%ea
+        self%nb = self%na
+    end subroutine to_unrestricted
 
 
 end module molecular_orbitals_mod

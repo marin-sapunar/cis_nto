@@ -44,13 +44,13 @@ contains
                 write(stdout, *)
                 write(stdout, '(1x,a)') 'Unrestricted bra and restricted ket MOs...'
             end if
-            allocate(mos2%cb, source=mos2%ca)
+            call mos2%to_unrestricted()
         else if (uhf2 .and. (.not. uhf1)) then
             if (print_level >= 1) then
                 write(stdout, *)
                 write(stdout, '(1x,a)') 'Restricted bra and unrestricted ket MOs...'
             end if
-            allocate(mos1%cb, source=mos1%ca)
+            call mos1%to_unrestricted()
         end if
         time_in =  time_in + omp_get_wtime() - time0
 
