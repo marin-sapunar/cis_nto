@@ -3,7 +3,7 @@
 
 ## Purpose of Module
 
-The CIS NTO module contains programs for calculating the natural transition orbitals for a CIS type wave functions and using them for calculating the overlaps or Dyson orbitals between two sets of CIS wave functions.
+The CIS NTO module contains programs for calculating the natural transition orbitals for CIS type wave functions and using them for calculating the overlaps or Dyson orbitals between two sets of CIS wave functions.
 
 ## Installation and technical information
 
@@ -14,7 +14,9 @@ The CIS NTO module contains programs for calculating the natural transition orbi
 * Prerequisites
   * cmake
   * make
-  * MKL (with the [MKL Fortran 95 Interface](https://software.intel.com/en-us/mkl-linux-developer-guide-fortran-95-interfaces-to-lapack-and-blas))
+  * BLAS/LAPACK
+    * OpenBLAS
+    * MKL (with the [MKL Fortran 95 Interface](https://software.intel.com/en-us/mkl-linux-developer-guide-fortran-95-interfaces-to-lapack-and-blas))
 
 Commands to downolad and install the module:
 
