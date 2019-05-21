@@ -60,7 +60,7 @@ contains
     !! and finally from internal format to output format.
     !----------------------------------------------------------------------------------------------
     subroutine init(self, bset, source_format, target_format)
-        use blas95, only : gemm
+        use linalg_wrapper_mod, only : gemm
         use matrix_mod, only : mat_ge_mmm
         class(basis_transform), intent(inout) :: self
         type(basis_set), intent(in) :: bset !< Basis set for which the transformation is generated
@@ -104,7 +104,7 @@ contains
     !> @brief Transform 2D array where the basis coefficients are along dimension bf_dim.
     !----------------------------------------------------------------------------------------------
     subroutine transform_array(self, array, bf_dim)
-        use blas95, only : gemm
+        use linalg_wrapper_mod, only : gemm
         class(basis_transform), intent(inout) :: self
         real(dp), allocatable, intent(inout) :: array(:, :) !< Array to transform
         integer, intent(in) :: bf_dim !< Dimension along which to transform
@@ -128,7 +128,7 @@ contains
     !> @brief Transform 3D array where the basis coefficients are along dimension bf_dim.
     !----------------------------------------------------------------------------------------------
     subroutine transform_arrays(self, array, bf_dim)
-        use blas95, only : gemm
+        use linalg_wrapper_mod, only : gemm
         class(basis_transform), intent(inout) :: self
         real(dp), allocatable, intent(inout) :: array(:, :, :) !< Array to transform
         integer, intent(in) :: bf_dim !< Dimension along which to transform
