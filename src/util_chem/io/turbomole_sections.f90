@@ -1,62 +1,17 @@
 !----------------------------------------------------------------------------------------------
-! MODULE: read_turbomole_sections_mod
+! MODULE: turbomole_sections_mod
 !> @author Marin Sapunar, Ruđer Bošković Institute
 !> @date August, 2018
 !
 !> @brief Subroutines for reading data from sections present in turbomole input/output files.
 !----------------------------------------------------------------------------------------------
-module read_turbomole_sections_mod
+module turbomole_sections_mod
     use global_defs
     use file_mod
-    use string_mod
-    use ivec_mod
     implicit none
 
 
 contains
-
-
-    function turbomole_sphe_order(ll) result(lm)
-        integer, intent(in) :: ll
-        integer, allocatable :: lm(:, :)
-        integer :: i
-
-        allocate(lm(2, 2*ll+1))
-        lm(1, :) = ll
-        select case(ll)
-        case(0)
-            lm(2, :) = 0
-        case(1)
-            lm(2, :) = [1, -1, 0]
-        case default
-            lm(2, 1) = 0
-            do i = 1, ll
-                if (mod(i, 2) == 0) then
-                    lm(2, 2*i) = -i
-                    lm(2, 2*i+1) = i
-                else 
-                    lm(2, 2*i) = i
-                    lm(2, 2*i+1) = -i
-                end if
-            end do
-        end select
-    end function turbomole_sphe_order
-
-
-    function turbomole_sphe_phase(ll) result(phase)
-        integer, intent(in) :: ll
-        real(dp), allocatable :: phase(:)
-
-        allocate(phase(2*ll+1))
-        phase = num1
-        select case(ll)
-        case(3)
-            phase(7) = -num1
-        case(4)
-            phase(4) = -num1
-            phase(7) = -num1
-        end select
-    end function turbomole_sphe_phase
 
 
     !----------------------------------------------------------------------------------------------
@@ -118,6 +73,8 @@ contains
     !! type of basis set. Also contains aux. basis set information, but is not read here.
     !----------------------------------------------------------------------------------------------
     subroutine section_read_atoms(readf, nabas, basis_asym, basis_index, basis_key)
+        use ivec_mod
+        use string_mod
         type(reader), intent(inout) :: readf
         integer, intent(in) :: nabas
         character(len=2), intent(out) :: basis_asym(nabas)
@@ -159,6 +116,7 @@ contains
     !! calculations.
     !----------------------------------------------------------------------------------------------
     subroutine section_read_shells(readf, nmo, omask)
+        use string_mod
         type(reader), intent(inout) :: readf
         integer, intent(in) :: nmo
         logical, intent(out) :: omask(nmo)
@@ -184,6 +142,7 @@ contains
     !! of frozen orbitals.
     !----------------------------------------------------------------------------------------------
     subroutine section_read_freeze(readf, nmo, amask)
+        use string_mod
         type(reader), intent(inout) :: readf
         integer, intent(in) :: nmo
         logical, intent(out) :: amask(nmo)
@@ -300,7 +259,7 @@ contains
         do i = 1, nmo
             call readf%next()
             if (index(readf%line, '$') == 1) then
-                write(stderr, *) 'Error in read_turbomole module, section_read_mo subroutine.'
+                write(stderr, *) 'Error in turbomole_sections_mod.'
                 write(stderr, *) '  Not all molecular orbitals found.'
                 stop
             end if
@@ -470,59 +429,55 @@ contains
 
 
     !----------------------------------------------------------------------------------------------
-    ! FUNCTION: FunctionalType
-    !
-    !> @brief Return type of DFT functional.
-    !> @details
-    !! The output is an integer based on the type of functional:
-    !!  1 - LDA
-    !!  2 - GGA
-    !!  3 - MGGA
-    !!  4 - Hybrid
-    !!  5 - ODFT
-    !!  6 - Double-hybrid
+    ! FUNCTION: section_count_basis
+    !> @brief Get number of basis sets in a $basis section.
     !----------------------------------------------------------------------------------------------
-    function functionaltype(func) result (functype)
-        character(len=*), intent(in) :: func
-        integer :: functype
-        character(len=21), dimension(5), parameter :: ldafunc = ['slater-dirac-exchange', &
-                                                                 's-vwn                ', &
-                                                                 'vwn                  ', &
-                                                                 's-vwn_Gaussian       ', &
-                                                                 'pwlda                ']
-        character(len=14), dimension(7), parameter :: ggafunc = ['becke-exchange', &
-                                                                 'b-lyp         ', &
-                                                                 'b-vwn         ', &
-                                                                 'lyp           ', &
-                                                                 'b-p           ', &
-                                                                 'pbe           ', &
-                                                                 'b97-d         ']
-        character(len=4 ), dimension(1), parameter :: mggfunc = ['tpss']
-        character(len=15), dimension(8), parameter :: hybfunc = ['bh-lyp         ', &
-                                                                 'b3-lyp         ', &
-                                                                 'b3-lyp_Gaussian', &
-                                                                 'pbe0           ', &
-                                                                 'tpshh          ', &
-                                                                 'm06            ', &
-                                                                 'm06-2x         ', &
-                                                                 'pbeh-3c        ']
-        character(len=3 ), dimension(2), parameter :: odffunc = ['lhf', &
-                                                                 'oep']
-        character(len=7 ), dimension(1), parameter :: dhyfunc = ['b2-plyp']
-        functype = 0
-        if (any(ldafunc == func)) functype = 1
-        if (any(ggafunc == func)) functype = 2
-        if (any(mggfunc == func)) functype = 3
-        if (any(hybfunc == func)) functype = 4
-        if (any(odffunc == func)) functype = 5
-        if (any(dhyfunc == func)) functype = 6
-        if (functype == 0) then
-            write(stderr, *) 
-            write(stderr, *) 'Error in read_turbomole module, functionaltype subroutine.'
-            write(stderr, *) '  Unrecognized DFT functional.'
-            stop
-        end if
-    end function functionaltype
+    function section_count_basis(readf) result (nabas)
+        type(reader), intent(inout) :: readf
+        integer :: nabas
+        logical :: check
+        integer :: iline
+        iline = readf%line_num
+        nabas = 0
+        do
+            call readf%go_to_keyword('*', found=check)
+            if (.not. check) exit
+            nabas = nabas + 1
+        end do
+        call readf%go_to_line(iline)
+        nabas = (nabas - 1) / 2
+    end function section_count_basis
 
 
-end module read_turbomole_sections_mod
+    !----------------------------------------------------------------------------------------------
+    ! SUBROUTINE: section_count_mo
+    !> @brief Get dimensions of MO array.
+    !----------------------------------------------------------------------------------------------
+    subroutine section_count_mo(readf, nbas, nmo)
+        type(reader) :: readf
+        integer, intent(out) :: nbas
+        integer, intent(out) :: nmo
+        logical :: check
+        integer :: iline
+        integer :: i
+        iline = readf%line_num
+        nmo = 0
+        do 
+            call readf%go_to_keyword('eigenvalue=', found=check)
+            if (.not. check) exit
+            nmo = nmo + 1
+            if (nmo == 1) then
+                call readf%parseline(' =')
+                do i = 1, readf%narg
+                    if (readf%args(i)%s == 'nsaos') then
+                        read(readf%args(i+1)%s, *) nbas
+                        exit
+                    end if
+                end do
+            end if
+        end do
+        call readf%go_to_line(iline)
+    end subroutine section_count_mo
+
+
+end module turbomole_sections_mod

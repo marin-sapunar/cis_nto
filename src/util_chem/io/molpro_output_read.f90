@@ -4,28 +4,21 @@
 !> @date March, 2019
 !
 !> @brief Contains subroutines for reading data from a molpro output file.
-!> @details
-!! The Molden file format is organized into sections marked by keywords (ex. [Atoms]). Each 
-!! subroutine in this module reads a section from the file. It should be possible to call the
-!! subroutines in any order, as the subroutines will attempt to read any missing required
-!! information by calling each other.
 !----------------------------------------------------------------------------------------------
 module molpro_output_read_mod
     use global_defs
     use file_mod, only : reader
     implicit none
 
-    private
 
+    private
     public :: molpro_output_read_geom
     public :: molpro_output_read_basis
     public :: molpro_output_read_mo
     public :: molpro_sphe_order
-   !public :: molden_cart_order
 
 
 contains
-
 
 
     !----------------------------------------------------------------------------------------------
@@ -44,7 +37,7 @@ contains
         real(dp) :: charge
 
         call readf%open(fname, skip_empty = .false.)
-        call find_n_atom(readf, natom)
+        call find_coordinates(readf, natom)
         allocate(geom(3*natom))
         allocate(at_symbol(natom))
         allocate(at_number(natom))
@@ -64,7 +57,7 @@ contains
 
     !----------------------------------------------------------------------------------------------
     ! SUBROUTINE: molpro_output_read_basis
-    !> @brief Read basis set information from a molden file.
+    !> @brief Read basis set information from a molpro output file.
     !----------------------------------------------------------------------------------------------
     subroutine molpro_output_read_basis(fname, bs)
         use basis_set_mod, only : basis_set
@@ -75,7 +68,7 @@ contains
         integer :: i
 
         call readf%open(fname, skip_empty = .false.)
-        call find_n_atom(readf, bs%n_center)
+        call find_coordinates(readf, bs%n_center) ! Get number of atoms
         bs%n_bs = bs%n_center
         allocate(bs%bs(bs%n_bs))
         allocate(bs%center_i_bs(1:bs%n_bs), source=[ (i, i = 1, bs%n_bs ) ])
@@ -91,6 +84,95 @@ contains
     end subroutine molpro_output_read_basis
 
 
+    !----------------------------------------------------------------------------------------------
+    ! SUBROUTINE: molpro_output_read_mo
+    !> @brief Read molecular orbitals from a molpro output file.
+    !> @details
+    !! The input has to have the thrprint=-1 keyword to print the full molecular orbitals.
+    !----------------------------------------------------------------------------------------------
+    subroutine molpro_output_read_mo(fname, mos)
+        use molecular_orbitals_mod, only : molecular_orbitals
+        character(len=*), intent(in) :: fname
+        type(molecular_orbitals) :: mos
+        real(dp), allocatable :: moa_c(:, :)
+        real(dp), allocatable :: mob_c(:, :)
+        real(dp), allocatable :: moa_e(:)
+        real(dp), allocatable :: mob_e(:)
+        real(dp), allocatable :: moa_o(:)
+        real(dp), allocatable :: mob_o(:)
+        type(reader) :: readf
+        integer :: nmo_a, nmo_b, nbas
+
+        call readf%open(fname, skip_empty = .false.)
+        call readf%go_to_keyword('MOLECULAR ORBITALS, SYMMETRY 1:')
+        call readf%next() ! ========== line
+        call section_dim_mo(readf, nmo_a, nbas)
+
+        allocate(moa_c(nbas, nmo_a))
+        allocate(moa_e(nmo_a))
+        allocate(moa_o(nmo_a))
+        call section_read_mo(readf, nbas, nmo_a, moa_e, moa_c)
+        call readf%close()
+        call mos%init(ca=moa_c, ea=moa_e, oa=moa_o)
+    end subroutine molpro_output_read_mo
+
+
+    !----------------------------------------------------------------------------------------------
+    ! SUBROUTINE: find_coordinates
+    !> @brief Go to ATOMIC COORDINATES section of output file and count number of atoms.
+    !----------------------------------------------------------------------------------------------
+    subroutine find_coordinates(readf, n)
+        type(reader), intent(inout) :: readf
+        integer, intent(out) :: n
+        logical :: check
+
+        call readf%go_to_keyword('ATOMIC COORDINATES', found=check)
+        if (.not. check) then
+            write(stderr, *) ' Error reading molpro output.'
+            write(stderr, *) '     "ATOMIC COORDINATES" not found.'
+            stop
+        end if
+        call readf%next() ! Empty line
+        call readf%next() ! NR  ATOM    CHARGE       X              Y              Z
+        call readf%next() ! Empty line
+        n = readf%count_lines_to_keyword('')
+    end subroutine find_coordinates
+
+
+
+    !----------------------------------------------------------------------------------------------
+    ! SUBROUTINE: section_dim_mo
+    !> @brief Cound number of AO/MO from MOLECULAR ORBITALS section of output file.
+    !----------------------------------------------------------------------------------------------
+    subroutine section_dim_mo(readf, nmo, nao)
+        type(reader), intent(inout) :: readf
+        integer, intent(out) :: nmo
+        integer, intent(out) :: nao
+        integer :: iline
+
+        iline = readf%line_num
+        call readf%next() ! Empty line
+        nmo = 0
+        do
+            call readf%next()
+            call readf%parseline(' ')
+            if (readf%line == '') exit
+            if (readf%args(1)%s /= 'Orb.') exit
+            nmo = nmo + readf%narg - 2
+            call readf%next() ! Energies
+            call readf%next() ! Empty line
+            call readf%next() ! Nr  Atom  Typ     Orbital Coefficients:
+            call readf%go_to_keyword('', count_lines=nao)
+        end do
+        call readf%rewind()
+        call readf%go_to_line(iline)
+    end subroutine section_dim_mo
+
+
+    !----------------------------------------------------------------------------------------------
+    ! SUBROUTINE: section_read_basis
+    !> @brief Read basis set from BASIS DATA section of a molpro output file.
+    !----------------------------------------------------------------------------------------------
     subroutine section_read_basis(readf, nabas, abas)
         use basis_set_mod, only : basis_set_single
         use ang_mom_defs
@@ -117,15 +199,18 @@ contains
             if (readf%line == '') exit
             call readf%parseline(' ')
             c_prim = c_prim + 1
+            ! Check if minimum number of primitives were read for current function block
             if (c_prim <= c_block_len) then
                 start = 3
                 if (skip) cycle
+            ! Check if more primitives are present for the current function block
             else if (readf%args(2)%s /= 'A') then
                 start = 1
                 if (skip) cycle
+            ! Start new function block
             else 
                 start = 5
-                ! Check start of new atom block
+                ! Check for new atom block
                 read(readf%args(3)%s, *) atom
                 if (atom /= bi) then
                     if (bi /= 0) call abas(bi)%init(c_block_end, orbtype, nprim, zeta, beta)
@@ -133,7 +218,8 @@ contains
                     c_block_len = 0
                     c_block_end = 0
                 end if
-                ! Check if function block should be skipped
+                ! Check m_l to see if function should be read
+                ! (saving subshells here, and expanding into individual functions later)
                 read(readf%args(start-1)%s, '(1x,1a)') orb
                 if (orb /= 's') read(readf%args(start-1)%s, '(2x,a)') chkm
                 skip = .false.
@@ -146,13 +232,14 @@ contains
                     if (chkm /= '0') skip = .true.
                 end select
                 if (skip) cycle
-
+                ! Check number of functions in current block
                 c_block_len = readf%narg - start
                 c_block_start = c_block_end + 1
                 c_block_end = c_block_start + c_block_len - 1
+                ! Restart count of primitives for current function
                 c_prim = 1
             end if
-
+            ! Read coefficients from line
             nprim(c_block_start:c_block_end) = c_prim
             orbtype(c_block_start:c_block_end) = orb
             do i = 0, c_block_len - 1
@@ -164,66 +251,10 @@ contains
     end subroutine section_read_basis
 
 
-
     !----------------------------------------------------------------------------------------------
-    ! SUBROUTINE: molpro_output_read_mo
-    !> @brief Read molecular orbitals from a molpro output file.
-    !> @details
-    !! The input has to have the thrprint=-1 keyword to print the full molecular orbitals.
+    ! SUBROUTINE: section_read_mo
+    !> @brief Read molecular orbitals from MOLECULAR ORBITALS section of a molpro output file.
     !----------------------------------------------------------------------------------------------
-    subroutine molpro_output_read_mo(fname, mos)
-        use molecular_orbitals_mod, only : molecular_orbitals
-        character(len=*), intent(in) :: fname
-        type(molecular_orbitals) :: mos
-        real(dp), allocatable :: moa_c(:, :)
-        real(dp), allocatable :: mob_c(:, :)
-        real(dp), allocatable :: moa_e(:)
-        real(dp), allocatable :: mob_e(:)
-        real(dp), allocatable :: moa_o(:)
-        real(dp), allocatable :: mob_o(:)
-        type(reader) :: readf
-        integer :: nmo_a, nmo_b, nbas
-
-        call readf%open(fname, skip_empty = .false.)
-        call readf%go_to_keyword('MOLECULAR ORBITALS, SYMMETRY 1:')
-        call readf%next() ! ========== line
-        call count_mo(readf, nmo_a, nbas)
-
-        allocate(moa_c(nbas, nmo_a))
-        allocate(moa_e(nmo_a))
-        allocate(moa_o(nmo_a))
-        call section_read_mo(readf, nbas, nmo_a, moa_e, moa_c)
-        call readf%close()
-        call mos%init(ca=moa_c, ea=moa_e, oa=moa_o)
-    end subroutine molpro_output_read_mo
-
-
-    subroutine count_mo(readf, nmo, nao)
-        type(reader), intent(inout) :: readf
-        integer, intent(out) :: nmo
-        integer, intent(out) :: nao
-        integer :: iline
-
-        iline = readf%line_num
-        call readf%next() ! Empty line
-        nmo = 0
-        do
-            call readf%next()
-            call readf%parseline(' ')
-            if (readf%line == '') exit
-            if (readf%args(1)%s /= 'Orb.') exit
-            nmo = nmo + readf%narg - 2
-            call readf%next() ! Energies
-            call readf%next() ! Empty line
-            call readf%next() ! Nr  Atom  Typ     Orbital Coefficients:
-            call readf%go_to_keyword('', count_lines=nao)
-        end do
-        call readf%rewind()
-        call readf%go_to_line(iline)
-    end subroutine count_mo
-
-
-
     subroutine section_read_mo(readf, nbas, nmo, mo_e, mo_c)
         type(reader), intent(inout) :: readf
         integer, intent(in) :: nbas !< Number of basis functions
@@ -282,24 +313,6 @@ contains
             stop 'molpro_sphe_order not implemented'
         end select
     end function molpro_sphe_order
-
-
-    subroutine find_n_atom(readf, n)
-        type(reader), intent(inout) :: readf
-        integer, intent(out) :: n
-        logical :: check
-
-        call readf%go_to_keyword('ATOMIC COORDINATES', found=check)
-        if (.not. check) then
-            write(stderr, *) ' Error reading molpro output.'
-            write(stderr, *) '     "ATOMIC COORDINATES" not found.'
-            stop
-        end if
-        call readf%next() ! Empty line
-        call readf%next() ! NR  ATOM    CHARGE       X              Y              Z
-        call readf%next() ! Empty line
-        n = readf%count_lines_to_keyword('')
-    end subroutine find_n_atom
 
 
 end module molpro_output_read_mod

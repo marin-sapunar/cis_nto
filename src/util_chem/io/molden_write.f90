@@ -1,5 +1,5 @@
 !----------------------------------------------------------------------------------------------
-! MODULE: write_molden_mod
+! MODULE: molden_write_mod
 !> @author Marin Sapunar, Ruđer Bošković Institute
 !> @date June, 2017
 !
@@ -8,25 +8,25 @@
 !! The Molden file format is organized into sections marked by keywords (ex. [Atoms]). Each 
 !! subroutine in this module writes a section of the file. 
 !----------------------------------------------------------------------------------------------
-module write_molden_mod
+module molden_write_mod
     use global_defs
     implicit none
 
     private
-    public :: write_molden_atoms
-    public :: write_molden_gto
-    public :: write_molden_mo
-    public :: write_molden_mo_single
+    public :: molden_write_atoms
+    public :: molden_write_gto
+    public :: molden_write_mo
+    public :: molden_write_mo_single
 
 
 contains
 
 
     !----------------------------------------------------------------------------------------------
-    ! SUBROUTINE: write_molden_gto
+    ! SUBROUTINE: molden_write_gto
     !> @brief Write the molden [Atoms] section.
     !----------------------------------------------------------------------------------------------
-    subroutine write_molden_atoms(outunit, geom, at_symbol, at_number, angstrom)
+    subroutine molden_write_atoms(outunit, geom, at_symbol, at_number, angstrom)
         integer, intent(in) :: outunit
         real(dp), intent(in) :: geom(:)
         character(len=2), intent(in) :: at_symbol(:)
@@ -52,14 +52,14 @@ contains
         do i = 1, size(at_symbol)
             write(outunit, fatm) at_symbol(i), i, at_number(i), geom(3*i-2:3*i)*lenconv
         end do
-    end subroutine write_molden_atoms
+    end subroutine molden_write_atoms
 
 
     !----------------------------------------------------------------------------------------------
-    ! SUBROUTINE: write_molden_gto
+    ! SUBROUTINE: molden_write_gto
     !> @brief Write the molden [GTO] section.
     !----------------------------------------------------------------------------------------------
-    subroutine write_molden_gto(outunit, bs)
+    subroutine molden_write_gto(outunit, bs)
         use basis_set_mod, only : basis_set
         integer, intent(in) :: outunit !< Unit in which the file is open.
         type(basis_set), intent(in) :: bs !< Basis sets.
@@ -80,13 +80,13 @@ contains
             end do
             write(outunit, '(a)') ' '
         end do
-    end subroutine write_molden_gto
+    end subroutine molden_write_gto
 
     !----------------------------------------------------------------------------------------------
-    ! SUBROUTINE: write_molden_mo
+    ! SUBROUTINE: molden_write_mo
     !> @brief Write set of molecular orbitals to molden [MO] section.
     !----------------------------------------------------------------------------------------------
-    subroutine write_molden_mo(outunit, mos)
+    subroutine molden_write_mo(outunit, mos)
         use molecular_orbitals_mod, only : molecular_orbitals
         integer, intent(in) :: outunit
         type(molecular_orbitals), intent(in) :: mos
@@ -94,21 +94,21 @@ contains
 
         write(outunit, '(a)') '[MO]'
         do i = 1, mos%n_mo_a
-            call write_molden_mo_single(outunit, mos%na(i), 'a   ', 1, mos%ea(i), mos%oa(i),       &
+            call molden_write_mo_single(outunit, mos%na(i), 'a   ', 1, mos%ea(i), mos%oa(i),       &
             &                           mos%ca(:, i))
         end do
         do i = 1, mos%n_mo_b
-            call write_molden_mo_single(outunit, mos%nb(i), 'a   ', 1, mos%eb(i), mos%ob(i),       &
+            call molden_write_mo_single(outunit, mos%nb(i), 'a   ', 1, mos%eb(i), mos%ob(i),       &
             &                           mos%cb(:, i))
         end do
-    end subroutine write_molden_mo
+    end subroutine molden_write_mo
 
 
     !----------------------------------------------------------------------------------------------
-    ! SUBROUTINE: write_molden_mo_single
+    ! SUBROUTINE: molden_write_mo_single
     !> @brief Write a single molecular orbital to the [MO] section.
     !----------------------------------------------------------------------------------------------
-    subroutine write_molden_mo_single(outunit, n, sym, spin, ene, occup, coef)
+    subroutine molden_write_mo_single(outunit, n, sym, spin, ene, occup, coef)
         integer, intent(in) :: outunit !< Unit in which the file is open.
         integer, intent(in) :: n !< Number of the MO.
         character(len=*), intent(in) :: sym !< Symmetry group.
@@ -131,7 +131,7 @@ contains
         do i = 1, size(coef)
             write(outunit, fcoe) i, coef(i)
         end do
-    end subroutine write_molden_mo_single
+    end subroutine molden_write_mo_single
 
 
-end module write_molden_mod
+end module molden_write_mod

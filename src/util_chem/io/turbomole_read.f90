@@ -1,37 +1,40 @@
 !----------------------------------------------------------------------------------------------
-! MODULE: read_turbomole_mod
+! MODULE: turbomole_read_mod
 !> @author Marin Sapunar, Ruđer Bošković Institute
 !> @date August, 2018
 !
 !> @brief Read data turbomole input/output files.
 !----------------------------------------------------------------------------------------------
-module read_turbomole_mod
+module turbomole_read_mod
     use global_defs
     use file_mod
-    use string_mod
-    use ivec_mod
-    use read_turbomole_sections_mod
+    use turbomole_sections_mod
+    use turbomole_definitions_mod
     implicit none
 
-    private
-    public :: read_geom_turbomole
-    public :: read_basis_turbomole
-    public :: read_mo_turbomole
-    public :: read_cis_turbomole
 
+    private
+    public :: turbomole_read_geom
+    public :: turbomole_read_basis
+    public :: turbomole_read_mo
+    public :: turbomole_read_cis
+
+
+    ! Helper variables while searching through a turbomole directory.
     type(reader) :: tm_reader
     character(len=:), allocatable :: tm_dname
     character(len=:), allocatable :: tm_fname
     character(len=1000) :: tm_initdir
 
+
 contains
 
 
     !----------------------------------------------------------------------------------------------
-    ! SUBROUTINE: read_geom_turbomole
+    ! SUBROUTINE: turbomole_read_geom
     !> @brief Read geometry (and atom symbols) from a turbomole format file.
     !----------------------------------------------------------------------------------------------
-    subroutine read_geom_turbomole(path, geom, at_symbol)
+    subroutine turbomole_read_geom(path, geom, at_symbol)
         character(len=*), intent(in) :: path
         real(dp), allocatable :: geom(:) !< Geometry.
         character(len=2), allocatable, optional :: at_symbol(:) !< Atomic symbols.
@@ -47,15 +50,17 @@ contains
         call tm_reader%close()
         call chdir(tm_initdir)
         if (present(at_symbol)) at_symbol=tsymbol
-    end subroutine read_geom_turbomole
+    end subroutine turbomole_read_geom
 
 
     !----------------------------------------------------------------------------------------------
-    ! SUBROUTINE: read_basis_turbomole
+    ! SUBROUTINE: turbomole_read_basis
     !> @brief Read all information about the basis set from a turbomole calculation.
     !----------------------------------------------------------------------------------------------
-    subroutine read_basis_turbomole(path, bs, read_atoms)
+    subroutine turbomole_read_basis(path, bs, read_atoms)
         use basis_set_mod, only : basis_set
+        use ivec_mod
+        use string_mod
         character(len=*), intent(in) :: path
         type(basis_set), intent(out) :: bs
         logical, intent(in), optional :: read_atoms
@@ -73,7 +78,7 @@ contains
 
         call tm_enter_dir(path)
         call tm_find_section('$basis')
-        bs%n_bs = tm_count_basis(tm_reader)
+        bs%n_bs = section_count_basis(tm_reader)
         allocate(bs%bs(bs%n_bs))
         call section_read_basis(tm_reader, bs%n_bs, bs%bs)
         call tm_reader%close()
@@ -95,15 +100,14 @@ contains
             end do
         end if
         call chdir(tm_initdir)
-
-    end subroutine read_basis_turbomole
+    end subroutine turbomole_read_basis
 
 
     !----------------------------------------------------------------------------------------------
-    ! SUBROUTINE: read_mo_turbomole
+    ! SUBROUTINE: turbomole_read_mo
     !> @brief Read all information about molecular orbitals from a turbomole calculation.
     !----------------------------------------------------------------------------------------------
-    subroutine read_mo_turbomole(path, mos)
+    subroutine turbomole_read_mo(path, mos)
         use molecular_orbitals_mod, only : molecular_orbitals
         character(len=*), intent(in) :: path
         type(molecular_orbitals) :: mos 
@@ -121,7 +125,7 @@ contains
             call tm_find_section('$uhfmo_alpha', check)
         end if
         if (check) then
-            call tm_count_mo(tm_reader, nbas, nmo)
+            call section_count_mo(tm_reader, nbas, nmo)
             allocate(tmoa_c(nbas, nmo))
             allocate(tmoa_e(nmo))
             call section_read_mo(tm_reader, nmo, nbas, tmoa_c, tmoa_e)
@@ -129,7 +133,7 @@ contains
         call tm_reader%close()
         call tm_find_section('$uhfmo_beta', check)
         if (check) then
-            call tm_count_mo(tm_reader, nbas, nmo)
+            call section_count_mo(tm_reader, nbas, nmo)
             allocate(tmob_c(nbas, nmo))
             allocate(tmob_e(nmo))
             call section_read_mo(tm_reader, nmo, nbas, tmob_c, tmob_e)
@@ -138,14 +142,14 @@ contains
         call chdir(tm_initdir)
 
         call mos%init(ca=tmoa_c, ea=tmoa_e, cb=tmob_c, eb=tmob_e)
-    end subroutine read_mo_turbomole
+    end subroutine turbomole_read_mo
 
 
     !----------------------------------------------------------------------------------------------
-    ! SUBROUTINE: read_cis_turbomole
+    ! SUBROUTINE: turbomole_read_cis
     !> @brief Read all information about CIS vectors from escf or ricc2 calculation.
     !----------------------------------------------------------------------------------------------
-    subroutine read_cis_turbomole(path, wfa, wfb, occ_mo, act_mo)
+    subroutine turbomole_read_cis(path, wfa, wfb, occ_mo, act_mo)
         use occupation_mod
         character(len=*), intent(in) :: path
         real(dp), allocatable :: wfa(:, :)
@@ -194,7 +198,7 @@ contains
         else
             method = 'escf'
         end if
-        nex = tm_count_nex(method)
+        nex = tm_count_n_ex_states(method)
 
         if (allocated(wfa)) deallocate(wfa)
         if (allocated(wfb)) deallocate(wfb)
@@ -208,7 +212,7 @@ contains
             call read_cis_escf(rhf, wfa, wfb)
         end select
         call chdir(tm_initdir)
-    end subroutine read_cis_turbomole
+    end subroutine turbomole_read_cis
 
 
     !----------------------------------------------------------------------------------------------
@@ -271,7 +275,7 @@ contains
 
         supdim = 2
         if ((instab == 'ucis') .or. (instab == 'ciss')) supdim = 1
-        if (functionaltype(dft_func) < 3) supdim = 1
+        if (turbomole_functional_type(dft_func) < 3) supdim = 1
         dima = size(wfa, 1)
         dimb = 0
         if (rhf == 2) dimb = size(wfb, 1)
@@ -294,100 +298,6 @@ contains
 
 
     !----------------------------------------------------------------------------------------------
-    ! FUNCTION: tm_count_basis
-    !> @brief Get number of basis sets in a $basis section.
-    !----------------------------------------------------------------------------------------------
-    function tm_count_basis(readf) result (nabas)
-        type(reader), intent(inout) :: readf
-        integer :: nabas
-        logical :: check
-        integer :: iline
-        iline = readf%line_num
-        nabas = 0
-        do
-            call readf%go_to_keyword('*', found=check)
-            if (.not. check) exit
-            nabas = nabas + 1
-        end do
-        call readf%go_to_line(iline)
-        nabas = (nabas - 1) / 2
-    end function tm_count_basis
-
-
-    !----------------------------------------------------------------------------------------------
-    ! SUBROUTINE: tm_count_mo
-    !> @brief Get dimensions of MO array.
-    !----------------------------------------------------------------------------------------------
-    subroutine tm_count_mo(readf, nbas, nmo)
-        type(reader) :: readf
-        integer, intent(out) :: nbas
-        integer, intent(out) :: nmo
-        logical :: check
-        integer :: iline
-        integer :: i
-        iline = readf%line_num
-        nmo = 0
-        do 
-            call readf%go_to_keyword('eigenvalue=', found=check)
-            if (.not. check) exit
-            nmo = nmo + 1
-            if (nmo == 1) then
-                call readf%parseline(' =')
-                do i = 1, readf%narg
-                    if (readf%args(i)%s == 'nsaos') then
-                        read(readf%args(i+1)%s, *) nbas
-                        exit
-                    end if
-                end do
-            end if
-        end do
-        call readf%go_to_line(iline)
-    end subroutine tm_count_mo
-
-
-    !----------------------------------------------------------------------------------------------
-    ! FUNCTION: tm_count_nex
-    !> @brief Find number of excited states included in calculation (depending on method).
-    !----------------------------------------------------------------------------------------------
-    function tm_count_nex(method) result(nex)
-        character(len=*) :: method
-        integer :: nex
-        integer :: i
-        select case(method)
-        case('ricc2')
-            call tm_find_section('$excitations')
-            outer: do
-                call tm_reader%next()
-                if (index(tm_reader%line, '$') == 1) then
-                    write(stderr, *) 'Error in tm_count_excitations subroutine.'
-                    write(stderr, *) 'irrep line not found.'
-                    call abort()
-                end if
-                if (index(tm_reader%line, 'irrep') /= 0) then
-                    call tm_reader%parseline(' =')
-                    do i = 1, tm_reader%narg - 1
-                        if (tm_reader%args(i)%s == 'nexc') then
-                            read(tm_reader%args(i+1)%s, *) nex
-                            exit outer
-                        end if
-                    end do
-                end if
-            end do outer
-            call tm_reader%close()
-        case('escf')
-            call tm_find_section('$soes')
-            call tm_reader%next()
-            call tm_reader%parseline(' ')
-            read(tm_reader%args(2)%s, *) nex
-            call tm_reader%close()
-        case default
-            write(stderr, *) 'Error in tm_count_excitations subroutine.'
-            write(stderr, *) 'Unrecognized method: '//method
-        end select
-    end function tm_count_nex
-
-
-    !----------------------------------------------------------------------------------------------
     ! SUBROUTINE: tm_match_basis_with atoms
     !
     !> @brief Match information from $atoms and $basis sections.
@@ -397,6 +307,8 @@ contains
     !----------------------------------------------------------------------------------------------
     subroutine tm_match_basis_with_atoms(basis, key, key_atom_index, atom_basis_index)
         use basis_set_mod, only : basis_set_single
+        use ivec_mod
+        use string_mod
         type(basis_set_single), intent(in) :: basis(:)
         type(string), intent(in) :: key(:)
         type(ivec), intent(in) :: key_atom_index(:)
@@ -414,7 +326,7 @@ contains
                     exit
                 else
                     if (j == size(basis)) then
-                        write(stderr, *) 'Error in read_turbomole module,&
+                        write(stderr, *) 'Error in turbomole_read module,&
                                         & tm_match_basis_with_atoms subroutine.'
                         write(stderr, *) key(i)%s//' not found in basis section.'
                         call abort()
@@ -423,7 +335,7 @@ contains
             end do
         end do
         if (chk_natom /= size(atom_basis_index)) then
-            write(stderr, *) 'Error in read_turbomole module, tm_match_basis_with_atoms subroutine.'
+            write(stderr, *) 'Error in turbomole_read module, tm_match_basis_with_atoms subroutine.'
             write(stderr, '(a,i0,a)') ' Found ', chk_natom, ' atoms.'
             write(stderr, '(a,i0,a)') ' Expected ', size(atom_basis_index), 'atoms.'
         end if
@@ -488,35 +400,6 @@ contains
 
 
     !----------------------------------------------------------------------------------------------
-    ! SUBROUTINE: tm_find_eigenpairs
-    !
-    !> @brief Find eigenpairs section depending on type of calculation.
-    !> @details
-    !! Eigenpairs section is not mentioned in control file, the default name of the file containing
-    !! the section depends on the scfinstab option in the control file.
-    !----------------------------------------------------------------------------------------------
-    subroutine tm_find_eigenpairs(instab)
-        character(len=*), intent(in) :: instab
-        logical :: check
-        call tm_find_section('$eigenpairs', check)
-        if (.not. check) then
-            call tm_reader%close()
-            select case(instab)
-            case('rpas')
-                call tm_reader%open('sing_a')
-            case('ciss')
-                call tm_reader%open('ciss_a')
-            case('urpa')
-                call tm_reader%open('unrs_a')
-            case('ucis')
-                call tm_reader%open('ucis_a')
-            end select
-            call tm_reader%go_to_keyword('$eigenpairs')
-        end if
-    end subroutine tm_find_eigenpairs
-
-
-    !----------------------------------------------------------------------------------------------
     ! SUBROUTINE: tm_enter_dir
     !
     !> @brief Enter directory containing turbomole files.
@@ -578,4 +461,75 @@ contains
     end subroutine tm_find_section
 
 
-end module read_turbomole_mod
+    !----------------------------------------------------------------------------------------------
+    ! SUBROUTINE: tm_find_eigenpairs
+    !
+    !> @brief Find eigenpairs section depending on type of calculation.
+    !> @details
+    !! Eigenpairs section is not mentioned in control file, the default name of the file containing
+    !! the section depends on the scfinstab option in the control file.
+    !----------------------------------------------------------------------------------------------
+    subroutine tm_find_eigenpairs(instab)
+        character(len=*), intent(in) :: instab
+        logical :: check
+        call tm_find_section('$eigenpairs', check)
+        if (.not. check) then
+            call tm_reader%close()
+            select case(instab)
+            case('rpas')
+                call tm_reader%open('sing_a')
+            case('ciss')
+                call tm_reader%open('ciss_a')
+            case('urpa')
+                call tm_reader%open('unrs_a')
+            case('ucis')
+                call tm_reader%open('ucis_a')
+            end select
+            call tm_reader%go_to_keyword('$eigenpairs')
+        end if
+    end subroutine tm_find_eigenpairs
+
+
+    !----------------------------------------------------------------------------------------------
+    ! FUNCTION: tm_count_n_ex_states
+    !> @brief Find number of excited states included in calculation (depending on method).
+    !----------------------------------------------------------------------------------------------
+    function tm_count_n_ex_states(method) result(nex)
+        character(len=*) :: method
+        integer :: nex
+        integer :: i
+        select case(method)
+        case('ricc2')
+            call tm_find_section('$excitations')
+            outer: do
+                call tm_reader%next()
+                if (index(tm_reader%line, '$') == 1) then
+                    write(stderr, *) 'Error in turbomole_read_mod.'
+                    write(stderr, *) 'irrep line not found in $excitations section.'
+                    call abort()
+                end if
+                if (index(tm_reader%line, 'irrep') /= 0) then
+                    call tm_reader%parseline(' =')
+                    do i = 1, tm_reader%narg - 1
+                        if (tm_reader%args(i)%s == 'nexc') then
+                            read(tm_reader%args(i+1)%s, *) nex
+                            exit outer
+                        end if
+                    end do
+                end if
+            end do outer
+            call tm_reader%close()
+        case('escf')
+            call tm_find_section('$soes')
+            call tm_reader%next()
+            call tm_reader%parseline(' ')
+            read(tm_reader%args(2)%s, *) nex
+            call tm_reader%close()
+        case default
+            write(stderr, *) 'Error in turbomole_read_mod subroutine.'
+            write(stderr, *) 'Unrecognized method '//method//' while checking number of states.'
+        end select
+    end function tm_count_n_ex_states
+
+
+end module turbomole_read_mod
