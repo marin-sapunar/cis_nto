@@ -45,6 +45,7 @@ contains
 
 
     subroutine gemm(a, b, c, transa, transb, alpha, beta)
+        !> @todo add complex version
         real(dp) :: a(:, :)
         real(dp) :: b(:, :)
         real(dp) :: c(:, :)

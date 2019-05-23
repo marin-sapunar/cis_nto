@@ -36,9 +36,9 @@ contains
         write(stdout, '(a)') 'optional arguments:'
         write(stdout, '(a)') '  -h, --help                  show this help message and exit                      '
         write(stdout, '(a)') '  -in, --input-format         format of input file(s)                              '
-        write(stdout, '(32x,a,l1)') 'default: ', input_format
+        write(stdout, '(32x,a,a)') 'default: ', input_format
         write(stdout, '(a)') '  -out, --output-format       output format                                        '
-        write(stdout, '(32x,a,l1)') 'default: ', output_format
+        write(stdout, '(32x,a,a)') 'default: ', output_format
         write(stdout, '(a)') '  -p, --print-level p         control output level of program (0 = quiet)          '
         write(stdout, '(32x,a,i0)') 'default: ', print_level
         stop
