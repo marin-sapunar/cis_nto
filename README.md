@@ -3,7 +3,12 @@
 
 ## Purpose of Module
 
-The CIS NTO module contains programs for calculating the natural transition orbitals for CIS type wave functions and using them for calculating the overlaps or Dyson orbitals between two sets of CIS wave functions.
+The main purpose of the module is calculating overlap matrices between sets of wave functions, molecular orbitals or atomic orbitals. Presently, only CIS type wave functions are supported and overlaps between them are efficiently calculated either by expanding the wave functions in terms of excitations between natural transition orbitals (NTOs) or by expanding the overlap determinants into level 2 minors (L2M).
+
+If using the code, please cite the following reference:
+ * M. Sapunar, T. Piteša, D. Davidović and N. Došlić, [J. Chem. Theory Comput. (2019.)][NTOpaper]
+ 
+which describes the main methods implemented in the code.
 
 ## Installation and technical information
 
@@ -16,12 +21,12 @@ The CIS NTO module contains programs for calculating the natural transition orbi
   * make
   * BLAS/LAPACK
     * OpenBLAS
-    * MKL (with the [MKL Fortran 95 Interface](https://software.intel.com/en-us/mkl-linux-developer-guide-fortran-95-interfaces-to-lapack-and-blas))
+    * MKL (with the [MKL Fortran 95 Interface][F95])
 
 Commands to downolad and install the module:
 
 ```
-git clone --recursive https://github.com/marin-sapunar/cis_nto.git
+git clone https://github.com/marin-sapunar/cis_nto.git
 cd cis_nto
 mkdir build
 cd build
@@ -29,7 +34,7 @@ cmake ..
 make
 ```
 
-after running  make, the executables will be in the bin directory. 
+after running  make, the executables will be in the bin directory.
 For instructions/options run the executables with the --help command line argument.
 
 
@@ -42,4 +47,7 @@ The source code is available at: [GitHub][Git]
 
 
 [Git]: https://github.com/msapunar/cis_nto
+[F95]: https://software.intel.com/en-us/mkl-linux-developer-guide-fortran-95-interfaces-to-lapack-and-blas
+[NTOpaper]: https://pubs.acs.org/doi/10.1021/acs.jctc.9b00235
+
 
