@@ -12,44 +12,60 @@ module basis_transform_mod
     use basis_set_mod
     implicit none
  
+
     private
     public :: basis_transform
 
 
+    !----------------------------------------------------------------------------------------------
+    ! SUBROUTINE: basis_transform
+    !> @brief Transformation between different spherical/Cartesian Gaussian basis sets.
+    !> @details
+    !! Different formats expand the basis set using different ordering of the m (spherical) or lx,
+    !! ly, lz (Cartesian) quantum numbers. This type is used to generate matrices for transforming
+    !! vectors from one format to another.
+    !!
+    !! Calling the init procedure initializes the transformation matrix after which the transform
+    !! procedure is used to transform vectors/arrays by multiplying them with the transformation
+    !! matrix.
+    !----------------------------------------------------------------------------------------------
     type basis_transform
         logical :: initialized = .false. !< Instance initialized?
-        character(len=:), allocatable :: source_format !< Format from which to convert.
-        character(len=:), allocatable :: target_format !< Format to which to convert.
-        logical :: source_sphe !< Spherical/cartesian for source format.
-        logical :: target_sphe !< Spherical/cartesian for target format.
-        real(dp), allocatable :: trans(:, :) !< Transformation matrix.
-        real(dp), allocatable :: sphe_cart_trans(:, :) !< Sphe/cart basis transformation.
-        real(dp), allocatable :: source_trans(:, :) !< Transform source format to internal format.
-        real(dp), allocatable :: target_trans(:, :) !< Transform target format to internal format.
-        integer :: n1 = 0 !< Number of source basis functions.
-        integer :: n2 = 0 !< Number of target basis functions.
+        character(len=:), allocatable :: source_format !< Format from which to convert
+        character(len=:), allocatable :: target_format !< Format to which to convert
+        logical :: source_sphe !< Spherical/cartesian for source format
+        logical :: target_sphe !< Spherical/cartesian for target format
+        real(dp), allocatable :: trans(:, :) !< Transformation matrix
+        real(dp), allocatable :: sphe_cart_trans(:, :) !< Sphe/cart basis transformation
+        real(dp), allocatable :: source_trans(:, :) !< Transform source format to internal format
+        real(dp), allocatable :: target_trans(:, :) !< Transform target format to internal format
+        integer :: n1 = 0 !< Number of source basis functions
+        integer :: n2 = 0 !< Number of target basis functions
     contains
         procedure :: init
         generic :: transform => transform_array, transform_arrays
         procedure, private :: transform_array, transform_arrays
     end type
 
-!   public :: transform
 
 contains
 
 
     !----------------------------------------------------------------------------------------------
     ! SUBROUTINE: init
-    !> @brief Initialize basis set transformation matrix
+    !> @brief Initialize basis set transformation matrix.
+    !> @details
+    !! The transformation matrix is generated from three separate transformations: from the input
+    !! format to the internal format, (if needed) between internal Cartesian and spherical formats
+    !! and finally from internal format to output format.
     !----------------------------------------------------------------------------------------------
     subroutine init(self, bset, source_format, target_format)
-        use blas95, only : gemm
+        use linalg_wrapper_mod, only : gemm
         use matrix_mod, only : mat_ge_mmm
         class(basis_transform), intent(inout) :: self
-        type(basis_set), intent(in) :: bset
-        character(len=*), intent(in) :: source_format !< Format from which to convert.
-        character(len=*), intent(in) :: target_format !< Format to which to convert.
+        type(basis_set), intent(in) :: bset !< Basis set for which the transformation is generated
+        character(len=*), intent(in) :: source_format !< Format from which to convert
+        character(len=*), intent(in) :: target_format !< Format to which to convert
         real(dp), allocatable :: wrk(:, :)
 
         if (self%initialized) then
@@ -83,11 +99,15 @@ contains
     end subroutine init
 
 
+    !----------------------------------------------------------------------------------------------
+    ! SUBROUTINE: transform_array
+    !> @brief Transform 2D array where the basis coefficients are along dimension bf_dim.
+    !----------------------------------------------------------------------------------------------
     subroutine transform_array(self, array, bf_dim)
-        use blas95, only : gemm
+        use linalg_wrapper_mod, only : gemm
         class(basis_transform), intent(inout) :: self
-        real(dp), allocatable, intent(inout) :: array(:, :)
-        integer, intent(in) :: bf_dim
+        real(dp), allocatable, intent(inout) :: array(:, :) !< Array to transform
+        integer, intent(in) :: bf_dim !< Dimension along which to transform
         real(dp), allocatable :: wrk(:, :)
 
         if (bf_dim == 1) then
@@ -103,11 +123,15 @@ contains
     end subroutine transform_array
 
 
+    !----------------------------------------------------------------------------------------------
+    ! SUBROUTINE: transform_arrays
+    !> @brief Transform 3D array where the basis coefficients are along dimension bf_dim.
+    !----------------------------------------------------------------------------------------------
     subroutine transform_arrays(self, array, bf_dim)
-        use blas95, only : gemm
+        use linalg_wrapper_mod, only : gemm
         class(basis_transform), intent(inout) :: self
-        real(dp), allocatable, intent(inout) :: array(:, :, :)
-        integer, intent(in) :: bf_dim
+        real(dp), allocatable, intent(inout) :: array(:, :, :) !< Array to transform
+        integer, intent(in) :: bf_dim !< Dimension along which to transform
         real(dp), allocatable :: wrk(:, :, :)
         integer :: i, lb(3), ub(3)
 
@@ -134,10 +158,10 @@ contains
     !> @brief Generate matrix for converting basis functions to internal format.
     !----------------------------------------------------------------------------------------------
     subroutine transform_to_internal_format(bset, basis_format, sphe, mat)
-        use read_molden_mod, only : molden_sphe_order, molden_cart_order
-        use read_turbomole_sections_mod, only : turbomole_sphe_order, turbomole_sphe_phase
+        use molden_definitions_mod, only : molden_sphe_order, molden_cart_order
+        use turbomole_definitions_mod, only : turbomole_sphe_order, turbomole_sphe_phase
         use molpro_output_read_mod, only : molpro_sphe_order
-        type(basis_set), intent(in) :: bset
+        type(basis_set), intent(in) :: bset !<
         character(len=*), intent(in) :: basis_format
         logical, intent(out) :: sphe
         real(dp), allocatable, intent(out) :: mat(:, :)
@@ -152,7 +176,7 @@ contains
         case('molden_cart')
             sphe = .false.
             mat = transform_within_subshells(bset, sphe, molden_cart_order)
-        case('molpro_output')
+        case('molpro')
             sphe = .true.
             mat = transform_within_subshells(bset, sphe, molpro_sphe_order)
         case('internal')
@@ -171,7 +195,7 @@ contains
     !> @brief Generate matrix for converting between cartesian/spherical basis functions.
     !----------------------------------------------------------------------------------------------
     function transform_sphe_cart(bset) result(wrk)
-        type(basis_set), intent(in) :: bset
+        type(basis_set), intent(in) :: bset !< Basis set for which the transformation is generated
         real(dp), allocatable :: wrk(:, :)
         integer :: i, j, bi, l, s, c
 
@@ -195,10 +219,10 @@ contains
     !> @brief Generate matrix for reordering basis functions within subshells.
     !----------------------------------------------------------------------------------------------
     function transform_within_subshells(bset, sphe, order, phase) result(trans)
-        type(basis_set), intent(in) :: bset
-        logical, intent(in) :: sphe
-        procedure(subshell_numbers) :: order
-        procedure(subshell_phases), optional :: phase
+        type(basis_set), intent(in) :: bset !< Basis set for which the transformation is generated
+        logical, intent(in) :: sphe !< Spherical/Cartesian basis set
+        procedure(subshell_numbers) :: order !< Order of bfs within subshells for given l
+        procedure(subshell_phases), optional :: phase !< Phase of bfs within subshells for given l
         real(dp), allocatable :: trans(:, :)
         integer :: i, bi, j, l, n(0:amp%max_l), c
 

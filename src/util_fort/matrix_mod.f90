@@ -180,8 +180,8 @@ contains
 
         ! Conversion to original basis.
         tmp1 = cmplx(evec, 0.0_dp, dp)
-        call cgemm(tmp1, res, tmp2)
-        call cgemm(tmp2, tmp1, res, transb='C')
+        call gemm(tmp1, res, tmp2)
+        call gemm(tmp2, tmp1, res, transb='C')
     end function mat_sy_exp
 
 

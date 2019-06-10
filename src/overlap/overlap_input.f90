@@ -17,6 +17,11 @@ module overlap_input_mod
     public :: command_line_interface
 
 
+    character(len=4), parameter :: default_file_ao = 's_ao'
+    character(len=4), parameter :: default_file_mo = 's_mo'
+    character(len=4), parameter :: default_file_wf = 's_wf'
+
+
 contains
 
 
@@ -59,6 +64,16 @@ contains
         write(stdout, '(32x,a,l1)') 'default: ', orth_overlap
         write(stdout, '(a)') '  -mp, --(no-)match-phase     match phase between assigned bra/ket states          '
         write(stdout, '(32x,a,l1)') 'default: ', match_phase
+        write(stdout, '(a)') '  -op, --operator op          operator whose expectation values are cacluclated.   '
+        write(stdout, '(a)') '                              Currently, only overlaps can be calculated for wave  '
+        write(stdout, '(a)') '                              functions.                                           '
+        write(stdout, '(a)') '                              Available options:                                   '
+        write(stdout, '(a)') '                                analytic expression (eg. "x * y^2 - z^2")          '
+        write(stdout, '(a)') '                                  note: use quotation marks                        '
+        write(stdout, '(a)') '                                  note: see read_operator_string subroutine docs   '
+        write(stdout, '(a)') '                                overlap                                            '
+        write(stdout, '(a)') '                                r^2 (equivalent to "x^2 + y^2 + z^2")              '
+        write(stdout, '(32x,a,a)') 'default: ', operator_string
         write(stdout, '(a)') '  -cp, --(no-)center-pairs    attempt to remove effect of basis set translation by '
         write(stdout, '(a)') '                              recentering pairs of AOs in AO overlap calculation   '
         write(stdout, '(a)') '                              (untested, not recommended)                          '
@@ -107,9 +122,10 @@ contains
         center_pairs = .false.
         freeze_mo_norm = .false.
         freeze_mo_norm_t = -1.0_dp
+        operator_string = 'overlap'
         outfile_ao = 'None'
         outfile_mo = 'None'
-        outfile_wf = 's_wf'
+        outfile_wf = default_file_wf
         prefix_dyson = 'dys'
         print_level = 2
         ! Set timings to 0
@@ -149,10 +165,10 @@ contains
                 input_format_2 = trim(adjustl(temp))
             case('--ao-stop', '-ao')
                 ao_stop = .true.
-                if (outfile_ao == 'None') outfile_ao = 's_ao'
+                if (outfile_ao == 'None') outfile_ao = default_file_ao
             case('--mo-stop', '-mo')
                 mo_stop = .true.
-                if (outfile_mo == 'None') outfile_mo = 's_mo'
+                if (outfile_mo == 'None') outfile_mo = default_file_mo
             case('--algorithm', '-alg')
                 i = i + 1
                 call get_command_argument(i, temp)
@@ -185,6 +201,10 @@ contains
                 match_phase = .true.
             case('--no-match-phase', '-nmp')
                 match_phase = .false.
+            case('--operator', '-op')
+                i = i + 1
+                call get_command_argument(i, temp)
+                operator_string = trim(adjustl(temp))
             case('--center-pairs', '-cp')
                 center_pairs = .true.
             case('--no-center-pairs', '-ncp')
@@ -216,6 +236,15 @@ contains
         path1 = trim(adjustl(temp))
         call get_command_argument(narg, temp)
         path2 = trim(adjustl(temp))
+
+        if (operator_string /= 'overlap') then
+            if (.not. mo_stop) then
+                write(stderr, *) 'Warning. Only overlap operator is implemented for wave functions.'
+                write(stderr, *) '  Setting mo_stop option to .true.'
+                mo_stop = .true.
+                if (outfile_mo == 'None') outfile_mo = default_file_mo
+            end if
+        end if
     end subroutine command_line_interface
 
 

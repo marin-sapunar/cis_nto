@@ -8,8 +8,8 @@
 !----------------------------------------------------------------------------------------------
 module read_all_mod
     use global_defs
-    use read_molden_mod
-    use read_turbomole_mod
+    use molden_read_mod
+    use turbomole_read_mod
     use molpro_output_read_mod
     implicit none
 
@@ -40,10 +40,10 @@ contains
 
         select case(dformat)
         case('turbomole')
-            call read_geom_turbomole(path, geom, tsymbol)
+            call turbomole_read_geom(path, geom, tsymbol)
             tnumber = element_s2z(tsymbol)
         case('molden') 
-            call read_geom_molden(path, geom, tsymbol, tnumber)
+            call molden_read_geom(path, geom, tsymbol, tnumber)
         case('molpro_output')
             call molpro_output_read_geom(path, geom, tsymbol, tnumber)
         case default
@@ -68,9 +68,9 @@ contains
         
         select case(dformat)
         case('turbomole')
-            call read_basis_turbomole(path, basis)
+            call turbomole_read_basis(path, basis)
         case('molden') 
-            call read_basis_molden(path, basis)
+            call molden_read_basis(path, basis)
         case('molpro_output')
             call molpro_output_read_basis(path, basis)
         case default
@@ -95,9 +95,9 @@ contains
 
         select case(dformat)
         case('turbomole')
-            call read_mo_turbomole(path, mos)
+            call turbomole_read_mo(path, mos)
         case('molden')
-            call read_mo_molden(path, mos)
+            call molden_read_mo(path, mos)
         case('molpro_output')
             call molpro_output_read_mo(path, mos)
         case default
@@ -112,6 +112,9 @@ contains
     !----------------------------------------------------------------------------------------------
     ! SUBROUTINE: read_cis
     !> @brief Read CIS wave function coefficients.
+    !> @todo Add CIS type to hold relevant arrays.
+    !> @todo Code cleaning
+    !> @todo Orthogonalization for unrestricted wave functions?
     !----------------------------------------------------------------------------------------------
     subroutine read_cis(dformat, path, wfa, wfb, occ_mo, act_mo, cisa, cisb, occ_num, norm, orthog)
         use occupation_mod
@@ -144,7 +147,7 @@ contains
 
         select case(dformat)
         case('turbomole')
-            call read_cis_turbomole(path, twfa, twfb, tocc_mo, tact_mo)
+            call turbomole_read_cis(path, twfa, twfb, tocc_mo, tact_mo)
         case default
             write(stderr, *) 'Error in read_cis subroutine.'
             write(stderr, *) 'Input format not implemented: '//trim(adjustl(dformat))

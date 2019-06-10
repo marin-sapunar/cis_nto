@@ -36,6 +36,7 @@ module overlap_variables
     character(len=:), allocatable :: outfile_mo
     character(len=:), allocatable :: outfile_wf
     character(len=:), allocatable :: prefix_dyson
+    character(len=:), allocatable :: operator_string
     ! System
     real(dp), allocatable :: geom1(:) !< Geometry 1
     real(dp), allocatable :: geom2(:) !< Geometry 2

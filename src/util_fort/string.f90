@@ -38,14 +38,16 @@ contains
     !! delimiters are treated as one. Whitespace at the beginning and end of each argument is 
     !! removed.
     !----------------------------------------------------------------------------------------------
-    subroutine string_parse(input_string, delimiters, narg, arguments)
-        character(len=*), intent(in) :: input_string
-        integer, intent(out) :: narg
-        type(string), allocatable, intent(out) :: arguments(:)
-        character(len=*), intent(in) :: delimiters !< String containing the possible delimiters between arguments.
+    subroutine string_parse(input_string, delimiters, narg, arguments, found_delimiters)
+        character(len=*), intent(in) :: input_string !< Input string.
+        character(len=*), intent(in) :: delimiters !< String containing the possible delimiters.
+        integer, intent(out) :: narg !< Number of substrings found.
+        type(string), allocatable, intent(out) :: arguments(:) !< Substrings.
+        integer, allocatable, optional :: found_delimiters(:) !< List of delimiters found.
       
         character(len=:), allocatable :: tempstr
         character(len=:), allocatable :: tempout
+        integer :: first_delim
         integer :: i
       
       
@@ -57,14 +59,19 @@ contains
         do
             if (len_trim(tempstr) == 0) exit
             narg = narg + 1
-            call split(tempstr, delimiters, tempout)
+            call split(tempstr, delimiters, tempout, first_delim)
         end do
         ! Allocate and fill arguments array.
         if (allocated(arguments)) deallocate(arguments)
         allocate(arguments(narg))
+        if (present(found_delimiters)) then
+            if (allocated(found_delimiters)) deallocate(found_delimiters)
+            allocate(found_delimiters(narg-1))
+        end if
         tempstr = input_string
         do i = 1, narg
-            call split(tempstr, delimiters, tempout)
+            call split(tempstr, delimiters, tempout, first_delim)
+            if (present(found_delimiters) .and. (i /= narg)) found_delimiters(i) = first_delim
             arguments(i)%s = tempout
         end do
     end subroutine string_parse
@@ -173,7 +180,6 @@ contains
                 outstr = outstr // ch
           END SELECT
        END DO
- 
        str = adjustl(outstr)
  
     END SUBROUTINE rmWhite
@@ -189,7 +195,6 @@ contains
     !----------------------------------------------------------------------------------------------
     SUBROUTINE compact(str)
         character(len=:), intent(inout), allocatable :: str
-      
         character(len=:), allocatable :: outstr
         character(len=1) :: ch
         integer :: i
@@ -212,7 +217,6 @@ contains
                     isp = 0
             END SELECT
         END DO
-      
         str = adjustl(outstr)
         
     END SUBROUTINE compact
@@ -226,10 +230,11 @@ contains
     !! Search input string for first occurence of any character from delimiters string and split
     !! it at the position.
     !----------------------------------------------------------------------------------------------
-    SUBROUTINE split(str, delims, before)
+    SUBROUTINE split(str, delims, before, first_delim)
         character(len=:), intent(inout), allocatable :: str !< Input string. Second part of output string.
         character(len=*), intent(in) :: delims !< Characters at which the string is split.
         character(len=:), intent(out), allocatable :: before !< First part of output string.
+        integer, intent(out) :: first_delim !< Position (in delims string) of first found delimiter.
         
         character :: ch
         integer :: i
@@ -258,6 +263,7 @@ contains
                     EXIT
                 END IF
                 found = .true.
+                first_delim = ipos
             END IF
         END DO
         
