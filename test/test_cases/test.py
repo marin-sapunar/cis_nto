@@ -7,7 +7,7 @@ import re
 import os
 
 
-PROG = ['../../../build/bin/cis_overlap.exe']
+PROG = ['../../build/bin/cis_overlap.exe']
 
 
 class turbomole(unittest.TestCase):
