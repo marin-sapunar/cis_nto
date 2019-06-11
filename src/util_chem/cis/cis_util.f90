@@ -102,6 +102,9 @@ contains
         real(dp), allocatable, intent(inout) :: cis2(:, :, :) !< Ket CIS matrices.
         character(len=:), allocatable :: ab
 
+        if (.not. allocated(cis1)) return
+        if (.not. allocated(cis2)) return
+
         ! Check number of occupied orbitals. This has to be compatible.
         if ((on1%o(s) + n_el_d /= on2%o(s))) then
             write(stderr, *)

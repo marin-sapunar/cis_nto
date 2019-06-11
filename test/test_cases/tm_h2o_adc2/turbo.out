@@ -1,0 +1,1406 @@
+
+ define (neptun) : TURBOMOLE V7.0.1( 19978 ) 29 Sep 2015 at 10:17:19
+ Copyright (C) 2015 TURBOMOLE GmbH, Karlsruhe
+
+
+    2019-06-10 17:11:53.617 
+
+             OPERATING SYSTEM = unix
+                    HOST NAME = neptun
+   STANDARD BASIS SET LIBRARY = /usr/local/chem/Turbomole7.0.1/basen/
+  ALTERNATE BASIS SET LIBRARY = /usr/local/chem/Turbomole7.0.1/basold/
+ LIBRARY FOR RI-J  BASIS SETS = /usr/local/chem/Turbomole7.0.1/jbasen/
+ LIBRARY FOR RI-JK BASIS SETS = /usr/local/chem/Turbomole7.0.1/jkbasen/
+ LIBRARY FOR RIMP2/RICC2 SETS = /usr/local/chem/Turbomole7.0.1/cbasen/
+ LIBRARY FOR RIR12 BASIS SETS = /usr/local/chem/Turbomole7.0.1/cabasen/
+ LIBRARY FOR OEP   BASIS SETS = /usr/local/chem/Turbomole7.0.1/xbasen/
+            STRUCTURE LIBRARY = /usr/local/chem/Turbomole7.0.1/structures/
+
+ 
+ ***********************************************************
+ *                                                         *
+ *                       D E F I N E                       *
+ *                                                         *
+ *         TURBOMOLE'S  INTERACTIVE  INPUT  PROGRAM        *
+ *                                                         *
+ *  Quantum Chemistry Group       University of Karlsruhe  *
+ *                                                         *
+ ***********************************************************
+ 
+
+ DATA WILL BE WRITTEN TO THE NEW FILE control
+
+ IF YOU WANT TO READ DEFAULT-DATA FROM ANOTHER control-TYPE FILE,
+ THEN ENTER ITS LOCATION/NAME OR OTHERWISE HIT >return<.
+
+ 
+ INPUT TITLE OR 
+ ENTER & TO REPEAT DEFINITION OF DEFAULT INPUT FILE 
+
+ SPECIFICATION OF MOLECULAR GEOMETRY ( #ATOMS=0     SYMMETRY=c1  )
+ YOU MAY USE ONE OF THE FOLLOWING COMMANDS : 
+ sy <group> <eps> : DEFINE MOLECULAR SYMMETRY (default for eps=3d-1)
+ desy <eps>       : DETERMINE MOLECULAR SYMMETRY AND ADJUST 
+                     COORDINATES (default for eps=1d-6)
+ susy             : ADJUST COORDINATES FOR SUBGROUPS
+ ai               : ADD ATOMIC COORDINATES INTERACTIVELY
+ a <file>         : ADD ATOMIC COORDINATES FROM FILE <file>
+ aa <file>        : ADD ATOMIC COORDINATES IN ANGSTROEM UNITS FROM FILE <file>
+ sub              : SUBSTITUTE AN ATOM BY A GROUP OF ATOMS
+ i                : INTERNAL COORDINATE MENU 
+ ired             : REDUNDANT INTERNAL COORDINATES
+ red_info         : DISPLAY REDUNDANT INTERNAL COORDINATES
+ ff               : UFF-FORCEFIELD CALCULATION
+ m                : MANIPULATE GEOMETRY
+ frag             : Define Fragments for BSSE calculation
+ w <file>         : WRITE MOLECULAR COORDINATES TO FILE <file> 
+ r <file>         : RELOAD ATOMIC AND INTERNAL COORDINATES FROM FILE <file>
+ name             : CHANGE ATOMIC IDENTIFIERS 
+ del              : DELETE ATOMS 
+ dis              : DISPLAY MOLECULAR GEOMETRY 
+ banal            : CARRY OUT BOND ANALYSIS 
+ *                : TERMINATE MOLECULAR GEOMETRY SPECIFICATION 
+                     AND WRITE GEOMETRY DATA TO CONTROL FILE 
+
+ IF YOU APPEND A QUESTION MARK TO ANY COMMAND AN EXPLANATION
+ OF THAT COMMAND MAY BE GIVEN 
+
+
+ CARTESIAN COORDINATES FOR   3 ATOMS HAVE SUCCESSFULLY 
+ BEEN ADDED. 
+
+ keyword $intdef  missing in file <../../coord>
+
+ DEFINITIONS OF INTERNAL COORDINATES HAVE  N O T  BEEN READ. 
+ SPECIFICATION OF BOND TOPOLOGY HAS BEEN READ. 
+
+ SPECIFICATION OF MOLECULAR GEOMETRY ( #ATOMS=3     SYMMETRY=c1  )
+ YOU MAY USE ONE OF THE FOLLOWING COMMANDS : 
+ sy <group> <eps> : DEFINE MOLECULAR SYMMETRY (default for eps=3d-1)
+ desy <eps>       : DETERMINE MOLECULAR SYMMETRY AND ADJUST 
+                     COORDINATES (default for eps=1d-6)
+ susy             : ADJUST COORDINATES FOR SUBGROUPS
+ ai               : ADD ATOMIC COORDINATES INTERACTIVELY
+ a <file>         : ADD ATOMIC COORDINATES FROM FILE <file>
+ aa <file>        : ADD ATOMIC COORDINATES IN ANGSTROEM UNITS FROM FILE <file>
+ sub              : SUBSTITUTE AN ATOM BY A GROUP OF ATOMS
+ i                : INTERNAL COORDINATE MENU 
+ ired             : REDUNDANT INTERNAL COORDINATES
+ red_info         : DISPLAY REDUNDANT INTERNAL COORDINATES
+ ff               : UFF-FORCEFIELD CALCULATION
+ m                : MANIPULATE GEOMETRY
+ frag             : Define Fragments for BSSE calculation
+ w <file>         : WRITE MOLECULAR COORDINATES TO FILE <file> 
+ r <file>         : RELOAD ATOMIC AND INTERNAL COORDINATES FROM FILE <file>
+ name             : CHANGE ATOMIC IDENTIFIERS 
+ del              : DELETE ATOMS 
+ dis              : DISPLAY MOLECULAR GEOMETRY 
+ banal            : CARRY OUT BOND ANALYSIS 
+ *                : TERMINATE MOLECULAR GEOMETRY SPECIFICATION 
+                     AND WRITE GEOMETRY DATA TO CONTROL FILE 
+
+ IF YOU APPEND A QUESTION MARK TO ANY COMMAND AN EXPLANATION
+ OF THAT COMMAND MAY BE GIVEN 
+
+
+ YOU DID NOT YET DEFINE ANY INTERNAL COORDINATES !
+
+ ONLY AN INCOMPLETE SET OF   -1 INTERNALS SPECIFIED
+ RECOMMENDATION: USE CARTESIAN COORDINATES (ENTER no BELOW)
+ FOR ANY OTHER ANSWER YOU RETURN TO THE PREVIOUS MENU AGAIN
+
+ IF YOU DO NOT WANT TO USE INTERNAL COORDINATES ENTER  no
+
+
+ GEOMETRY DATA WILL BE WRITTEN TO FILE coord
+
+
+ SUPPLYING BASIS SETS TO    3 ATOMS 
+ #                                                                       
+ #                       BASIS SET LIBRARY FOR OXYGEN                    
+ #            ECPs, HONDO-BASIS SETS FROM basen AND                      
+ #     FULLY OPTIMIZED BASIS SETS FROM newbas MERGED 02/6/93             
+ #                                                                       
+ #         abbreviation hondo refers to the version 7.0 of HONDO         
+ #                                                                       
+ #                                                                       
+ ########################################################################
+ #       HF limit : E(3P) = -74.809398 a.u. (C. Froese Fischer, 1977)    
+ ########################################################################
+ #       Roothaan parameters for O(3P) in symmetry I:                    
+ #        a = 15/16      b = 9/8                                         
+ ########################################################################
+ #                                                                       
+ o def-SV(P)                                                             
+ o def2-SVP                                                              
+ o dhf-SVP                                                               
+ o dhf-SVP-2c                                                            
+ o def2-SV(P)                                                            
+ o dhf-SV(P)                                                             
+ o dhf-SV(P)-2c                                                          
+ # o (7s4p1d)/[3s2p1d] {511/31/1}                                        
+ # ROHF(equiv) energy is -74.71374601625 a.u.  (virial theorem = 2.000000
+ # UHF(noneq)  energy is -74.72010092377 a.u.  (virial theorem = 2.000106
+ #                                                                       
+ #                    BASIS SET LIBRARY FOR HYDROGEN                     
+ #            ECPs, HONDO-BASIS SETS FROM basen AND                      
+ #     FULLY OPTIMIZED BASIS SETS FROM newbas MERGED 02/6/93             
+ #                                                                       
+ #         abbreviation hondo refers to the version 7.0 of HONDO         
+ #                                                                       
+ ########################################################################
+ #       HF limit : E(2S) = -0.5 a.u.                                    
+ ########################################################################
+ #       Roothaan parameters for H(2S):                                  
+ #        a = 0      b = 0                                               
+ ########################################################################
+ #                                                                       
+ h def-SV(P)                                                             
+ h def2-SV(P)                                                            
+ h dhf-SV(P)                                                             
+ h dhf-SV(P)-2c                                                          
+ # HF(equiv) energy is -0.49927840571 a.u.  (virial theorem = 2.000000001
+ # (4s)/[2s] {31}                                                        
+ # H. Horn, Aug. 91                                                      
+ 
+ ==============================================================================
+ NOTE: Improved basis sets are available for H-Rn ("def2-bases").
+ For further information type "bi".
+ ==============================================================================
+
+ ATOMIC ATTRIBUTE DEFINITION MENU  ( #atoms=3     #bas=3     #ecp=0     )
+
+ b    : ASSIGN ATOMIC BASIS SETS 
+ bb   : b RESTRICTED TO BASIS SET LIBRARY 
+ bl   : LIST ATOMIC BASIS SETS ASSIGNED
+ bm   : MODIFY DEFINITION OF ATOMIC BASIS SET
+ bp   : SWITCH BETWEEN 5d/7f AND 6d/10f
+ lib  : SELECT BASIS SET LIBRARY
+ ecp  : ASSIGN EFFECTIVE CORE POTENTIALS 
+ ecpb : ecp RESTRICTED TO BASIS SET LIBRARY 
+ ecpi : GENERAL INFORMATION ABOUT EFFECTIVE CORE POTENTIALS
+ ecpl : LIST EFFECTIVE CORE POTENTIALS ASSIGNED
+ ecprm: REMOVE EFFECTIVE CORE POTENTIAL(S)
+ c    : ASSIGN NUCLEAR CHARGES (IF DIFFERENT FROM DEFAULTS) 
+ cem  : ASSIGN NUCLEAR CHARGES FOR EMBEDDING 
+ m    : ASSIGN ATOMIC MASSES (IF DIFFERENT FROM DEFAULTS) 
+ dis  : DISPLAY MOLECULAR GEOMETRY 
+ dat  : DISPLAY ATOMIC ATTRIBUTES YET ESTABLISHED 
+ h    : EXPLANATION OF ATTRIBUTE DEFINITION SYNTAX 
+ *    : TERMINATE THIS SECTION AND WRITE DATA OR DATA REFERENCES TO control
+ GOBACK=& (TO GEOMETRY MENU !)
+
+
+ BASIS SETS WILL BE WRITTEN TO FILE basis BY DEFAULT
+
+
+              ATOMIC COORDINATES              ATOM SHELLS CHARGE PSEUDO MASS
+     0.00000000    0.00000000   -0.12178984    o      6      8.     0 15.999
+     1.41713421    0.00000000    0.96657855    h      2      1.     0  1.008
+    -1.41713421    0.00000000    0.96657855    h      2      1.     0  1.008
+ 
+
+ we will work with the  1s 3p 5d  7f  9g basis set
+
+
+ there are 1 real representations :   a   
+
+ OCCUPATION NUMBER & MOLECULAR ORBITAL DEFINITION MENU 
+
+ CHOOSE COMMAND 
+ infsao     : OUTPUT SAO INFORMATION 
+ atb        : Switch for writing MOs in ASCII or binary format
+ eht        : PROVIDE MOS && OCCUPATION NUMBERS FROM EXTENDED HUECKEL GUESS 
+ use <file> : SUPPLY MO INFORMATION USING DATA FROM <file> 
+ man        : MANUAL SPECIFICATION OF OCCUPATION NUMBERS 
+ hcore      : HAMILTON CORE GUESS FOR MOS
+ flip       : FLIP SPIN OF A SELECTED ATOM
+ &          : MOVE BACK TO THE ATOMIC ATTRIBUTES MENU
+ THE COMMANDS  use  OR  eht  OR  *  OR q(uit) TERMINATE THIS MENU !!! 
+ FOR EXPLANATIONS APPEND A QUESTION MARK (?) TO ANY COMMAND 
+
+
+ PROVIDING EHT AOS FOR THE FOLLOWING SET OF ATOMS :
+     1 o       
+ for the   8 electrons of the actual atom you have
+ to provide at least basis functions for the AO's :   2s  1p  0d  0f
+
+
+ reading orbital data 3P(DZ)  from file /usr/local/chem/Turbomole7.0.1/basen/o . 
+
+ 
+
+ PROVIDING EHT AOS FOR THE FOLLOWING SET OF ATOMS :
+     2 h            3 h       
+ for the   1 electrons of the actual atom you have
+ to provide at least basis functions for the AO's :   1s  0p  0d  0f
+
+
+ reading orbital data 2S(DZ)  from file /usr/local/chem/Turbomole7.0.1/basen/h . 
+
+ 
+
+    sao summary :
+   irrep      number of sao's referring to
+                old basis    new basis
+    a               7           18
+
+ EFFECTIVE NUMBER OF NON-VANISHING CARTESIAN 
+ OVERLAP MATRIX ELEMENTS   :     351
+
+
+ DO YOU WANT THE DEFAULT PARAMETERS FOR THE EXTENDED HUECKEL CALCULATION ? 
+ DEFAULT=y   HELP=? 
+
+
+ ENTER THE MOLECULAR CHARGE  (DEFAULT=0) 
+
+
+ NUMBER OF ELECTRONS IN YOUR MOLECULE IS   10
+
+
+ AUTOMATIC OCCUPATION NUMBER ASSIGNMENT ESTABLISHED !
+ FOUND CLOSED SHELL SYSTEM !
+ HOMO/LUMO-SEPARATION :  0.923683
+ ORBITAL  SYMMETRY      ENERGY     DEFAULT 
+ (SHELL)    TYPE                 OCCUPATION 
+     2     2a          -1.25957      2
+     3     3a          -0.68474      2
+     4     4a          -0.63782      2
+     5     5a          -0.62277      2
+     6     6a           0.30091      0
+     7     7a           0.63121      0
+
+ DO YOU ACCEPT THIS OCCUPATION ?  DEFAULT=y 
+
+
+ projection quality sqrt{sum[1-<i|i>]}/korb irrep a    :  0.58D-02
+
+ PROVIDING  'derivative'  DEFAULT PARAMETERS ...
+
+ PROVIDING FORCE RELAXATION DEFAULT PARAMETERS ...
+
+ FILE SPACE LOCKING WILL BE DISABLED BY DEFAULT !
+
+
+ GENERAL MENU : SELECT YOUR TOPIC 
+ scf    : SELECT NON-DEFAULT SCF PARAMETER 
+ mp2    : OPTIONS AND DATA GROUPS FOR rimp2 and mpgrad
+ cc     : OPTIONS AND DATA GROUPS FOR ricc2
+ pnocc  : OPTIONS AND DATA GROUPS FOR pnoccsd
+ ex     : EXCITED STATE AND RESPONSE OPTIONS
+ prop   : SELECT TOOLS FOR SCF-ORBITAL ANALYSIS 
+ drv    : SELECT NON-DEFAULT INPUT PARAMETER FOR EVALUATION
+          OF ANALYTICAL ENERGY DERIVATIVES 
+          (GRADIENTS, FORCE CONSTANTS) 
+ rex    : SELECT OPTIONS FOR GEOMETRY UPDATES USING RELAX
+ stp    : SELECT NON-DEFAULT STRUCTURE OPTIMIZATION PARAMETER
+ e      : DEFINE EXTERNAL ELECTROSTATIC FIELD 
+ dft    : DFT Parameters 
+ ri     : RI Parameters 
+ rijk   : RI-JK-HF Parameters 
+ rirpa  : RIRPA Parameters 
+ senex  : seminumeric exchange parameters 
+ hybno  : hybrid Noga/Diag parameters
+ dsp    : DFT dispersion correction
+ trunc  : USE TRUNCATED AUXBASIS DURING ITERATIONS 
+ marij  : MULTIPOLE ACCELERATED RI-J 
+ dis    : DISPLAY MOLECULAR GEOMETRY 
+ list   : LIST OF CONTROL FILE 
+ &      : GO BACK TO OCCUPATION/ORBITAL ASSIGNMENT MENU
+
+ * or q : END OF DEFINE SESSION 
+
+
+ INPUT MENU FOR CALCULATIONS WITH ricc2:
+ (#atoms=  3   #bas=  3   #cbas=  0   #cabs=  0   #jkbas=  0   )
+ freeze  : SET FROZEN OCCUPIED/VIRTUAL ORBITAL OPTIONS
+ cbas    : ASSIGN AUXILIARY (CBAS) BASIS SETS
+ memory  : SET MAXIMUM CORE MEMORY (PRESENT VALUE:    500 Mb)
+ denconv : CONVERGENCE THRESHOLD FOR SCF DENSITY (0.1E-06 )
+ tmpdir  : DEFINE PATH FOR TEMPORY FILES
+ ricc2   : DATA GROUP $ricc2 (MODELS AND GLOBAL OPTIONS)
+ f12     : DATA GROUP $rir12 (F12 APPROX. AND OPTIONS)
+ exci    : INPUT FOR CALCULATION OF EXCITATION ENERGIES
+ resp    : INPUT FOR GROUND STATE PROPERTIES
+ cabs    : ASSIGN COMPLEMENTARY AUXILIARY (CABS) BASIS SETS
+ jkbas   : ASSIGN AUXILIARY BASIS FOR FOCK MATRICES (JKBAS)
+ other   : OTHER DIVERSE OPTIONS
+ * / end : SAVE DEFINITIONS AND LEAVE MENU
+
+ NO DEFINITION OF BASIS SETS ($cbas) IN control
+  TRY TO OBTAIN BASIS SETS FROM LIBRARY !
+
+ keyword $cbas  missing in file <control>
+
+ o def-SV(P)                                                             
+ o def2-SVP                                                              
+ o def2-SV(P)                                                            
+ # o     (8s6p5d3f) / [6s5p4d1f]     {311111/21111/2111/3}               
+ #  MP2-energy (RI):    -0.10301847 H                                    
+ #  EMP2(RI) - EMP2:    65.560627   uH                                   
+ #  delta/|EMP2|:        0.397196   ppm                                  
+ # Ref.: Weigend, Häser, Patzelt, Ahlrichs, CPL 294 (1998) 143.          
+
+ keyword $cbas  missing in file <control>
+
+ h def-SV(P)                                                             
+ h def2-SV(P)                                                            
+ h def2-SVP                                                              
+ # h     (4s3p2d) / [3s2p1d]     {211/21/2}                              
+ # h2 molecule, r=1.4115 bohr:                                           
+ #  MP2-energy (RI):    -0.02630247 H                                    
+ #  EMP2(RI) - EMP2:    21.915718   uH                                   
+ #  delta/|EMP2|:        0.320109   ppm                                  
+ # Ref.: Weigend, Häser, Patzelt, Ahlrichs, CPL 294 (1998) 143.          
+
+ keyword $cbas  missing in file <control>
+
+ o def-SV(P)                                                             
+ o def2-SVP                                                              
+ o def2-SV(P)                                                            
+ # o     (8s6p5d3f) / [6s5p4d1f]     {311111/21111/2111/3}               
+ #  MP2-energy (RI):    -0.10301847 H                                    
+ #  EMP2(RI) - EMP2:    65.560627   uH                                   
+ #  delta/|EMP2|:        0.397196   ppm                                  
+ # Ref.: Weigend, Häser, Patzelt, Ahlrichs, CPL 294 (1998) 143.          
+
+ keyword $cbas  missing in file <control>
+
+ h def-SV(P)                                                             
+ h def2-SV(P)                                                            
+ h def2-SVP                                                              
+ # h     (4s3p2d) / [3s2p1d]     {211/21/2}                              
+ # h2 molecule, r=1.4115 bohr:                                           
+ #  MP2-energy (RI):    -0.02630247 H                                    
+ #  EMP2(RI) - EMP2:    21.915718   uH                                   
+ #  delta/|EMP2|:        0.320109   ppm                                  
+ # Ref.: Weigend, Häser, Patzelt, Ahlrichs, CPL 294 (1998) 143.          
+
+ AUXILIARY BASIS SET DEFINITION MENU 
+ ( #atoms=3     #cbas=3     )
+ b      : ASSIGN ATOMIC BASIS SETS 
+ bb     : b RESTRICTED TO BASIS SET LIBRARY 
+ bl     : LIST ATOMIC BASIS SETS ASSIGNED
+ bm     : MODIFY DEFINITION OF ATOMIC BASIS SET
+ lib    : SELECT BASIS SET LIBRARY
+ dis    : DISPLAY MOLECULAR GEOMETRY 
+ dat    : DISPLAY ATOMIC ATTRIBUTES YET ESTABLISHED 
+ h      : EXPLANATION OF ATTRIBUTE DEFINITION SYNTAX 
+ * / end: END THIS SECTION AND SAVE DATA ON FILE control
+
+ INPUT MENU FOR CALCULATIONS WITH ricc2:
+ (#atoms=  3   #bas=  3   #cbas=  3   #cabs=  0   #jkbas=  0   )
+ freeze  : SET FROZEN OCCUPIED/VIRTUAL ORBITAL OPTIONS
+ cbas    : ASSIGN AUXILIARY (CBAS) BASIS SETS
+ memory  : SET MAXIMUM CORE MEMORY (PRESENT VALUE:    500 Mb)
+ denconv : CONVERGENCE THRESHOLD FOR SCF DENSITY (0.1E-06 )
+ tmpdir  : DEFINE PATH FOR TEMPORY FILES
+ ricc2   : DATA GROUP $ricc2 (MODELS AND GLOBAL OPTIONS)
+ f12     : DATA GROUP $rir12 (F12 APPROX. AND OPTIONS)
+ exci    : INPUT FOR CALCULATION OF EXCITATION ENERGIES
+ resp    : INPUT FOR GROUND STATE PROPERTIES
+ cabs    : ASSIGN COMPLEMENTARY AUXILIARY (CABS) BASIS SETS
+ jkbas   : ASSIGN AUXILIARY BASIS FOR FOCK MATRICES (JKBAS)
+ other   : OTHER DIVERSE OPTIONS
+ * / end : SAVE DEFINITIONS AND LEAVE MENU
+
+ <model>    : add wavefunction model to calculation
+              (type 'list models' for a list)
+ scs,sos    : switches for spin component scaled MP2
+              (type 'list scs' for details)
+ oconv <n>  : threshold for vector function    (10^ -5.)
+ conv <n>   : convergence threshold for energy (10^ -6.)
+ lindep     : linear dependence threshold      (10^-14.)
+ maxiter    : max. number of iterations        ( 100)
+ mxdiis     : max. number of DIIS vectors      (  10)
+ maxred     : max. dim. of reduced space       ( 100)
+ geoopt <m> <x> : optimize geometry for wavefunction <m>
+                  and state <x> (type 'list geoopt' for details)
+ *,end      : write $ricc2 to file and leave the menu
+ &          : go back - leaving $ricc2 unchanged...
+
+
+ <model>    : add wavefunction model to calculation
+              (type 'list models' for a list)
+ scs,sos    : switches for spin component scaled MP2
+              (type 'list scs' for details)
+ oconv <n>  : threshold for vector function    (10^ -5.)
+ conv <n>   : convergence threshold for energy (10^ -6.)
+ lindep     : linear dependence threshold      (10^-14.)
+ maxiter    : max. number of iterations        ( 100)
+ mxdiis     : max. number of DIIS vectors      (  10)
+ maxred     : max. dim. of reduced space       ( 100)
+ geoopt <m> <x> : optimize geometry for wavefunction <m>
+                  and state <x> (type 'list geoopt' for details)
+ *,end      : write $ricc2 to file and leave the menu
+ &          : go back - leaving $ricc2 unchanged...
+
+
+ INPUT MENU FOR CALCULATIONS WITH ricc2:
+ (#atoms=  3   #bas=  3   #cbas=  3   #cabs=  0   #jkbas=  0   )
+ freeze  : SET FROZEN OCCUPIED/VIRTUAL ORBITAL OPTIONS
+ cbas    : ASSIGN AUXILIARY (CBAS) BASIS SETS
+ memory  : SET MAXIMUM CORE MEMORY (PRESENT VALUE:    500 Mb)
+ denconv : CONVERGENCE THRESHOLD FOR SCF DENSITY (0.1E-06 )
+ tmpdir  : DEFINE PATH FOR TEMPORY FILES
+ ricc2   : DATA GROUP $ricc2 (MODELS AND GLOBAL OPTIONS)
+ f12     : DATA GROUP $rir12 (F12 APPROX. AND OPTIONS)
+ exci    : INPUT FOR CALCULATION OF EXCITATION ENERGIES
+ resp    : INPUT FOR GROUND STATE PROPERTIES
+ cabs    : ASSIGN COMPLEMENTARY AUXILIARY (CABS) BASIS SETS
+ jkbas   : ASSIGN AUXILIARY BASIS FOR FOCK MATRICES (JKBAS)
+ other   : OTHER DIVERSE OPTIONS
+ * / end : SAVE DEFINITIONS AND LEAVE MENU
+
+ irrep       : number of excitations for a given symmetry
+ spectrum    : give input for spectrum (transition moments)
+ exprop      : give input for excited state properties
+ conv <n>    : convergence threshold for energy    (10^ -6.)
+ thrdiis <n> : threshold for switching on DIIS     (10^ -2.)
+ preopt <n>  : threshold for pre-optimization      (10^-Inf)
+ list <opt>  : print status & help for option <opt>
+ del  <opt>  : delete input for option <opt>
+ * / end     : write $ricc2 to file and leave the menu
+ &           : go back - leaving $ricc2 unchanged...
+ <opt> = irrep, spectrum, or exprop
+
+
+ irrep       : number of excitations for a given symmetry
+ spectrum    : give input for spectrum (transition moments)
+ exprop      : give input for excited state properties
+ conv <n>    : convergence threshold for energy    (10^ -6.)
+ thrdiis <n> : threshold for switching on DIIS     (10^ -2.)
+ preopt <n>  : threshold for pre-optimization      (10^-Inf)
+ list <opt>  : print status & help for option <opt>
+ del  <opt>  : delete input for option <opt>
+ * / end     : write $ricc2 to file and leave the menu
+ &           : go back - leaving $ricc2 unchanged...
+ <opt> = irrep, spectrum, or exprop
+
+
+ INPUT MENU FOR CALCULATIONS WITH ricc2:
+ (#atoms=  3   #bas=  3   #cbas=  3   #cabs=  0   #jkbas=  0   )
+ freeze  : SET FROZEN OCCUPIED/VIRTUAL ORBITAL OPTIONS
+ cbas    : ASSIGN AUXILIARY (CBAS) BASIS SETS
+ memory  : SET MAXIMUM CORE MEMORY (PRESENT VALUE:    500 Mb)
+ denconv : CONVERGENCE THRESHOLD FOR SCF DENSITY (0.1E-06 )
+ tmpdir  : DEFINE PATH FOR TEMPORY FILES
+ ricc2   : DATA GROUP $ricc2 (MODELS AND GLOBAL OPTIONS)
+ f12     : DATA GROUP $rir12 (F12 APPROX. AND OPTIONS)
+ exci    : INPUT FOR CALCULATION OF EXCITATION ENERGIES
+ resp    : INPUT FOR GROUND STATE PROPERTIES
+ cabs    : ASSIGN COMPLEMENTARY AUXILIARY (CABS) BASIS SETS
+ jkbas   : ASSIGN AUXILIARY BASIS FOR FOCK MATRICES (JKBAS)
+ other   : OTHER DIVERSE OPTIONS
+ * / end : SAVE DEFINITIONS AND LEAVE MENU
+
+ GENERAL MENU : SELECT YOUR TOPIC 
+ scf    : SELECT NON-DEFAULT SCF PARAMETER 
+ mp2    : OPTIONS AND DATA GROUPS FOR rimp2 and mpgrad
+ cc     : OPTIONS AND DATA GROUPS FOR ricc2
+ pnocc  : OPTIONS AND DATA GROUPS FOR pnoccsd
+ ex     : EXCITED STATE AND RESPONSE OPTIONS
+ prop   : SELECT TOOLS FOR SCF-ORBITAL ANALYSIS 
+ drv    : SELECT NON-DEFAULT INPUT PARAMETER FOR EVALUATION
+          OF ANALYTICAL ENERGY DERIVATIVES 
+          (GRADIENTS, FORCE CONSTANTS) 
+ rex    : SELECT OPTIONS FOR GEOMETRY UPDATES USING RELAX
+ stp    : SELECT NON-DEFAULT STRUCTURE OPTIMIZATION PARAMETER
+ e      : DEFINE EXTERNAL ELECTROSTATIC FIELD 
+ dft    : DFT Parameters 
+ ri     : RI Parameters 
+ rijk   : RI-JK-HF Parameters 
+ rirpa  : RIRPA Parameters 
+ senex  : seminumeric exchange parameters 
+ hybno  : hybrid Noga/Diag parameters
+ dsp    : DFT dispersion correction
+ trunc  : USE TRUNCATED AUXBASIS DURING ITERATIONS 
+ marij  : MULTIPOLE ACCELERATED RI-J 
+ dis    : DISPLAY MOLECULAR GEOMETRY 
+ list   : LIST OF CONTROL FILE 
+ &      : GO BACK TO OCCUPATION/ORBITAL ASSIGNMENT MENU
+
+ * or q : END OF DEFINE SESSION 
+
+ 
+ ***********************************************************
+ *                                                         *
+ *                       e n d   o f                       *
+ *                       D E F I N E                       *
+ *                                                         *
+ *         TURBOMOLE'S  INTERACTIVE  INPUT  PROGRAM        *
+ *                                                         *
+ *  Quantum Chemistry Group       University of Karlsruhe  *
+ *                                                         *
+ ***********************************************************
+
+
+    ------------------------------------------------------------------------
+         total  cpu-time :   0.04 seconds
+         total wall-time :   0.04 seconds
+    ------------------------------------------------------------------------
+
+
+   ****  define : all done  ****
+
+
+    2019-06-10 17:11:53.653 
+
+ operating system is UNIX !
+ hostname is         neptun
+
+ dscf (neptun) : TURBOMOLE V7.0.1( 19978 ) 29 Sep 2015 at 10:17:19
+ Copyright (C) 2015 TURBOMOLE GmbH, Karlsruhe
+
+
+    2019-06-10 17:11:53.658 
+
+
+
+                             d s c f - program
+
+                   idea & directorship : reinhart ahlrichs
+                   program development : marco haeser
+                                         michael baer
+                           dft version : oliver treutler
+
+
+                          quantum chemistry group
+                          universitaet  karlsruhe
+                                  germany
+
+
+
+
+                          References             
+                                                 
+          TURBOMOLE:                             
+              R. Ahlrichs, M. Baer, M. Haeser, H. Horn, and
+              C. Koelmel
+              Electronic structure calculations on workstation
+              computers: the program system TURBOMOLE
+              Chem. Phys. Lett. 162: 165 (1989)
+          Density Functional:                              
+              O. Treutler and R. Ahlrichs                      
+              Efficient Molecular Numerical Integration Schemes
+              J. Chem. Phys. 102: 346 (1995)                   
+          Parallel Version:                                
+              Performance of parallel TURBOMOLE for Density    
+              Functional Calculations                          
+              M. v. Arnim and R. Ahlrichs                      
+              J. Comp. Chem. 19: 1746 (1998)                   
+                                         
+
+
+
+
+              +--------------------------------------------------+
+              | Atomic coordinate, charge and isotop information |
+              +--------------------------------------------------+
+
+                    atomic coordinates            atom    charge  isotop
+          0.00000000    0.00000000   -0.12178984    o      8.000     0
+          1.41713421    0.00000000    0.96657855    h      1.000     0
+         -1.41713421    0.00000000    0.96657855    h      1.000     0
+ 
+       center of nuclear mass  :    0.00000000    0.00000000   -0.00000000
+       center of nuclear charge:    0.00000000    0.00000000    0.09588384
+
+              +--------------------------------------------------+
+              |               basis set information              |
+              +--------------------------------------------------+
+
+              we will work with the 1s 3p 5d 7f 9g ... basis set
+              ...i.e. with spherical basis functions...
+
+   type   atoms  prim   cont   basis
+   ---------------------------------------------------------------------------
+    o        1     24     14   def-SV(P)   [3s2p1d|7s4p1d]
+    h        2      4      2   def-SV(P)   [2s|4s]
+   ---------------------------------------------------------------------------
+   total:    3     32     18
+   ---------------------------------------------------------------------------
+
+   total number of primitive shells          :   16
+   total number of contracted shells         :   10
+   total number of cartesian basis functions :   19
+   total number of SCF-basis functions       :   18
+
+
+ integral neglect threshold       :  0.18E-09
+ integral storage threshold THIZE :  0.10E-04
+ integral storage threshold THIME :         5
+
+
+ DENSITY CONVERGENCE CHECK SWITCHED ON !
+ SCF CONVERGENCE IF RMS(delta[D]) <     0.1000000000E-06
+
+
+ symmetry group of the molecule :   c1 
+
+ the group has the following generators :
+   c1(z)
+
+    1 symmetry operations found
+
+ there are 1 real representations :   a   
+
+ maximum number of shells which are related by symmetry :  1
+
+
+    mo occupation :
+   irrep   mo's   occupied
+    a       18        5
+ 
+ number of basis functions   :           18
+ number of occupied orbitals :            5
+ 
+
+          ------------------------
+          nuclear repulsion energy  :   9.30715477358    
+          ------------------------
+
+ 
+          -----------------
+          -S,T+V- integrals
+          -----------------
+
+ 1e-integrals will be neglected if expon. factor < 0.175893E-10
+ 
+   Difference densities algorithm switched on.
+   The maximal number of linear combinations of
+   difference densities is          20 .
+
+ automatic virtual orbital shift switched on 
+      shift if e(lumo)-e(homo) < 0.10000000    
+
+
+ DIIS switched on: error vector is FDS-SDF
+ Max. Iterations for DIIS is     :   5
+ DIIS matrix (see manual) 
+    Scaling factor of diagonals  :  1.200
+    threshold for scaling factor :  0.000
+
+ scf convergence criterion : increment of total energy < .1000000D-06
+                  and increment of one-electron energy < .1000000D-03
+
+
+ <geterg> : there is no data group $energy 
+
+  MOs are in ASCII format !
+
+
+ reading orbital data $scfmo  from file mos . 
+
+ orbital characterization : expanded
+ 
+ mo provided and orthogonalized by Cholesky decomposition
+
+ DSCF restart information will be dumped onto file mos
+
+ 
+                                              current damping :  0.300
+ ITERATION  ENERGY          1e-ENERGY        2e-ENERGY     RMS[dD(SAO)]   TOL
+   1  -75.738861100248    -124.43866883     39.392652955    0.000D+00 0.175D-09
+          max. resid. norm for Fia-block=  2.875D-01 for orbital      1a         
+          max. resid. fock norm         =  1.400D+00 for orbital      8a         
+          Delta Eig. =    38.5761532577 eV 
+ 
+                                              current damping :  0.250
+ ITERATION  ENERGY          1e-ENERGY        2e-ENERGY     RMS[dD(SAO)]   TOL
+   2  -75.912247378996    -122.99110542     37.771703264    0.308D-01 0.115D-09
+          Norm of current diis error: 0.34853    
+          max. resid. norm for Fia-block=  9.890D-02 for orbital      1a         
+          max. resid. fock norm         =  1.054D-01 for orbital      9a         
+          Delta Eig. =     9.1449391036 eV 
+ 
+                                              current damping :  0.200
+ ITERATION  ENERGY          1e-ENERGY        2e-ENERGY     RMS[dD(SAO)]   TOL
+   3  -75.934133477546    -123.27873562     38.037447370    0.144D-01 0.902D-10
+          Norm of current diis error: 0.12363    
+          max. resid. norm for Fia-block=  3.623D-02 for orbital      4a         
+          max. resid. fock norm         =  4.253D-02 for orbital      9a         
+          Delta Eig. =     1.9912949663 eV 
+ 
+                                              current damping :  0.250
+ ITERATION  ENERGY          1e-ENERGY        2e-ENERGY     RMS[dD(SAO)]   TOL
+   4  -75.937880140017    -123.13255732     37.887522408    0.663D-02 0.785D-10
+          Norm of current diis error: 0.35760E-01
+          max. resid. norm for Fia-block=  1.160D-02 for orbital      4a         
+          max. resid. fock norm         =  1.205D-02 for orbital      4a         
+          Delta Eig. =     0.4411835310 eV 
+ 
+                                              current damping :  0.300
+ ITERATION  ENERGY          1e-ENERGY        2e-ENERGY     RMS[dD(SAO)]   TOL
+   5  -75.938259470965    -123.16684167     37.921427422    0.214D-02 0.727D-10
+          Norm of current diis error: 0.11932E-01
+          max. resid. norm for Fia-block=  5.276D-03 for orbital      4a         
+          max. resid. fock norm         =  5.395D-03 for orbital      4a         
+ mo-orthogonalization: Cholesky decomposition
+          Delta Eig. =     0.0691502162 eV 
+ 
+                                              current damping :  0.350
+ ITERATION  ENERGY          1e-ENERGY        2e-ENERGY     RMS[dD(SAO)]   TOL
+   6  -75.938309322717    -123.16304203     37.917577938    0.791D-03 0.676D-10
+          Norm of current diis error: 0.45158E-02
+          max. resid. norm for Fia-block=  2.170D-03 for orbital      4a         
+          max. resid. fock norm         =  2.228D-03 for orbital      4a         
+          Delta Eig. =     0.0132134563 eV 
+ 
+                                              current damping :  0.400
+ ITERATION  ENERGY          1e-ENERGY        2e-ENERGY     RMS[dD(SAO)]   TOL
+   7  -75.938317482223    -123.16364496     37.918172702    0.313D-03 0.632D-10
+          Norm of current diis error: 0.18693E-02
+          max. resid. norm for Fia-block=  9.958D-04 for orbital      4a         
+          max. resid. fock norm         =  1.016D-03 for orbital      4a         
+          Delta Eig. =     0.0053497722 eV 
+ 
+                                              current damping :  0.450
+ ITERATION  ENERGY          1e-ENERGY        2e-ENERGY     RMS[dD(SAO)]   TOL
+   8  -75.938318991949    -123.16343793     37.917964169    0.135D-03 0.595D-10
+          Norm of current diis error: 0.77959E-03
+          max. resid. norm for Fia-block=  4.347D-04 for orbital      4a         
+          max. resid. fock norm         =  4.437D-04 for orbital      4a         
+          Delta Eig. =     0.0021295359 eV 
+ 
+                                              current damping :  0.500
+ ITERATION  ENERGY          1e-ENERGY        2e-ENERGY     RMS[dD(SAO)]   TOL
+   9  -75.938319262387    -123.16348854     37.918014503    0.575D-04 0.566D-10
+          Norm of current diis error: 0.31563E-03
+          max. resid. norm for Fia-block=  1.866D-04 for orbital      4a         
+          max. resid. fock norm         =  1.895D-04 for orbital      4a         
+          Delta Eig. =     0.0010767051 eV 
+ 
+                                              current damping :  0.550
+ ITERATION  ENERGY          1e-ENERGY        2e-ENERGY     RMS[dD(SAO)]   TOL
+  10  -75.938319305956    -123.16339219     37.917918114    0.232D-04 0.545D-10
+          Norm of current diis error: 0.12504E-03
+          max. resid. norm for Fia-block=  7.240D-05 for orbital      4a         
+          max. resid. fock norm         =  7.379D-05 for orbital      4a         
+ mo-orthogonalization: Cholesky decomposition
+          Delta Eig. =     0.0003774133 eV 
+ 
+                                              current damping :  0.600
+ ITERATION  ENERGY          1e-ENERGY        2e-ENERGY     RMS[dD(SAO)]   TOL
+  11  -75.938319312469    -123.16340200     37.917927918    0.891D-05 0.529D-10
+          Norm of current diis error: 0.50455E-04
+          max. resid. norm for Fia-block=  2.970D-05 for orbital      4a         
+          max. resid. fock norm         =  3.014D-05 for orbital      4a         
+          Delta Eig. =     0.0001368997 eV 
+ 
+                                              current damping :  0.650
+ ITERATION  ENERGY          1e-ENERGY        2e-ENERGY     RMS[dD(SAO)]   TOL
+  12  -75.938319313168    -123.16339314     37.917919051    0.346D-05 0.516D-10
+          Norm of current diis error: 0.20655E-04
+          max. resid. norm for Fia-block=  1.187D-05 for orbital      4a         
+          max. resid. fock norm         =  1.205D-05 for orbital      4a         
+          Delta Eig. =     0.0000543958 eV 
+
+ ENERGY & DENSITY CONVERGED !
+
+ 
+                                              current damping :  0.500
+ ITERATION  ENERGY          1e-ENERGY        2e-ENERGY     RMS[dD(SAO)]   TOL
+  13  -75.938319313119    -123.16339142     37.917917329    0.135D-05 0.504D-10
+          max. resid. norm for Fia-block=  2.744D-06 for orbital      4a         
+          max. resid. fock norm         =  2.771D-06 for orbital      4a         
+
+ convergence criteria satisfied after 13 iterations
+
+
+                  ------------------------------------------ 
+                 |  total energy      =    -75.93831931312  |
+                  ------------------------------------------ 
+                 :  kinetic energy    =     75.93469789605  :
+                 :  potential energy  =   -151.87301720916  :
+                 :  virial theorem    =      1.99995231107  :
+                 :  wavefunction norm =      1.00000000000  :
+                  .......................................... 
+
+
+ <geterg> : there is no data group $energy 
+
+
+ <skperg> : $end is missing 
+
+
+ orbitals $scfmo  will be written to file mos
+
+    irrep                  1a          2a          3a          4a          5a   
+ eigenvalues H        -20.54011    -1.33059    -0.71768    -0.57244    -0.50297
+            eV        -558.9292    -36.2074    -19.5292    -15.5769    -13.6866
+ occupation              2.0000      2.0000      2.0000      2.0000      2.0000 
+
+    irrep                  6a          7a          8a          9a         10a   
+ eigenvalues H          0.17514     0.25569     0.82055     0.94780     1.19839
+            eV           4.7658      6.9577     22.3284     25.7911     32.6100
+ 
+ 
+ 
+ 
+ ==============================================================================
+                           electrostatic moments
+ ==============================================================================
+
+ reference point for electrostatic moments:    0.00000   0.00000   0.00000
+
+ 
+              nuc           elec       ->  total
+ ------------------------------------------------------------------------------
+                          charge      
+ ------------------------------------------------------------------------------
+          10.000000     -10.000000      -0.000000
+ 
+ ------------------------------------------------------------------------------
+                       dipole moment  
+ ------------------------------------------------------------------------------
+   x       0.000000      -0.000000      -0.000000
+   y       0.000000       0.000000       0.000000
+   z       0.958838      -0.070396       0.888442
+ 
+   | dipole moment | =     0.8884 a.u. =     2.2582 debye 
+ 
+ ------------------------------------------------------------------------------
+                     quadrupole moment
+ ------------------------------------------------------------------------------
+  xx       4.016539      -7.161994      -3.145455
+  yy       0.000000      -5.294693      -5.294693
+  zz       1.987210      -6.297730      -4.310520
+  xy       0.000000       0.000000       0.000000
+  xz       0.000000      -0.000000      -0.000000
+  yz       0.000000       0.000000       0.000000
+ 
+     1/3  trace=      -4.250223
+     anisotropy=       1.863491
+ 
+ ==============================================================================
+ 
+ 
+
+
+    ------------------------------------------------------------------------
+         total  cpu-time :   0.04 seconds
+         total wall-time :   0.04 seconds
+    ------------------------------------------------------------------------
+
+
+   ****  dscf : all done  ****
+
+
+    2019-06-10 17:11:53.700 
+
+ hostname is         neptun
+ this is node-proc. number 0 running on node neptun
+ the total number of node-proc. spawned is   1
+
+ ricc2 (neptun) : TURBOMOLE V7.0.1( 19978 ) 29 Sep 2015 at 10:17:19
+ Copyright (C) 2015 TURBOMOLE GmbH, Karlsruhe
+
+
+    2019-06-10 17:11:53.705 
+
+
+
+                              R I C C 2 - PROGRAM
+
+                          the quantum chemistry groups
+                             at the universities in
+                           Karlsruhe, Bochum & Mainz
+                                   Germany
+
+
+
+   *-----------------------------------------------------------------------*
+   |                     program will use  1 thread(s)                     |
+   *-----------------------------------------------------------------------*
+
+
+              +--------------------------------------------------+
+              | Atomic coordinate, charge and isotop information |
+              +--------------------------------------------------+
+
+                    atomic coordinates            atom    charge  isotop
+          0.00000000    0.00000000   -0.12178984    o      8.000     0
+          1.41713421    0.00000000    0.96657855    h      1.000     0
+         -1.41713421    0.00000000    0.96657855    h      1.000     0
+ 
+       center of nuclear mass  :    0.00000000    0.00000000   -0.00000000
+       center of nuclear charge:    0.00000000    0.00000000    0.09588384
+
+              +--------------------------------------------------+
+              |               basis set information              |
+              +--------------------------------------------------+
+
+              we will work with the 1s 3p 5d 7f 9g ... basis set
+              ...i.e. with spherical basis functions...
+
+   type   atoms  prim   cont   basis
+   ---------------------------------------------------------------------------
+    o        1     24     14   def-SV(P)   [3s2p1d|7s4p1d]
+    h        2      4      2   def-SV(P)   [2s|4s]
+   ---------------------------------------------------------------------------
+   total:    3     32     18
+   ---------------------------------------------------------------------------
+
+   total number of primitive shells          :   16
+   total number of contracted shells         :   10
+   total number of cartesian basis functions :   19
+   total number of SCF-basis functions       :   18
+
+
+
+   =========================================================================
+
+
+     restricted closed shell calculation for the wavefunction models:
+               ADC(2)     - Algebraic Diagrammatic Construction to 2. Order (strict)
+
+
+     global parameters for ricc2 program:
+
+        hard restart (reuse of interm.) :  disabled
+        soft restart (reuse of vectors) :  disabled
+        threshold for vector function   :    0.100000E-05
+        convergence threshold energy    :    0.100000E-06
+        linear dependence threshold     :    0.100000E-13
+        global print level              :      1
+        maximum number of iterations    :    30
+        maximum number DIIS vectors     :    10
+        max. dim. of reduced space      :   100
+        core memory limit (MB)          :   500
+
+
+   =========================================================================
+     "cartesian on" in $drvopt is ignored by $ricc2
+
+    der. integral neglect threshold  :  0.10E-07
+    integral neglect threshold       :  0.18E-09
+    integral storage threshold THIZE :  0.10E-04
+    integral storage threshold THIME :         5
+
+
+                  +------------------------------------------+
+                  |     Auxiliary basis set information      |
+                  +------------------------------------------+
+
+              we will work with the 1s 3p 5d 7f 9g ... basis set
+              ...i.e. with spherical basis functions...
+
+   type   atoms  prim   cont   basis
+   ---------------------------------------------------------------------------
+    o        1     72     48   def-SV(P)   [6s5p4d1f|8s6p5d3f]
+    h        2     23     14   def-SV(P)   [3s2p1d|4s3p2d]
+   ---------------------------------------------------------------------------
+   total:    3    118     76
+   ---------------------------------------------------------------------------
+
+   total number of primitive shells          :   31
+   total number of contracted shells         :   28
+   total number of cartesian basis functions :   85
+   total number of SCF-basis functions       :   76
+
+
+ symmetry group of the molecule :   c1 
+
+ the group has the following generators :
+   c1(z)
+
+    1 symmetry operations found
+
+ there are 1 real representations :   a   
+
+ maximum number of shells which are related by symmetry :  1
+
+
+ The symmetry information takes   1 MB
+
+*---------------------------------------------------------------------*
+|               simplified C1 algorithm will be applied               |
+*---------------------------------------------------------------------*
+  MOs are in ASCII format !
+
+
+ reading orbital data $scfmo  from file mos . 
+
+ orbital characterization : scfconv=7
+ 
+
+         --------------------------------------------------------------
+                   checking mo's by calculating trace(D*S)
+
+              number of electrons : 
+                 from trace(D*S)         :   10.000000000001
+                 from occupation numbers :   10.000000000000
+
+              molecular charge           :    0.000000000000
+         --------------------------------------------------------------
+
+ time elapsed for calculating density matrices :   0.000 sec
+ all orbitals will be active in the correlation treatment
+
+
+   Molecular Orbital Statistic:
+   ============================
+
+   -----------------------------
+   orbitals in total:
+   -----------------------------
+    frozen occupied :      0
+    active occupied :      5
+    active virtual  :     13
+    frozen virtual  :      0
+    all together    :     18
+   -----------------------------
+
+
+     time in riccmos       cpu:  0.00 sec    wall:  0.00 sec    ratio:  0.9
+
+     total memory allocated for calculation of (Q|P)**(-1/2) : 1 MiB
+
+
+     calculation of (P|Q) ...
+     time in lp2sym        cpu:  0.00 sec    wall:  0.00 sec    ratio:  0.0
+
+
+     calculation of the Cholesky decomposition of (P|Q)**(-1) ...
+     time in invmetri      cpu:  0.00 sec    wall:  0.00 sec    ratio:  0.4
+
+   threshold for RMS(d[D]) in SCF was     :  0.10E-06
+   integral neglect threshold             :  0.18E-09
+   derivative integral neglect threshold  :  0.10E-07
+
+
+ setting up bound for integral derivative estimation
+
+ increment for numerical differentiation : 0.00050000
+
+   =========================================================================
+
+     Energy of reference wave function is   -75.9383193131200
+     Maximum orbital residual is           0.2771115950301E-05
+
+
+     Number of symmetry-nonredundant auxiliary basis functions:       76
+
+     Block lengths for integral files:
+        frozen occupied (BOI):        0 MiB
+        active occupied (BJI):        1 MiB
+        active virtual  (BAI):        1 MiB
+        frozen virtual  (BGI):        0 MiB
+               general  (BTI):        1 MiB
+
+   =========================================================================
+
+
+
+
+   **************************************************************************
+   *                                                                        *
+   *          OPTIMIZATION OF THE GROUND STATE CLUSTER AMPLITUDES           *
+   *                                                                        *
+   **************************************************************************
+
+
+   Iter.   MP2 energy       Norm(Omega)    Norm(t1)  Norm(t2)     cpu    wall
+   ...........................................................................
+    1    -76.1274285257    0.0253534312     0.00000   0.12162    0.00    0.00
+   ...........................................................................
+
+
+     time in total         cpu:  0.00 sec    wall:  0.00 sec    ratio:  1.2
+
+
+     **********************************************************************
+     *                                                                    *
+     *   RHF  energy                             :    -75.9383193131      *
+     *   MP2 correlation energy                  :     -0.1891092126      *
+     *                                                                    *
+     *   Final MP2 energy                        :    -76.1274285257      *
+     *                                                                    *
+     *   Norm of MP1 T2 amplitudes               :      0.1216210646      *
+     *                                                                    *
+     *   D1 diagnostic                           :      0.0087            *
+     *                                                                    *
+     **********************************************************************
+
+
+
+ **************************************************************
+ *                                                            *
+ *    OPTIMIZATION OF THE EXCITED STATE CLUSTER AMPLITUDES    *
+ *                                                            *
+ **************************************************************
+
+
+  preoptimize excitation energies/vectors using CCS:
+  ==================================================
+
+
+ ======== LINEAR CC RESPONSE SOLVER ========
+
+    threshold for convergence: 0.10E-02
+    maximum number of simultaneous jacoby matrix transformations:  5
+                                                
+     summary of start vectors generation:
+     -------------------------------------------
+     type of solution vectors      : RE0
+     symmetry                      : a  
+     number of vectors requested   :     5
+     number of vectors generated   :     5
+       -- guessed as rhs/(e_a-e_i) :     5
+     -------------------------------------------
+                                                
+
+    Iter  #Vectors  time (min)    max. residual 
+    --------------------------------------------
+      1       5         0.00     0.13E+00  (  3)
+      2       5         0.00     0.45E-01  (  3)
+      3       5         0.00     0.67E-02  (  3)
+      4       5         0.00     0.22E-02  (  3)
+      5       1         0.00     0.91E-03  (  3)
+    --------------------------------------------
+    converged in  5 iterations
+
+         Total time          0.00 minutes
+
+
+ ===========================================
+
+
+
+
+ Note that this is the intermediate result of a preoptimization!
+ The convergence threshold was  0.1E-02 only!
+
+
+ +==================================================================+
+ | sym | multi | state |          CCS excitation energies           |
+ |     |       |       +--------------------------------------------+
+ |     |       |       |   Hartree    |     eV       |     cm-1     |
+ +==================================================================+
+ | a   |   1   |   1   |    0.3457523 |      9.40840 |    75883.849 |
+ | a   |   1   |   2   |    0.4129425 |     11.23674 |    90630.412 |
+ | a   |   1   |   3   |    0.4389428 |     11.94424 |    96336.815 |
+ | a   |   1   |   4   |    0.5072640 |     13.80336 |   111331.576 |
+ | a   |   1   |   5   |    0.5676674 |     15.44701 |   124588.586 |
+ +==================================================================+
+
+
+
+
+  preoptimize ADC(2) excitation energies/vectors using a quasi linear algorithm:
+  ==============================================================================
+
+
+ ======== LINEAR CC RESPONSE SOLVER ========
+
+    threshold for convergence: 0.10E-02
+    maximum number of simultaneous jacoby matrix transformations:  5
+                                                
+     summary of start vectors generation:
+     -------------------------------------------
+     type of solution vectors      : RE0
+     symmetry                      : a  
+     number of vectors requested   :     5
+     number of vectors generated   :     5
+       -- restarted from file      :     5
+     -------------------------------------------
+                                                
+
+    Iter  #Vectors  time (min)    max. residual 
+    --------------------------------------------
+ threshold for this macro iteration:  4.334638758653292E-002
+      1       5         0.00     0.54E-01  (  2)
+ ...adapted threshold to:  4.596077156276845E-002
+      2       4         0.00     0.33E-01  (  5)
+                                                
+     summary of start vectors generation:
+     -------------------------------------------
+     type of solution vectors      : RE0
+     symmetry                      : a  
+     number of vectors requested   :     5
+     number of vectors generated   :     5
+       -- restarted from file      :     5
+     -------------------------------------------
+                                                
+
+    Iter  #Vectors  time (min)    max. residual 
+    --------------------------------------------
+ threshold for this macro iteration:  2.252766943257323E-003
+      3       5         0.00     0.33E-01  (  5)
+      4       5         0.00     0.31E-02  (  5)
+      5       1         0.00     0.19E-02  (  3)
+                                                
+     summary of start vectors generation:
+     -------------------------------------------
+     type of solution vectors      : RE0
+     symmetry                      : a  
+     number of vectors requested   :     5
+     number of vectors generated   :     5
+       -- restarted from file      :     5
+     -------------------------------------------
+                                                
+
+    Iter  #Vectors  time (min)    max. residual 
+    --------------------------------------------
+ threshold for this macro iteration:  1.000000000000000E-003
+      6       5         0.00     0.75E-03  (  3)
+    --------------------------------------------
+    converged in  6 iterations
+
+         Total time          0.00 minutes
+
+
+ ===========================================
+
+
+
+
+ Note that this is the intermediate result of a preoptimization!
+ The convergence threshold was  0.1E-02 only!
+
+
+ +==================================================================+
+ | sym | multi | state |          ADC(2) excitation energies        |
+ |     |       |       +--------------------------------------------+
+ |     |       |       |   Hartree    |     eV       |     cm-1     |
+ +==================================================================+
+ | a   |   1   |   1   |    0.3018983 |      8.21507 |    66259.014 |
+ | a   |   1   |   2   |    0.3811209 |     10.37083 |    83646.378 |
+ | a   |   1   |   3   |    0.3951438 |     10.75241 |    86724.045 |
+ | a   |   1   |   4   |    0.4766083 |     12.96917 |   104603.436 |
+ | a   |   1   |   5   |    0.5561527 |     15.13369 |   122061.419 |
+ +==================================================================+
+
+
+
+
+
+  solve for ADC(2) excitation energies/vectors using a DIIS algorithm:
+  =================================================================
+                                                
+     summary of start vectors generation:
+     -------------------------------------------
+     type of solution vectors      : RE0
+     symmetry                      : a  
+     number of vectors requested   :     5
+     number of vectors generated   :     5
+       -- restarted from file      :     5
+     -------------------------------------------
+                                                
+
+
+ ========= DIIS CC RESPONSE SOLVER =========
+
+    threshold for convergence:0.10E-05
+    max. nb. of DIIS vectors :      10
+    maximum number of simultaneous jacoby matrix transformations:  5
+
+    Iter  #Vectors  time (min)   residual
+    --------------------------------------
+      1       5         0.00     0.22E-03  (  3)    0.57E-06
+      2       5         0.00     0.12E-03  (  3)    0.35E-06
+      3       5         0.00     0.82E-05  (  3)    0.35E-06
+      4       3         0.00     0.17E-05  (  3)    0.35E-06
+      5       1         0.00     0.64E-07  (  3)    0.35E-06
+    --------------------------------------
+    converged in   5 iterations
+
+   Total time          0.00 minutes
+
+
+ ===========================================
+
+
+
+
+
+ +================================================================================+
+ | sym | multi | state |          ADC(2) excitation energies    |  %t1   |  %t2   |
+ |     |       |       +----------------------------------------+--------+--------+
+ |     |       |       |   Hartree    |    eV      |    cm-1    |    %   |    %   |
+ +================================================================================+
+ | a   |   1   |   1   |    0.3019034 |    8.21521 |  66260.144 |  95.28 |   4.72 |
+ | a   |   1   |   2   |    0.3811235 |   10.37090 |  83646.943 |  95.63 |   4.37 |
+ | a   |   1   |   3   |    0.3951479 |   10.75252 |  86724.948 |  95.24 |   4.76 |
+ | a   |   1   |   4   |    0.4766109 |   12.96924 | 104604.006 |  95.67 |   4.33 |
+ | a   |   1   |   5   |    0.5561517 |   15.13366 | 122061.193 |  96.67 |   3.33 |
+ +================================================================================+
+
+
+       Energy:     0.3019034 H      8.21521 eV    66260.144 cm-1
+
+     +=======================================================================+
+     | type: RE0                    symmetry: a               state:    1    |
+     +-----------------------+-----------------------+-----------------------+
+     | occ. orb.  index spin | vir. orb.  index spin |  coeff/|amp|     %    |
+     +=======================+=======================+=======================+
+     |    5 a        5       |    6 a        6       |   0.99626      99.3   |
+     +=======================+=======================+=======================+
+     norm of printed elements:  0.99253
+
+
+       Energy:     0.3811235 H     10.37090 eV    83646.943 cm-1
+
+     +=======================================================================+
+     | type: RE0                    symmetry: a               state:    2    |
+     +-----------------------+-----------------------+-----------------------+
+     | occ. orb.  index spin | vir. orb.  index spin |  coeff/|amp|     %    |
+     +=======================+=======================+=======================+
+     |    5 a        5       |    7 a        7       |   0.99071      98.2   |
+     +=======================+=======================+=======================+
+     norm of printed elements:  0.98151
+
+
+       Energy:     0.3951479 H     10.75252 eV    86724.948 cm-1
+
+     +=======================================================================+
+     | type: RE0                    symmetry: a               state:    3    |
+     +-----------------------+-----------------------+-----------------------+
+     | occ. orb.  index spin | vir. orb.  index spin |  coeff/|amp|     %    |
+     +=======================+=======================+=======================+
+     |    4 a        4       |    6 a        6       |   0.99373      98.8   |
+     +=======================+=======================+=======================+
+     norm of printed elements:  0.98751
+
+
+       Energy:     0.4766109 H     12.96924 eV   104604.006 cm-1
+
+     +=======================================================================+
+     | type: RE0                    symmetry: a               state:    4    |
+     +-----------------------+-----------------------+-----------------------+
+     | occ. orb.  index spin | vir. orb.  index spin |  coeff/|amp|     %    |
+     +=======================+=======================+=======================+
+     |    4 a        4       |    7 a        7       |   0.99370      98.7   |
+     +=======================+=======================+=======================+
+     norm of printed elements:  0.98744
+
+
+       Energy:     0.5561517 H     15.13366 eV   122061.193 cm-1
+
+     +=======================================================================+
+     | type: RE0                    symmetry: a               state:    5    |
+     +-----------------------+-----------------------+-----------------------+
+     | occ. orb.  index spin | vir. orb.  index spin |  coeff/|amp|     %    |
+     +=======================+=======================+=======================+
+     |    3 a        3       |    6 a        6       |   0.99569      99.1   |
+     +=======================+=======================+=======================+
+     norm of printed elements:  0.99140
+
+
+
+      The semi-canonical algorithm will be used for densities
+
+
+    ------------------------------------------------------------------------
+         total  cpu-time :   0.19 seconds
+         total wall-time :   0.19 seconds
+    ------------------------------------------------------------------------
+
+
+   ****  ricc2 : all done  ****
+
+
+    2019-06-10 17:11:53.895 
+

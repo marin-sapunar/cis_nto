@@ -1,1 +1,2 @@
-build/*
+build
+test/test_cases/logs

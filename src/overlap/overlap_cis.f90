@@ -65,7 +65,7 @@ contains
         deallocate(act2)
         ! -- Check number of occupied orbitals.
         call check_occ_orb(diff_a, 1, on1, on2, cisa1, cisa2)
-        call check_occ_orb(diff_b, 2, on1, on2, cisa1, cisa2)
+        call check_occ_orb(diff_b, 2, on1, on2, cisb1, cisb2)
         ! -- Remove MOs frozen from el. struct. calculation.
         call remove_frozen_mo(on1%fo(1), on1%fv(1), 1, mos1%ca, s_mo_a)
         call remove_frozen_mo(on2%fo(1), on2%fv(1), 2, mos2%ca, s_mo_a)
