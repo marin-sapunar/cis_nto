@@ -35,7 +35,7 @@ contains
         write(stdout, '(a)') 'optional arguments:'
         write(stdout, '(a)') '  -h, --help                  show this help message and exit                      '
         write(stdout, '(a)') '  -in, --input-format         format of input files for bra orbitals/states        '
-        write(stdout, '(32x,a,l1)') 'default: ', input_format
+        write(stdout, '(32x,a,a)') 'default: ', input_format
         write(stdout, '(a)') '  -t, --wf-threshold t        truncate wave functions using given threshold        '
         write(stdout, '(a)') '  -tnex, --truncate-nex n     truncate wave functions to n dominant excitations    '
         write(stdout, '(a)') '  -ns, --(no-)norm-states     renormalize input states before calculation          '

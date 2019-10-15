@@ -41,9 +41,9 @@ contains
         write(stdout, '(a)') 'optional arguments:'
         write(stdout, '(a)') '  -h, --help                  show this help message and exit                      '
         write(stdout, '(a)') '  -in1, --input-format-1      format of input files for bra orbitals/states        '
-        write(stdout, '(32x,a,l1)') 'default: ', input_format_1
+        write(stdout, '(32x,a,a)') 'default: ', input_format_1
         write(stdout, '(a)') '  -in2, --input-format-2      format of input files for ket orbitals/states        '
-        write(stdout, '(32x,a,l1)') 'default: ', input_format_2
+        write(stdout, '(32x,a,a)') 'default: ', input_format_2
         write(stdout, '(a)') '  -ao, --ao-stop              stop program after AO overlap calculation            '
         write(stdout, '(a)') '  -mo, --mo-stop              stop program after MO overlap calculation            '
         write(stdout, '(a)') '  -alg, --algorithm ALG       algorithm to use for the overlap calculation         '
