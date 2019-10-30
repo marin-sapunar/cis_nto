@@ -23,6 +23,8 @@ class OverlapTest(unittest.TestCase):
         with open(LOGDIR+name+'.log', 'w') as log, open(LOGDIR+name+'.err', 'w') as err:
             subprocess.call(PROG + call, stdout=log, stderr=err)
         self.assertTrue(os.path.isfile(LOGDIR+name), 'Error termination.')
+        if not os.path.isfile(REFDIR+name):
+            raise FileNotFoundError(REFDIR + name + ' reference file not found.')
         new = pd.read_csv(LOGDIR+name, delim_whitespace=True, header=None, skiprows=1).values
         ref = pd.read_csv(REFDIR+name, delim_whitespace=True, header=None, skiprows=1).values
         return ref, new
@@ -123,6 +125,21 @@ class Molden(OverlapTest):
     def test_mo_overlap(self):
         ''' Test MO overlap from molcas generated molden file.'''
         self.compare_smo('molden/h2o_molcas', 'molden/h2o_molcas', 'molcas_mo_overlap')
+
+
+class Molpro(OverlapTest):
+    ''' Molpro interface tests. '''
+    PROG_FLAG = ['-in1', 'molpro_output', '-in2', 'molpro_output']
+
+
+    def test_ao_overlap(self):
+        ''' Test AO overlap from molpro output file.'''
+        self.compare_sao('molpro/o2.out', 'molpro/o2.out', 'molpro_ao_overlap')
+
+
+    def test_mo_overlap(self):
+        ''' Test MO overlap from molpro output file.'''
+        self.compare_smo('molpro/o2.out', 'molpro/o2.out', 'molpro_mo_overlap')
 
 
 def check_paths():
