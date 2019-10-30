@@ -1,2 +1,3 @@
 build
-test/test_cases/logs
+test/test_cases/logs*
+*swp
