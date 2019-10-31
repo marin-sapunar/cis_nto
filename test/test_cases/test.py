@@ -5,7 +5,6 @@ import time
 import unittest
 import subprocess
 import numpy as np
-import pandas as pd
 
 
 PROG = ['../../build/bin/cis_overlap.exe']
@@ -25,8 +24,8 @@ class OverlapTest(unittest.TestCase):
         self.assertTrue(os.path.isfile(LOGDIR+name), 'Error termination.')
         if not os.path.isfile(REFDIR+name):
             raise FileNotFoundError(REFDIR + name + ' reference file not found.')
-        new = pd.read_csv(LOGDIR+name, delim_whitespace=True, header=None, skiprows=1).values
-        ref = pd.read_csv(REFDIR+name, delim_whitespace=True, header=None, skiprows=1).values
+        new = np.loadtxt(LOGDIR+name, skiprows=1)
+        ref = np.loadtxt(REFDIR+name, skiprows=1)
         return ref, new
 
 
