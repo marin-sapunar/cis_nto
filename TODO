@@ -1,11 +1,9 @@
+-- Features:
+   -- Support for more operators, primarily for < r >
+   -- Support for different wave function types (interface with SHARC?)
 
 -- Checks and bugfixes:
-   -- Fix orthogonalziation for UHF calculations.
-   -- Check UHF calculations and mixed UHF/RHF calculations.
-   -- Check Dyson orbital program results.
+   -- Fix orthogonalziation for UHF calculations
+   -- Check UHF calculations and mixed UHF/RHF calculations
    -- Check MO freezing and AO recentering usefulness
-
--- Code cleaning:
-   -- Join dyson and overlap programs.
-   -- Add test cases.
 

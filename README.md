@@ -3,12 +3,15 @@
 
 ## Purpose of Module
 
-The main purpose of the module is calculating overlap matrices between sets of wave functions, molecular orbitals or atomic orbitals. Presently, only CIS type wave functions are supported and overlaps between them are efficiently calculated either by expanding the wave functions in terms of excitations between natural transition orbitals (NTOs) or by expanding the overlap determinants into level 2 minors (L2M).
+The main purpose of the module is calculating overlap matrices between sets of wave functions calculated at different geometries, using different atomic basis sets or different electronic structure methods. Wave functions are read from single point energy calculations performed by a quantum chemistry code. Geometries, basis sets, molecular orbital coefficients and wave function coefficients need to be read to calculate the overlaps. Only wave functions (approximately) expanded in CIS form are presently supported and overlaps between them are very efficiently calculated either by expanding the wave functions in terms of excitations between natural transition orbitals (NTOs) or by expanding the overlap determinants into level 2 minors (L2M).
 
 If using the code, please cite the following reference:
  * M. Sapunar, T. Piteša, D. Davidović and N. Došlić, [J. Chem. Theory Comput. (2019.)][NTOpaper]
  
 which describes the main methods implemented in the code.
+
+For wave function overlap calculations, the code is currently interfaced only to Turbomole, but additional interfaces can easily be added.
+
 
 ## Installation and technical information
 
@@ -23,7 +26,7 @@ which describes the main methods implemented in the code.
     * OpenBLAS
     * MKL (with the [MKL Fortran 95 Interface][F95])
 
-Commands to downolad and install the module:
+Commands to download and compile the code:
 
 ```
 git clone https://github.com/marin-sapunar/cis_nto.git
@@ -37,9 +40,9 @@ make
 after running  make, the executables will be in the bin directory.
 For instructions/options run the executables with the --help command line argument.
 
-
 ## Testing
 
+Some tests are available by running test.py in the 'test/test_cases' directory. 
 
 ## Source Code
 
