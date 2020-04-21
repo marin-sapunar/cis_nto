@@ -26,6 +26,7 @@ program cis_overlap_prog
     ! Begin run.
     time00 = omp_get_wtime()
     call set_defaults()
+    call command_line_interface()
     if (print_level >= 1) then
         write(stdout, '(5x,a)') '-------------------------------------------------------------'
         write(stdout, '(5x,a)') '                     cis_overlap program                     '
@@ -33,9 +34,6 @@ program cis_overlap_prog
         write(stdout, '(5x,a)') '                                                             '
         write(stdout, '(5x,a)') ' Program compiled on '//__DATE__//' '//__TIME__//'.          '
         write(stdout, '(5x,a)') '-------------------------------------------------------------'
-    end if
-    call command_line_interface()
-    if (print_level >= 1) then
         write(stdout, *) 
         write(stdout, '(1x,a,i0,a)') 'Using ', omp_get_max_threads(), ' threads.'
         write(stdout, *) 

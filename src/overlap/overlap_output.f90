@@ -143,11 +143,11 @@ contains
                 do i = lbound(s_wf, 1), ubound(s_wf, 1)
                     write(stdout, out_fmt_s) s_wf(i, :)
                 end do
+                call assignment_problem(-s_wf**2, assigned_rows, assigned_cols)
+                write(stdout, '(5x,a)') 'Assignment:'
+                write(stdout, '(9x,a,1000(i0, 1x))') 'Rows: ', assigned_rows
+                write(stdout, '(9x,a,1000(i0, 1x))') 'Cols: ', assigned_cols
             end if
-            call assignment_problem(-s_wf**2, assigned_rows, assigned_cols)
-            write(stdout, '(5x,a)') 'Assignment:'
-            write(stdout, '(9x,a,1000(i0, 1x))') 'Rows: ', assigned_rows
-            write(stdout, '(9x,a,1000(i0, 1x))') 'Cols: ', assigned_cols
         end if
     end subroutine output_phase
 

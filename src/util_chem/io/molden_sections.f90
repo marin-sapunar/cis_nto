@@ -112,8 +112,8 @@ contains
             end do
         end do outer
         call readf%go_to_line(iline)
-        nmo_a = readf%count_keyword_appearances('Spin= Alpha')
-        nmo_b = readf%count_keyword_appearances('Spin= Beta')
+        nmo_a = readf%count_keyword_appearances('Alpha')
+        nmo_b = readf%count_keyword_appearances('Beta')
     end subroutine section_count_mo
 
 

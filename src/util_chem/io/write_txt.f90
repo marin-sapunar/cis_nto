@@ -42,7 +42,7 @@ contains
         integer :: i, ounit
         character(len=100) :: outfmt
 
-        write(outfmt, '(a,i0,a)') '(', size(array, 1), 'es24.16)'
+        write(outfmt, '(a,i0,a)') '(', size(array, 1), 'e24.16)'
 
         open(newunit=ounit, file=fname, action='write')
         write(ounit, *) size(array, 1), size(array, 2)
@@ -63,7 +63,7 @@ contains
         integer :: i, j, ounit
         character(len=100) :: outfmt
 
-        write(outfmt, '(a,i0,a)') '(', size(array, 1), 'es24.16)'
+        write(outfmt, '(a,i0,a)') '(', size(array, 1), 'e24.16)'
 
         open(newunit=ounit, file=fname, action='write')
         write(ounit, *) size(array, 1), size(array, 2), size(array, 3)

@@ -46,14 +46,14 @@ contains
         end if
         if (print_level >= 4) then
             if (bs1%sphe_mo) then
-                write(*,*) 'Expecting bra MOs written in terms of spherical AOs.'
+                write(stdout, *) 'Expecting bra MOs written in terms of spherical AOs.'
             else
-                write(*,*) 'Expecting bra MOs written in terms of cartesian AOs.'
+                write(stdout, *) 'Expecting bra MOs written in terms of cartesian AOs.'
             end if
             if (bs2%sphe_mo) then
-                write(*,*) 'Expecting ket MOs written in terms of spherical AOs.'
+                write(stdout, *) 'Expecting ket MOs written in terms of spherical AOs.'
             else
-                write(*,*) 'Expecting ket MOs written in terms of cartesian AOs.'
+                write(stdout, *) 'Expecting ket MOs written in terms of cartesian AOs.'
             end if
         end if
         call one_el_op(geom1, geom2, bs1, bs2, operator_string, s_ao, center_atoms, center_pairs)
