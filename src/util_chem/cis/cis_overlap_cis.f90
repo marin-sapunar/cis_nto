@@ -207,7 +207,7 @@ contains
             write(stdout, '(9x, a40, f14.4)') 'RS and SR blocks          - time (sec):', time_rs_sr
             write(stdout, '(9x, a40, f14.4)') 'SS block                  - time (sec):', time_ss
             write(stdout, '(9x, 40x, a14)') '--------------'
-            write(stdout, '(9x, a40, f14.4)') 'Total                     - time (sec):', time_tot
+            write(stdout, '(9x, a40, f14.4)') 'Total WF overlap          - time (sec):', time_tot
         end if
         if (print_level >= 2) then
             write(stdout, *)

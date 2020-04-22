@@ -57,6 +57,7 @@ enable_language (C)
 ###################################################################################################
 # Libraries.                                                                                      #
   add_definitions(-DLINALG=1)
+  add_definitions(-DL2M=ON)
   # CMake FindBLAS/FindLAPACK modules don't work for ilp64 version of MKL or for MKL F95 interface.
   # Set everything manually.
   if(LINALG STREQUAL "MKL")
@@ -108,12 +109,6 @@ enable_language (C)
     set(LINKLIBS ${LINKLIBS} ${MKL_LIBS})
     add_definitions(-DMKL=1)
     add_definitions(-DLINALG_F95=1)
-  elseif(LINALG STREQUAL "OpenBLAS")
-    find_package(OpenBLAS)
-    include_directories(${OpenBLAS_INCLUDE_DIRS})
-    message(STATUS BLAS found: ${OpenBLAS_LIBRARIES})
-    set(LINKLIBS ${LINKLIBS} ${OpenBLAS_LIBRARIES})
-    add_definitions(-DOPENBLAS=1)
   endif()
 
 
@@ -132,29 +127,50 @@ enable_language (C)
 
 ################################################################################
 # Build                                                                        #
-  file(GLOB SOURCES_UTIL "src/util_chem/*/*f90" "src/util_fort/*f90")
+  file(GLOB SOURCES_UTIL 
+      "src/util_chem/atom/*f90"
+      "src/util_chem/basis/*f90"
+      "src/util_chem/cis/*f90"
+      "src/util_chem/io/*f90"
+      "src/util_fort/*f90")
   add_library(theochemutil ${SOURCES_UTIL})
 
+  file(GLOB SOURCES_PROG "src/overlap/*f90")
+  add_executable(cis_overlap-blas.exe ${SOURCES_PROG} 
+      src/util_chem/l2m/getlvl2minors_blk.f90 
+      src/util_chem/l2m/ssblock_blas.c 
+      src/util_chem/l2m/c_wrapper_blas.c)
+  target_link_libraries(cis_overlap-blas.exe theochemutil ${LINKLIBS})
 
-  file(GLOB SOURCES_OLAP "src/overlap/*f90" "src/l2m/*c")
-  file(GLOB SOURCES_CONV "src/convert/*f90")
-  file(GLOB SOURCES_GNTO "src/nto/*f90")
+  add_executable(cis_overlap-lu-csa.exe ${SOURCES_PROG} 
+      src/util_chem/l2m/getlvl2minors_lu_csa.f90 
+      src/util_chem/l2m/ssblock_lu_csa.c 
+      src/util_chem/l2m/c_wrapper_lu.c)
+  target_link_libraries(cis_overlap-lu-csa.exe theochemutil ${LINKLIBS})
 
-  add_executable(cis_overlap.exe ${SOURCES_OLAP})
-  add_executable(cis_nto.exe ${SOURCES_GNTO})
-  add_executable(convert.exe ${SOURCES_CONV})
+  add_executable(cis_overlap-opt-gauss.exe ${SOURCES_PROG} 
+      src/util_chem/l2m/getlvl2minors_opt.c
+      src/util_chem/l2m/ssblock_opt.c 
+      src/util_chem/l2m/determinants.c 
+      src/util_chem/l2m/c_wrapper_opt.c)
+  set_target_properties(cis_overlap-opt-gauss.exe PROPERTIES COMPILE_FLAGS "-DGAUSS")
+  target_link_libraries(cis_overlap-opt-gauss.exe theochemutil ${LINKLIBS})
 
 
-  target_link_libraries(cis_nto.exe theochemutil ${LINKLIBS})
-  target_link_libraries(cis_overlap.exe theochemutil ${LINKLIBS})
-  target_link_libraries(convert.exe theochemutil ${LINKLIBS})
+  add_executable(cis_overlap-opt-givens.exe ${SOURCES_PROG} 
+      src/util_chem/l2m/getlvl2minors_opt.c
+      src/util_chem/l2m/ssblock_opt.c 
+      src/util_chem/l2m/determinants.c 
+      src/util_chem/l2m/c_wrapper_opt.c)
+  set_target_properties(cis_overlap-opt-givens.exe PROPERTIES COMPILE_FLAGS "-DGIVENS")
+  target_link_libraries(cis_overlap-opt-givens.exe theochemutil ${LINKLIBS})
 
 ################################################################################
 # Check                                                                        #
-  file(GLOB SOURCES_TEST "test/unit_test/*f90")
-  add_custom_target(check COMMAND
-                    ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/cis_test.exe)
-  add_executable(cis_test.exe EXCLUDE_FROM_ALL ${SOURCES_TEST} ${SOURCES_OVLC})
-  add_dependencies(check cis_test.exe)
-  target_link_libraries(cis_test.exe theochemutil ${LINKLIBS})
+# file(GLOB SOURCES_TEST "test/unit_test/*f90")
+# add_custom_target(check COMMAND
+#                   ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/cis_test.exe)
+# add_executable(cis_test.exe EXCLUDE_FROM_ALL ${SOURCES_TEST} ${SOURCES_OVLC})
+# add_dependencies(check cis_test.exe)
+# target_link_libraries(cis_test.exe theochemutil ${LINKLIBS})
 

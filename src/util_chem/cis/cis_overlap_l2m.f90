@@ -58,8 +58,8 @@ contains
         real(dp), allocatable :: l1rminor(:, :)
         ! External routines
         external :: ssblock
-      ! integer, external :: mkl_get_max_threads
-      ! integer :: num_threads
+        integer, external :: mkl_get_max_threads
+        integer :: num_threads
         integer :: i
         real(dp), external :: omp_get_wtime
         real(dp) :: time00, time0
@@ -102,8 +102,8 @@ contains
         end if
 
         time0 = omp_get_wtime()
-       !num_threads = mkl_get_max_threads()
-       !call mkl_set_num_threads(1)
+        num_threads = mkl_get_max_threads()
+        call mkl_set_num_threads(1)
         if (print_level >= 2) then
             write(stdout, *)
             if (beta) then
@@ -136,9 +136,10 @@ contains
         if (print_level >= 2) write(stdout, '(9x,a)') 'SR block...'
         call srblock(s_mo_a, no_a, nv_a1, nwf_1, wf_a1, l1rminor, sr_a)
         time_rs_sr = omp_get_wtime() - time0
-       !call mkl_set_num_threads(num_threads)
+        call mkl_set_num_threads(num_threads)
         time0 = omp_get_wtime()
         if (print_level >= 2) write(stdout, '(9x,a)') 'SS block...'
+        flush(stdout)
         call ssblock(s_mo_a, no_a, nv_a1, nv_a2, nwf_1, nwf_2, wf_a1, wf_a2, l1rminor, ss_a, print_level)
         time_ss = omp_get_wtime() - time0
         deallocate(l1cminor)
@@ -147,8 +148,8 @@ contains
 
         if (beta) then
             time0 = omp_get_wtime()
-           !num_threads = mkl_get_max_threads()
-           !call mkl_set_num_threads(1)
+            num_threads = mkl_get_max_threads()
+            call mkl_set_num_threads(1)
             if (print_level >= 2) then
                 write(stdout, *)
                 write(stdout, '(5x,a)') 'Computing beta level 1 minors...'
@@ -172,8 +173,10 @@ contains
             if (print_level >= 2) write(stdout, '(9x,a)') 'SR block...'
             call srblock(s_mo_b, no_b, nv_b1, nwf_1, wf_b1, l1rminor, sr_b)
             time_rs_sr = time_rs_sr + omp_get_wtime() - time0
+            call mkl_set_num_threads(num_threads)
             time0 = omp_get_wtime()
             if (print_level >= 2) write(stdout, '(9x,a)') 'SS block...'
+            flush(stdout)
             call ssblock(s_mo_b, no_b, nv_b1, nv_b2, nwf_1, nwf_2, wf_b1, wf_b2, l1rminor, ss_b, print_level)
             time_ss = time_ss + omp_get_wtime() - time0
             deallocate(l1cminor)
@@ -215,7 +218,7 @@ contains
             write(stdout, '(9x, a40, f14.4)') 'RS and SR blocks          - time (sec):', time_rs_sr
             write(stdout, '(9x, a40, f14.4)') 'L2 minors and SS block    - time (sec):', time_ss
             write(stdout, '(9x, 40x, a14)') '--------------'
-            write(stdout, '(9x, a40, f14.4)') 'Total                     - time (sec):', time_tot
+            write(stdout, '(9x, a40, f14.4)') 'Total WF overlap          - time (sec):', time_tot
         end if
         if (print_level >= 2) then
             write(stdout, *)

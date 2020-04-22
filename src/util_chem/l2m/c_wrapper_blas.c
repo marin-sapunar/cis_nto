@@ -7,7 +7,7 @@
 
 #include <stdio.h>
 
-#include "ssblock_lu.h"
+#include "ssblock_blas.h"
 
 void ssblock_(double *csc, const int *no, const int *nv1, const int *nv2, const int *ns1, const int *ns2, double *wf1, double *wf2, double *l1minor, double *ss)
 {
@@ -17,6 +17,6 @@ void ssblock_(double *csc, const int *no, const int *nv1, const int *nv2, const 
 	int ns1_int = *ns1;
 	int ns2_int = *ns2;
 
-	ssblock_lu(csc, no_int, nv1_int, nv2_int, ns1_int, ns2_int, wf1, wf2, l1minor, ss);
+	ssblock_blas(csc, no_int, nv1_int, nv2_int, ns1_int, ns2_int, wf1, wf2, l1minor, ss);
 
 }

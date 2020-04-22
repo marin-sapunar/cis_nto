@@ -32,7 +32,7 @@ contains
         use linalg_wrapper_mod, only : gemm
         integer :: n_freeze_a, n_freeze_b
         integer :: diff_a, diff_b
-        integer :: i
+        integer :: i, j
 
         diff_a = 0
         diff_b = 0
@@ -80,6 +80,30 @@ contains
         call check_ci_norms(rhf, cisa1, cisb1, 'bra')
         call check_ci_norms(rhf, cisa2, cisb2, 'ket')
         time_in =  time_in + omp_get_wtime() - time0
+
+      ! !------------------------------
+      ! write(10, *)  size(cisa1, 3), 1
+      ! write(10, *)  size(cisa1, 2), size(cisa1, 1)
+      ! do i = 1, size(cisa1, 3)
+      !     write(10,*) 0.0_dp
+      !     do j = 1, size(cisa1, 2)
+      !         write(10,*) cisa1(:, j, i)
+      !     end do
+      ! end do
+      ! write(11, *)  size(cisa2, 3), 1
+      ! write(11, *)  size(cisa2, 2), size(cisa2, 1)
+      ! do i = 1, size(cisa2, 3)
+      !     write(11,*) 0.0_dp
+      !     do j = 1, size(cisa2, 2)
+      !         write(11,*) cisa2(:, j, i)
+      !     end do
+      ! end do
+
+      ! write(12, *)  1, size(s_mo_a, 1), size(s_mo_a, 2)
+      ! do j = 1, size(s_mo_a, 2)
+      ! write(12, *) s_mo_a(:, j)
+      ! end do
+      ! !------------------------------
 
         ! Start calculation.
         time0 = omp_get_wtime()
