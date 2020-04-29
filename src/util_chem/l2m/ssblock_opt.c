@@ -115,7 +115,7 @@ void ssblock_lu(double *csc, int no, const int nv1, const int nv2, const int ns1
         for( o1 = 0; o1 < no; o1++ ){
             for( o2 = 0; o2 < no; o2++ ){
 
-                printf("[ssblock_lu] Computing block (%d, %d)\n", o1, o2);
+                /* printf("[ssblock_lu] Computing block (%d, %d)\n", o1, o2); */
 
                 /* Apply rows from the right of the ref matrix, cscmat positions (1:no, no+1:np+nv2)
                 * Compute first product l2minors * csc(1:no, no+1:no+nv2) */
