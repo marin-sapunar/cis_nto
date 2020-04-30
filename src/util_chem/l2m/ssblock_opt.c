@@ -52,7 +52,7 @@ void ssblock_lu(double *csc, int no, const int nv1, const int nv2, const int ns1
     /* Timing routines */
     int n_timers = 6;
     double start, finish;
-    double times[n_timers]; 
+    double *times = NULL;
 
     /* Set leading dimensions */
     ld_csc =  no + nv1;
@@ -63,6 +63,7 @@ void ssblock_lu(double *csc, int no, const int nv1, const int nv2, const int ns1
     ss_size = ns1 * ns2;
 
     /* Set timings to zero */
+    times = (double*) malloc(n_timers * sizeof(double));
     for( i = 0; i < n_timers; i++ ){
         times[i] = zero;
     }
@@ -111,11 +112,11 @@ void ssblock_lu(double *csc, int no, const int nv1, const int nv2, const int ns1
 		sched_setaffinity(0, sizeof(cpu_set_t), &my_set); /* Set affinity of this process to */
 
         /* Start iterate through the blocks */
+
         #pragma omp for collapse(2) schedule(dynamic) private(o2, ld_tmp, pos_tmp, pos_msum, coef, i, v1, start, finish) reduction(+:ss[:ss_size]) reduction(+:times[:4]) 
+        
         for( o1 = 0; o1 < no; o1++ ){
             for( o2 = 0; o2 < no; o2++ ){
-
-                /* printf("[ssblock_lu] Computing block (%d, %d)\n", o1, o2); */
 
                 /* Apply rows from the right of the ref matrix, cscmat positions (1:no, no+1:np+nv2)
                 * Compute first product l2minors * csc(1:no, no+1:no+nv2) */
@@ -172,11 +173,6 @@ void ssblock_lu(double *csc, int no, const int nv1, const int nv2, const int ns1
         times[i] = times[i] / thmax; 
     }
 
-    /* Free allocated spaces */
-    free(msum);
-    free(tmp);
-    free(l2minors);
-
     /* Print timings */
     printf("[SSBLOCK] Execution times:\n");
     printf("\tscale:         %.7lf sec\n", times[5]);
@@ -185,4 +181,10 @@ void ssblock_lu(double *csc, int no, const int nv1, const int nv2, const int ns1
     printf("\twf1 * tmp:     %.7lf sec\n", times[1]);
     printf("\twf1 * wf2:     %.7lf sec\n", times[2]);
     printf("\tmsum * tmp:    %.7lf sec\n", times[3]);
+
+    /* Free allocated spaces */
+    free(msum);
+    free(tmp);
+    free(l2minors);
+    free(times);
 } 
