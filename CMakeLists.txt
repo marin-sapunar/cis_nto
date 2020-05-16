@@ -136,6 +136,7 @@ enable_language (C)
   add_library(theochemutil ${SOURCES_UTIL})
 
   file(GLOB SOURCES_PROG "src/overlap/*f90")
+
   add_executable(cis_overlap-blas.exe ${SOURCES_PROG} 
       src/util_chem/l2m/getlvl2minors_blk.f90 
       src/util_chem/l2m/ssblock_blas.c 
@@ -155,7 +156,6 @@ enable_language (C)
       src/util_chem/l2m/c_wrapper_opt.c)
   set_target_properties(cis_overlap-opt-gauss.exe PROPERTIES COMPILE_FLAGS "-DGAUSS")
   target_link_libraries(cis_overlap-opt-gauss.exe theochemutil ${LINKLIBS})
-
 
   add_executable(cis_overlap-opt-givens.exe ${SOURCES_PROG} 
       src/util_chem/l2m/getlvl2minors_opt.c

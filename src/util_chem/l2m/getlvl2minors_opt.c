@@ -45,7 +45,7 @@ void getlvl2minors_opt (int n, const int nv2, double *A, int Alda, double *l2min
 	double zero = 0.0;
 	int r1, r2, c1, c2;
 	int k;
-	int i;
+	int i, j;
 	double s1;
 	int thmax = omp_get_max_threads();
     int blas_threads;
@@ -90,7 +90,7 @@ void getlvl2minors_opt (int n, const int nv2, double *A, int Alda, double *l2min
 				if( r2 >= r1+1 ) {
 
 #ifdef TASKPAR
-					#pragma omp task firstprivate (r1, r2) private (k, my_thread_id, s1)
+					#pragma omp task firstprivate (r1, r2) private (k, my_thread_id, s1, i)
 #endif
 					{
 						my_thread_id = omp_get_thread_num();
@@ -120,13 +120,30 @@ void getlvl2minors_opt (int n, const int nv2, double *A, int Alda, double *l2min
 
 						k = nm2 - 1;
 						dlaset_("Lower", &k, &n, &zero, &zero, &Apref(2,1), &Aplda);
+
+                        for( i = 1; i <= nm2; i++ ){
+                            for( j = 1; j <= n; j++ ){
+                                Atpref(i,j) = Apref(i,j);
+                            }
+        
+                        }
 	
 #ifdef GIVENS
-						det_opt_rc( n, &Apref(1,1), Aplda, &Bpref(1,1), Bplda, &wk[my_thread_id*2*n], 2,
+                        /* Column wise */
+						//det_opt_rc( n, &Apref(1,1), Aplda, &Bpref(1,1), Bplda, &wk[my_thread_id*2*n], 2,
+						//	r1, r2, s1, l2minors);
+
+                        /* Row wise */
+						det_opt_rc_row( n, &Atpref(1,1), Atplda, &Bpref(1,1), Bplda, &wk[my_thread_id*2*n], 2,
 							r1, r2, s1, l2minors);
 #endif
 #ifdef GAUSS
-						det_opt_rc( n, &Apref(1,1), Aplda, &Bpref(1,1), Bplda, &wk[my_thread_id*2*n], 0,
+                        /* Column wise */
+						//det_opt_rc( n, &Apref(1,1), Aplda, &Bpref(1,1), Bplda, &wk[my_thread_id*2*n], 0,
+						//	r1, r2, s1, l2minors);
+
+                        /* Row wise */
+						det_opt_rc_row( n, &Atpref(1,1), Atplda, &Bpref(1,1), Bplda, &wk[my_thread_id*2*n], 0,
 							r1, r2, s1, l2minors);
 #endif
 					}

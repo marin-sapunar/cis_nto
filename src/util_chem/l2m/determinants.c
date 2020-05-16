@@ -121,12 +121,21 @@ void reduce_Hessenberg_ip_rc( int m, int n, double *C, int Clda, double *d, doub
 /** 
   Optimized solution, with implicit pivoting and workspace reduced and row storage
 */
-void det_opt_rc_row( int n, double *At, int Atlda, double *Bt, int Btlda, double *workspace, int transforms, double *sum, double *fsum, double *table ) {
-  double d, d1, d2, d3, s2;
-  int    c1, c2, k, r, c, m = n-2;
+void det_opt_rc_row( int n, double *At, int Atlda, double *Bt, int Btlda, double *workspace, int transforms, int r1, int r2, double s1, double *table ) {
 
-  *sum = 0.0, *fsum = 0.0;
+  double d, d1, d2, d3, s2, s3;
+  int    c1, c2, k, r, c, m = n-2;
+  int    pos1, pos2, pos3, pos4;
+  unsigned int  n2, n3;
+  int    c2_ext;
+
+  n2 = n * n;
+  n3 = n2 * n;
+
+  unsigned long int table_dim = n*n*n*n;
+
   if( n == 0 ) return;
+
   for (c1 = 1; c1 <= n-1; c1++){
     d1 = 1.0;
     for (k = 1; k <= c1-1; k++) {
@@ -134,11 +143,10 @@ void det_opt_rc_row( int n, double *At, int Atlda, double *Bt, int Btlda, double
     }
     // print_matrixt("A1", m-c1+1, c1-1, Atref(1,1), Atlda);
 
-    r    = m-c1+1; c = n-c1;
+    r = m-c1+1; 
+    c = n-c1;
     Btlda = c;
-    //dlacpy_("All", &r, &c, &Atref(c1,c1+1), &Atlda, &Btref(1,1), &Btlda);
     dlacpy_("All", &c, &r, &Atref(c1,c1+1), &Atlda, &Btref(1,1), &Btlda);
-    // print_matrixt("A2", r, c, &Btref(1,1), Btlda);
     reduce_Hessenberg_row( r, c, &Btref(1,1), Btlda, &s2 );
 
     for (c2 = 1; c2 <= n-c1; c2++){
@@ -149,26 +157,32 @@ void det_opt_rc_row( int n, double *At, int Atlda, double *Bt, int Btlda, double
 
       r    = m-c1-c2+2;
       c    = n-c1-c2;
-      // print_matrixt("A3", r, c, &Btref(c2,c2+1), Btlda);
+
       if (transforms==0)
         reduce_Hessenberg_ip_rc_row( r, c, &Btref(c2,c2+1), Btlda, &d3, workspace );
-      // else if (transforms==2)
-        // reduce_Hessenberg_rc_Gfast_row( r, c, &Btref(c2,c2+1), Btlda, &d3, workspace );
+      else if (transforms==2)
+        reduce_Hessenberg_rc_Gfast_row( r, c, &Btref(c2,c2+1), Btlda, &d3, workspace );
       else {
          printf("Unknown type of transforms\n");
          exit(-1);
       }
+	    
+      // The final determinant with included signs from Gauss rotations
+      d = s1 * d1*d2*d3;
 
-      d = d1*d2*d3;
-      // printf("det(%d,%d) = %22.15e %22.15e %22.15e %22.15e;\n", c1, c1+c2, d1, d2, d3, d); fflush(stdout);
-      *sum = (*sum) + d; *fsum = (*fsum)+fabs(d); table[(c1-1)*n+(c1+c2-1)] = d;
+	  // Extend c2 index to a 1:n range
+	  c2_ext = c2 + c1;
 
-      // if (transforms==0) {
-        // printf("det_opt_ip_rc(%d,%d) = %22.15e;\n", c1, c1+c2, d); fflush(stdout);
-      // }
-      // else if (transforms==2) {
-        // printf("det_opt_rc_Gfast(%d,%d) = %22.15e;\n", c1, c1+c2, d); fflush(stdout);
-      // }
+	  /* Compute positions in the determinant table */
+	  pos1 = (r1-1)*n3 + (r2-1)*n2 + (c1-1)*n + c2_ext - 1;
+	  pos2 = (r1-1)*n3 + (r2-1)*n2 + (c2_ext-1)*n + c1 - 1;
+	  pos3 = (r2-1)*n3 + (r1-1)*n2 + (c1-1)*n + c2_ext - 1;
+	  pos4 = (r2-1)*n3 + (r1-1)*n2 + (c2_ext-1)*n + c1 - 1;
+
+	  table[pos1] = pow(-1.0, c1+r1) * d;
+	  table[pos2] = pow(-1.0, c2_ext+r1+1) * d;
+	  table[pos3] = pow(-1.0, c1+r2+1) * d;
+	  table[pos4] = pow(-1.0, c2_ext+r2) * d;
     }
   }
 }
@@ -339,29 +353,7 @@ void det_opt_rc( int n, double *A, int Alda, double *B, int Blda, double *worksp
 			pos3 = (r2-1)*n3 + (r1-1)*n2 + (c1-1)*n + c2_ext - 1;
 			pos4 = (r2-1)*n3 + (r1-1)*n2 + (c2_ext-1)*n + c1 - 1;
 
-			/* Fill-in the table with the determinants with the correct sign */ 
-			/*if (c1+r1 % 2 == 0) {
-				table[pos1] = d;
-			} else {
-				table[pos1] = -d;
-			}
-			if (c2_ext+r1+1 % 2 == 0) {
-				table[pos2] = d;
-			} else {
-				table[pos2] = -d;
-			}
-			if(c1+r2+1 % 2 == 0) {
-				table[pos3] = d;
-			} else {
-				table[pos3] = -d;
-			}
-			if (c2_ext+r2 % 2 == 0) {
-				table[pos4] = d;
-			} else {
-				table[pos4] = -d;
-			}
-			*/
-				
+            /* Fill in the corresponding table elements */
 			table[pos1] = pow(-1.0, c1+r1) * d;
 			table[pos2] = pow(-1.0, c2_ext+r1+1) * d;
 			table[pos3] = pow(-1.0, c1+r2+1) * d;

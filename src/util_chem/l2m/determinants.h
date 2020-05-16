@@ -28,6 +28,7 @@ void det_opt( int n, double *A, int Alda, double *B, int Blda, double *C, int Cl
 void det_opt_ip( int n, double *A, int Alda, double *B, int Blda, double *C, int Clda, int transforms, double *sum, double *fsum );
 void det_opt_wk( int n, double *A, int Alda, double *B, int Blda, double *workspace, int transforms, double *sum, double *fsum, double *table );
 void det_opt_rc( int n, double *A, int Alda, double *B, int Blda, double *workspace, int transforms, int r1, int r2, double s1, double *table );
+void det_opt_rc_row( int n, double *A, int Alda, double *B, int Blda, double *workspace, int transforms, int r1, int r2, double s1, double *table );
 void reduce_Hessenberg_G( int m, int n, double *B, int Blda, double *d );
 void reduce_Hessenberg_Gfast( int m, int n, double *B, int Blda, double *d );
 void reduce_Hessenberg2_G( int m, int n, double *B, int Blda, double *d );
