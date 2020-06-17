@@ -55,7 +55,7 @@ contains
     ! SUBROUTINE: init_basis_set_single
     !> @brief Initialize instance of basis_set_single.
     !----------------------------------------------------------------------------------------------
-    subroutine init_basis_set_single(self, nfunc, orbtype, nprim, zeta, beta, sort_l)
+    subroutine init_basis_set_single(self, nfunc, orbtype, nprim, zeta, beta, sort_l, norm_gto)
         class(basis_set_single), intent(inout) :: self
         integer, intent(in) :: nfunc
         character(len=1), intent(in) :: orbtype(:)
@@ -63,9 +63,16 @@ contains
         real(dp), intent(in) :: zeta(:, :)
         real(dp), intent(in) :: beta(:, :)
         logical, intent(in), optional :: sort_l
+        logical, intent(in), optional :: norm_gto
         integer :: i, cfunc, l
-        logical :: sort
+        logical :: sort, wnorm_gto, init_cb
 
+        if (present(norm_gto)) then
+            wnorm_gto = norm_gto
+            init_cb = .true.
+        else
+            init_cb = .false.
+        end if
         sort = .false.
         if (present(sort_l)) sort = sort_l
 
@@ -85,6 +92,7 @@ contains
                     self%cg(cfunc)%z = zeta(i, 1:nprim(i))
                     self%cg(cfunc)%b = beta(i, 1:nprim(i))
                     call self%cg(cfunc)%norm_b()
+                    if (init_cb) call self%cg(cfunc)%gen_cb(.true., wnorm_gto)
                     self%n_sphe = self%n_sphe + amp%n_sphe(self%cg(cfunc)%l)
                     self%n_cart = self%n_cart + amp%n_cart(self%cg(cfunc)%l)
                 end if

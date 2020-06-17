@@ -51,13 +51,14 @@ contains
     ! SUBROUTINE: section_read_gto
     !> @brief Read the molden [GTO] section.
     !----------------------------------------------------------------------------------------------
-    subroutine section_read_gto(readf, nabas, abas, abas_index)
+    subroutine section_read_gto(readf, nabas, abas, abas_index, norm_gto)
         use basis_set_mod, only : basis_set_single
         use ang_mom_defs
         type(reader), intent(inout) :: readf
         integer, intent(in) :: nabas !< Number of atoms.
         integer, intent(out) :: abas_index(nabas)
         type(basis_set_single), intent(out) :: abas(nabas)
+        logical, intent(in) :: norm_gto
         character, parameter :: orborder(6) = ['s', 'p', 'd', 'f', 'g', 'h']
         integer, parameter :: maxnfunc = 100
         integer, parameter :: maxnprim = 25
@@ -84,7 +85,7 @@ contains
                     read(readf%line, *) zeta(nfunc, j), beta(nfunc, j)
                 end do
             end do
-            call abas(abas_index(i))%init(nfunc, orbtype, nprim, zeta, beta)
+            call abas(abas_index(i))%init(nfunc, orbtype, nprim, zeta, beta, norm_gto=norm_gto)
         end do
     end subroutine section_read_gto
 

@@ -30,10 +30,10 @@ module cgto_mod
                                           !! Dimensions: n_prim x n_cart(l)
         logical :: init_cb = .false.
         logical :: inorm_b = .false.
+        logical :: norm_gto = .false. !< Normalized primitive GTOs.
     contains
-        procedure :: norm_b => cgto_norm_b
-        procedure :: ccgto_b
-        procedure :: gen_all_ccgto_b
+        procedure :: norm_b => cngto_norm_b
+        procedure :: gen_cb => cgto_gen_cb
     end type cgto_subshell
 
 
@@ -41,80 +41,136 @@ contains
 
 
     !----------------------------------------------------------------------------------------------
-    ! SUBROUTINE: cgto_norm_b
-    !
-    !> @brief Normalize the cGTO.
-    !> @details 
-    !! Contraction coefficients are multiplied by the norm of the full contraction.
-    !!   b'(i) = N * b(i)
-    !! To fully normalize the basis set, the coefficients also need to be multiplied by the norms
-    !! of the individual primitive (Cartesian) Gaussians.
+    ! SUBROUTINE: cgto_gen_cb
+    !> @brief Normalize contracted Cartesian GTO.
+    !> @details
+    !! Multiply b coefficients by the norms of their respective primitive GTOs (if norm_gto) and by
+    !! the norm of the full expansion for each combination of {lx, ly, lz} with lx+ly+lz=l.
     !----------------------------------------------------------------------------------------------
-    subroutine cgto_norm_b(self)
+    subroutine cgto_gen_cb(self, norm_ccgto, norm_gto)
+        class(cgto_subshell) :: self
+        logical, intent(in) :: norm_ccgto
+        logical, intent(in) :: norm_gto
+        integer :: i, n_cart
+        integer, allocatable :: lc(:, :)
+        real(dp) :: norm
+
+        n_cart = amp%n_cart(self%l)
+        if (allocated(self%cb)) deallocate(self%cb)
+        allocate(self%cb(self%n_prim, n_cart))
+        allocate(lc(1:3,1:amp%n_cart(self%l)), source=amp%cart(self%l))
+
+        do i = 1, n_cart
+            if (norm_gto) then
+                self%cb(:, i) = self%b * gto_norms(self%z, lc(1, i), lc(2, i), lc(3, i)) 
+                self%norm_gto = .true.
+            else
+                self%cb(:, i) = self%b
+            end if
+            if (norm_ccgto) then
+                norm = cgto_norm(self%z, self%cb(:, i), lc(1, i), lc(2, i), lc(3, i))
+                self%cb(:, i) = self%cb(:, i) * norm
+            end if
+        end do
+        self%init_cb = .true.
+    end subroutine cgto_gen_cb
+
+
+    !----------------------------------------------------------------------------------------------
+    ! FUNCTION: cngto_norm_b
+    !
+    !> @brief Normalize subshell coefficients assuming primitive Gaussians will also be normalized.
+    !> @details 
+    !! See documentation of cngto_norm function.
+    !> @note
+    !! This subroutine is redundant if norm_cb is used to normalize the cb coefficients,
+    !! but it is the standard normalization for the b coefficients prior to expanding the subshell.
+    !----------------------------------------------------------------------------------------------
+    subroutine cngto_norm_b(self)
         class(cgto_subshell) :: self
         integer:: i, j
         real(dp) :: bi, bj, zi, zj, pow
         real(dp):: nsum
         
+        self%b = self%b * cngto_norm(self%z, self%b, self%l)
+        self%inorm_b = .true.
+    end subroutine cngto_norm_b
+
+
+    !----------------------------------------------------------------------------------------------
+    ! FUNCTION: cgto_norm
+    !> @brief Norm of a contracted GTOs.
+    !----------------------------------------------------------------------------------------------
+    function cgto_norm(z, b, lx, ly, lz) result(nsum)
+        real(dp), intent(in) :: z(:)
+        real(dp), intent(in) :: b(:)
+        integer, intent(in) :: lx
+        integer, intent(in) :: ly
+        integer, intent(in) :: lz
+        real(dp):: nsum
+        real(dp) :: pow, ggg
+        integer :: i, j, n_prim
+
+        n_prim = size(b)
+        ggg = gamma(f1o2+lx)*gamma(f1o2+ly)*gamma(f1o2+lz)
+        pow = - num3/num2 - lx - ly - lz
         nsum = num0
-        pow = f3o4 + self%l / num2
-        do i = 1, self%n_prim
-            bi = self%b(i)
-            zi = self%z(i)
-            do j = 1, self%n_prim
-                bj = self%b(j)
-                zj = self%z(j)
-                nsum = nsum + bi * bj * zi**pow * zj**pow / (zi+zj)**(num2*pow)
+        do i = 1, n_prim
+            do j = 1, n_prim
+                nsum = nsum + b(i) * b(j) * (z(i)+z(j))**pow
             end do
         end do
-        self%b = self%b / num2**pow / sqrt(nsum)
-        self%inorm_b = .true.
-    end subroutine cgto_norm_b
+        nsum = 1 / sqrt(nsum * ggg)
+    end function cgto_norm
 
 
     !----------------------------------------------------------------------------------------------
-    ! FUNCTION: ccgto_b
-    !> @brief Return cGTO coefficients multiplied by the ang. mom. dependent part of the norms.
+    ! FUNCTION: cngto_norm
+    !
+    !> @brief Norm of a contracted GTO assuming primitive Gaussians will also be normalized.
+    !> @details 
+    !! The cGTO is normalized and it is assumed that the b coefficients used here were not
+    !! already multiplied by the norms of the primitive functions. This norm depends only on the 
+    !! total angular momentum and can be used once to normalize the coefficients of the subshell.
+    !! The norms of the individual primitive (Cartesian) Gaussians also depend on the components
+    !! of the angular momentum and can only be added once the subshell is expanded.
     !----------------------------------------------------------------------------------------------
-    function ccgto_b(self, lxyz) result(lxyz_b)
-        use math_mod, only : factorial2
-        class(cgto_subshell) :: self
-        integer, intent(in) :: lxyz(3)
-        real(dp) :: lxyz_b(size(self%b))
-        integer :: lx, ly, lz, ll
-        real(dp), parameter :: pi_3o2 = pi**(num3/num2)
-        real(dp) :: pow, ggg, mul
-
-        lx = lxyz(1)
-        ly = lxyz(2)
-        lz = lxyz(3)
-        ll = sum(lxyz)
-        pow = f3o4 + ll / num2
-        ggg = factorial2(2*lx-1)*factorial2(2*ly-1)*factorial2(2*lz-1) / num2**ll * pi_3o2
-        mul = 2**pow / sqrt(ggg)
-        lxyz_b = self%b * mul * self%z**pow
-    end function ccgto_b
-
-
-    !----------------------------------------------------------------------------------------------
-    ! SUBROUTINE: gen_all_ccgto_b
-    !> @brief Return cGTO coefficients multiplied by the ang. mom. dependent part of the norms.
-    !----------------------------------------------------------------------------------------------
-    subroutine gen_all_ccgto_b(self)
-        class(cgto_subshell) :: self
-        integer :: i
-        integer, allocatable :: wrk(:, :)
-
-        if (.not. self%inorm_b) call self%norm_b
-        if (allocated(self%cb)) deallocate(self%cb)
-        allocate(self%cb(self%n_prim, amp%n_cart(self%l)))
-
-        allocate(wrk(1:3,1:amp%n_cart(self%l)), source=amp%cart(self%l))
-        do i = 1, amp%n_cart(self%l)
-            self%cb(:, i) = self%ccgto_b(wrk(:, i))
+    function cngto_norm(z, b, l) result(nsum)
+        real(dp), intent(in) :: z(:)
+        real(dp), intent(in) :: b(:)
+        integer, intent(in) :: l
+        real(dp):: nsum
+        integer:: i, j, n_prim
+        real(dp):: pow
+        
+        n_prim = size(b)
+        nsum = num0
+        pow = f3o4 + l / num2
+        do i = 1, n_prim
+            do j = 1, n_prim
+                nsum = nsum + b(i) * b(j) * (2*z(i))**pow * (2*z(j))**pow / (z(i)+z(j))**(num2*pow)
+            end do
         end do
-        self%init_cb = .true.
-    end subroutine gen_all_ccgto_b
+        nsum = 1 / sqrt(nsum)
+    end function cngto_norm
+
+
+    !----------------------------------------------------------------------------------------------
+    ! FUNCTION: gto_norms
+    !> @brief Return norms of primitive cartesian gaussians in a contracted GTO.
+    !----------------------------------------------------------------------------------------------
+    function gto_norms(z, lx, ly, lz) result(norm)
+        real(dp), intent(in) :: z(:)
+        integer, intent(in) :: lx
+        integer, intent(in) :: ly
+        integer, intent(in) :: lz
+        real(dp) :: norm(size(z))
+        real(dp) :: pow, ggg
+
+        pow = f3o4 + (lx + ly + lz) / num2
+        ggg = gamma(f1o2+lx)*gamma(f1o2+ly)*gamma(f1o2+lz)
+        norm = (2*z)**pow / sqrt(ggg)
+    end function gto_norms
 
 
     !----------------------------------------------------------------------------------------------
@@ -135,8 +191,8 @@ contains
         real(dp) :: qc(3), os_int(3)
         integer, allocatable :: l1(:, :), l2(:, :)
 
-        if (.not. cg1%init_cb) call cg1%gen_all_ccgto_b
-        if (.not. cg2%init_cb) call cg2%gen_all_ccgto_b
+        if (.not. cg1%init_cb) call cg1%gen_cb(.true., .true.)
+        if (.not. cg2%init_cb) call cg2%gen_cb(.true., .true.)
 
         r2 = sum((q1-q2)**2)
         allocate(l1(1:3,1:amp%n_cart(cg1%l)), source=amp%cart(cg1%l))
