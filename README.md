@@ -1,4 +1,4 @@
-# CIS NTO Module
+# CIS Overlap
 
 
 ## Purpose of Module
@@ -16,15 +16,13 @@ For wave function overlap calculations, the code is currently interfaced only to
 ## Installation and technical information
 
 * Language
-  * Fortran 2008
+  * Fortran 2008, C
 * License
   * MIT license (MIT)
 * Prerequisites
   * cmake
   * make
-  * BLAS/LAPACK
-    * OpenBLAS
-    * MKL (with the [MKL Fortran 95 Interface][F95])
+  * MKL (with the [MKL Fortran 95 Interface][F95])
 
 Commands to download and compile the code:
 
@@ -37,7 +35,7 @@ cmake ..
 make
 ```
 
-after running  make, the executables will be in the bin directory.
+after running  make, the executables will be in the bin directory. The main executable is cis_overlap.exe.
 For instructions/options run the executables with the --help command line argument.
 
 ## Testing
