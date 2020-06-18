@@ -94,12 +94,12 @@ contains
     ! SUBROUTINE: molden_read_basis
     !> @brief Read basis set information from a molden file.
     !----------------------------------------------------------------------------------------------
-    subroutine molden_read_basis(fname, bs, norm_gto)
+    subroutine molden_read_basis(fname, bs, fix_gto_norm)
         use basis_set_mod, only : basis_set
         use file_mod, only : check_string_in_file
         character(len=*), intent(in) :: fname
         type(basis_set), intent(out) :: bs
-        logical, intent(in) :: norm_gto
+        logical, intent(in) :: fix_gto_norm
         type(reader) :: readf
         integer :: ncart, nsphe
 
@@ -118,7 +118,7 @@ contains
 
         call readf%open(fname, skip_empty = .false.)
         call readf%go_to_keyword('[GTO]')
-        call section_read_gto(readf, bs%n_bs, bs%bs, bs%center_i_bs, norm_gto)
+        call section_read_gto(readf, bs%n_bs, bs%bs, bs%center_i_bs, fix_gto_norm)
         call readf%close()
     end subroutine molden_read_basis
 

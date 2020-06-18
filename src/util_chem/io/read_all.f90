@@ -70,9 +70,9 @@ contains
         case('turbomole')
             call turbomole_read_basis(path, basis)
         case('molden') 
-            call molden_read_basis(path, basis, .true.)
-        case('molden_orca')
             call molden_read_basis(path, basis, .false.)
+        case('molden_orca')
+            call molden_read_basis(path, basis, .true.)
         case('molpro_output')
             call molpro_output_read_basis(path, basis)
         case default

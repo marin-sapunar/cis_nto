@@ -13,6 +13,9 @@ module cgto_mod
     private
     public :: cgto_subshell
     public :: cgto_one_el
+    public :: gto_norms
+    public :: cgto_norm
+    public :: cngto_norm
 
 
     !----------------------------------------------------------------------------------------------
