@@ -33,8 +33,8 @@ contains
 
         ! Read MOs.
         time0 =  omp_get_wtime()
-        call read_mo(input_format_1, path1, mos1)
-        call read_mo(input_format_2, path2, mos2)
+        call read_mo(input_format_1, path1, mos1, bs1)
+        call read_mo(input_format_2, path2, mos2, bs2)
 
         ! Check unrestricted/restricted calculations.
         uhf1 = (mos1%n_mo_b > 0)

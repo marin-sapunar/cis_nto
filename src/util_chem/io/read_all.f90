@@ -38,13 +38,13 @@ contains
         character(len=2), allocatable :: tsymbol(:)
         integer, allocatable :: tnumber(:)
 
-        select case(dformat)
-        case('turbomole')
+        select case(dformat(:6))
+        case('turbom')
             call turbomole_read_geom(path, geom, tsymbol)
             tnumber = element_s2z(tsymbol)
-        case('molden', 'molden_orca') 
+        case('molden')
             call molden_read_geom(path, geom, tsymbol, tnumber)
-        case('molpro_output')
+        case('molpro')
             call molpro_output_read_geom(path, geom, tsymbol, tnumber)
         case default
             write(stderr, *) 'Error in read_geom subroutine.'
@@ -66,14 +66,17 @@ contains
         character(len=*), intent(in) :: path
         type(basis_set), intent(inout) :: basis
         
-        select case(dformat)
-        case('turbomole')
+        select case(dformat(:6))
+        case('turbom')
             call turbomole_read_basis(path, basis)
         case('molden') 
-            call molden_read_basis(path, basis, .false.)
-        case('molden_orca')
-            call molden_read_basis(path, basis, .true.)
-        case('molpro_output')
+            select case(dformat)
+            case('molden_orca')
+                call molden_read_basis(path, basis, .true.)
+            case default
+                call molden_read_basis(path, basis, .false.)
+            end select
+        case('molpro')
             call molpro_output_read_basis(path, basis)
         case default
             write(stderr, *) 'Error in read_basis subroutine.'
@@ -89,17 +92,34 @@ contains
     ! SUBROUTINE: read_mo
     !> @brief Read molecular orbitals.
     !----------------------------------------------------------------------------------------------
-    subroutine read_mo(dformat, path, mos)
+    subroutine read_mo(dformat, path, mos, bs)
         use molecular_orbitals_mod, only : molecular_orbitals
+        use basis_set_mod, only : basis_set
         character(len=*), intent(in) :: dformat
         character(len=*), intent(in) :: path
         type(molecular_orbitals) :: mos
+        type(basis_set), intent(in), optional :: bs
 
-        select case(dformat)
-        case('turbomole')
+        select case(dformat(:6))
+        case('turbom')
             call turbomole_read_mo(path, mos)
-        case('molden', 'molden_orca') 
-            call molden_read_mo(path, mos)
+        case('molden') 
+            select case(dformat)
+            case('molden_tm2molden')
+                if (.not. present(bs)) then
+                    write(stderr, *) 'Error, read_mo called for tm2molden without passing bs.'
+                    stop
+                end if
+                call molden_read_mo(path, mos, bs, 1)
+            case('molden_cfour')
+                if (.not. present(bs)) then
+                    write(stderr, *) 'Error, read_mo called for cfour without passing bs.'
+                    stop
+                end if
+                call molden_read_mo(path, mos, bs, 2)
+            case default
+                call molden_read_mo(path, mos)
+            end select
         case('molpro_output')
             call molpro_output_read_mo(path, mos)
         case default

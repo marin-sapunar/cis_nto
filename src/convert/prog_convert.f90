@@ -39,7 +39,7 @@ program nto_prog
 
     call read_geom(input_format, input_path, geom, atsym, atnum)
     call read_basis(input_format, input_path, bs)
-    call read_mo(input_format, input_path, mos)
+    call read_mo(input_format, input_path, mos, bs)
 
     call bs_trans%init(bs, bs%source_format, output_format)
     call bs_trans%transform(mos%ca, 1)

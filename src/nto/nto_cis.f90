@@ -30,7 +30,7 @@ contains
         time0 =  omp_get_wtime()
         call read_geom(input_format, path, geom, atsym, atnum)
         call read_basis(input_format, path, bs)
-        call read_mo(input_format, path, mos)
+        call read_mo(input_format, path, mos, bs)
         call read_cis(input_format, path, cisa=cisa, cisb=cisb, occ_mo=occ, act_mo=act, occ_num=on)
         beta = .false.
         if (allocated(mos%cb)) then

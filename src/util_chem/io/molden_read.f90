@@ -127,10 +127,13 @@ contains
     ! SUBROUTINE: molden_read_mo
     !> @brief Read molecular orbitals from a molden file.
     !----------------------------------------------------------------------------------------------
-    subroutine molden_read_mo(fname, mos)
+    subroutine molden_read_mo(fname, mos, bs, fix_mo)
         use molecular_orbitals_mod, only : molecular_orbitals
+        use basis_set_mod, only : basis_set
         character(len=*), intent(in) :: fname
         type(molecular_orbitals) :: mos
+        type(basis_set), intent(in), optional :: bs
+        integer, intent(in), optional :: fix_mo
         real(dp), allocatable :: tmoa_c(:, :)
         real(dp), allocatable :: tmoa_e(:)
         real(dp), allocatable :: tmoa_o(:)
@@ -151,8 +154,73 @@ contains
         allocate(tmob_o(nmo_b))
         call section_read_mo(readf, nbas, nmo_a, tmoa_e, tmoa_o, tmoa_c, nmo_b, tmob_e, tmob_o, tmob_c)
         call readf%close()
+        if (present(fix_mo)) then
+            select case(fix_mo)
+            case(0)
+            case(1)
+                call tm2molden_fix(bs, tmoa_c)
+                if (nmo_b > 0) call tm2molden_fix(bs, tmob_c)
+            case(2)
+                call cfour_fix(bs, tmoa_c)
+                if (nmo_b > 0) call cfour_fix(bs, tmob_c)
+            end select
+        end if
         call mos%init(ca=tmoa_c, ea=tmoa_e, oa=tmoa_o, cb=tmob_c, eb=tmob_e, ob=tmob_o)
     end subroutine molden_read_mo
+
+
+    subroutine tm2molden_fix(bs, moa)
+        use basis_set_mod, only : basis_set
+        use ang_mom_defs, only : amp
+        use math_mod, only : factorial2
+        type(basis_set), intent(in) :: bs
+        real(dp), intent(inout) :: moa(:, :)
+        integer :: i, j, pos, epos, cbs
+        real(dp) :: mult
+
+        pos = 1
+        do i = 1, bs%n_center
+            cbs = bs%center_i_bs(i)
+            do j = 1, bs%bs(cbs)%n_subshell
+                mult = sqrt(real(factorial2(2*bs%bs(cbs)%cg(j)%l-1), kind=dp))
+                epos = pos+amp%n_cart(bs%bs(cbs)%cg(j)%l) - 1
+                moa(pos:epos, :) = moa(pos:epos, :) * mult
+                pos = epos + 1
+            end do
+        end do
+    end subroutine tm2molden_fix
+
+
+    subroutine cfour_fix(bs, moa)
+        use basis_set_mod, only : basis_set
+        use ang_mom_defs, only : amp
+        use math_mod, only : factorial2
+        type(basis_set), intent(in) :: bs
+        real(dp), intent(inout) :: moa(:, :)
+        integer :: i, j, k, pos, l, cbs
+        integer, allocatable :: lc(:, :)
+        real(dp) :: mult
+
+        pos = 1
+        do i = 1, bs%n_center
+            cbs = bs%center_i_bs(i)
+            do j = 1, bs%bs(cbs)%n_subshell
+                l = bs%bs(cbs)%cg(j)%l
+                lc = amp%cart(l)
+                do k = 1, amp%n_cart(l)
+                    mult = 1.0_dp
+                    mult = mult * sqrt(real(factorial2(2*lc(1, k)-1), kind=dp))
+                    mult = mult * sqrt(real(factorial2(2*lc(2, k)-1), kind=dp))
+                    mult = mult * sqrt(real(factorial2(2*lc(3, k)-1), kind=dp))
+                    write(*,*) lc(:, k), mult
+                    moa(pos, :) = moa(pos, :) * mult
+                    pos = pos + 1
+                end do
+            end do
+        end do
+    end subroutine cfour_fix
+
+
 
 
 end module molden_read_mod
