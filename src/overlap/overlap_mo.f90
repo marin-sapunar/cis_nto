@@ -70,10 +70,10 @@ contains
         end if
         if (print_level >= 3) then
             write(stdout, '(5x,a)') 'Diagonal of the alpha MO overlap matrix: '
-            write(stdout, '(6x,15f8.4)') [ ( s_mo_a(i, i), i=1, size(s_mo_a, 1) ) ]
+            write(stdout, '(6x,15f8.4)') [( s_mo_a(i, i), i=1, min(size(s_mo_a, 1), size(s_mo_a, 2)) )]
             if (allocated(s_mo_b)) then
                 write(stdout, '(5x,a)') 'Diagonal of the beta MO overlap matrix: '
-                write(stdout, '(10x,15(f10.5))') [ ( s_mo_b(i, i), i=1, size(s_mo_b, 1) ) ]
+                write(stdout, '(10x,15(f10.5))') [( s_mo_b(i, i), i=1, min(size(s_mo_b, 1), size(s_mo_b, 2)) )]
             end if
         end if
         time_mo = omp_get_wtime() - time0
