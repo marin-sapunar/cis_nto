@@ -209,7 +209,7 @@ contains
             ck0 = ck
             cl = 0
             do j = 1, bs2%n_center
-                bj = bs1%center_i_bs(j)
+                bj = bs2%center_i_bs(j)
                 cl0 = cl
                 if (opt_pairs) then
                     qi = (geom1(3*i-2:3*i) - geom1(3*j-2:3*j)) / 2

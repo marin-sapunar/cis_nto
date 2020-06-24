@@ -181,13 +181,9 @@ contains
     !> @details
     !! Coefficients of contracted Gaussian functions are read from the $basis section, sorted in
     !! order of increasing angular momentum and stored into an array of atombasis type.
-    !
-    !> @note An error is thrown here if basis functions l>5 are found. If higher angular momenta
-    ! are required the appropriate arrays should be added to ang_mom_defs.f90
     !----------------------------------------------------------------------------------------------
     subroutine section_read_basis(readf, nabas, abas)
         use basis_set_mod, only : basis_set_single
-        use ang_mom_defs, only : amp
         type(reader), intent(inout) :: readf
         integer, intent(in) :: nabas
         type(basis_set_single), intent(out) :: abas(nabas)

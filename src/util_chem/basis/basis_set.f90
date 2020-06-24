@@ -24,8 +24,8 @@ module basis_set_mod
         character(len=:), allocatable :: key !< Name of the basis set for the atom.
         integer :: n_subshell = 0 !< Number of basis functions for the atom.
         type(cgto_subshell), allocatable :: cg(:) !< Contracted Gaussian functions.
-        integer :: n_cart !< Number of cartesian basis functions.
-        integer :: n_sphe !< Number of spherical basis functions.
+        integer :: n_cart = 0 !< Number of cartesian basis functions.
+        integer :: n_sphe = 0 !< Number of spherical basis functions.
     contains
         procedure :: init => init_basis_set_single
     end type basis_set_single
