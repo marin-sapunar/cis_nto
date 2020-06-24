@@ -72,9 +72,9 @@ contains
         case('molden') 
             select case(dformat)
             case('molden_orca')
-                call molden_read_basis(path, basis, .true.)
+                call molden_read_basis(path, basis, 3)
             case default
-                call molden_read_basis(path, basis, .false.)
+                call molden_read_basis(path, basis, 1)
             end select
         case('molpro')
             call molpro_output_read_basis(path, basis)
@@ -117,6 +117,8 @@ contains
                     stop
                 end if
                 call molden_read_mo(path, mos, bs, 2)
+            case('molden_orca')
+                call molden_read_mo(path, mos, bs, 3)
             case default
                 call molden_read_mo(path, mos)
             end select

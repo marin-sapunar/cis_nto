@@ -117,6 +117,7 @@ contains
         use string_mod, only : tolower
         character(len=1), intent(in) :: s_type
         integer :: i
+
         do i = 0, size(l_lett)
             if (l_lett(i) == tolower(s_type)) return
         end do
@@ -259,6 +260,7 @@ contains
         real(dp) :: frac, sum1, sum2
         integer :: i, k, am, jj, ediff
         integer(j15) :: csum
+
         am = abs(mm)
         if (ll /= lx + ly + lz) then
             coeff = 0.0_dp

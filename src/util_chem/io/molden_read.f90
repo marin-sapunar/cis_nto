@@ -99,7 +99,7 @@ contains
         use file_mod, only : check_string_in_file
         character(len=*), intent(in) :: fname
         type(basis_set), intent(out) :: bs
-        logical, intent(in) :: fix_gto_norm
+        integer, intent(in) :: fix_gto_norm
         type(reader) :: readf
         integer :: ncart, nsphe
 
@@ -118,7 +118,12 @@ contains
 
         call readf%open(fname, skip_empty = .false.)
         call readf%go_to_keyword('[GTO]')
-        call section_read_gto(readf, bs%n_bs, bs%bs, bs%center_i_bs, fix_gto_norm)
+        select case(fix_gto_norm)
+        case(3)
+            call section_read_gto(readf, bs%n_bs, bs%bs, bs%center_i_bs, .true.)
+        case default
+            call section_read_gto(readf, bs%n_bs, bs%bs, bs%center_i_bs, .false.)
+        end select
         call readf%close()
     end subroutine molden_read_basis
 
@@ -163,10 +168,40 @@ contains
             case(2)
                 call cfour_fix(bs, tmoa_c)
                 if (nmo_b > 0) call cfour_fix(bs, tmob_c)
+            case(3)
+                call orca_fix(bs, tmoa_c)
+                if (nmo_b > 0) call orca_fix(bs, tmob_c)
             end select
         end if
         call mos%init(ca=tmoa_c, ea=tmoa_e, oa=tmoa_o, cb=tmob_c, eb=tmob_e, ob=tmob_o)
     end subroutine molden_read_mo
+
+
+    subroutine orca_fix(bs, moa)
+        use basis_set_mod, only : basis_set
+        use ang_mom_defs, only : amp
+        use math_mod, only : factorial2
+        type(basis_set), intent(in) :: bs
+        real(dp), intent(inout) :: moa(:, :)
+        integer :: i, j, k, pos, l, cbs
+        integer, allocatable :: ls(:, :)
+        real(dp) :: mult
+
+        pos = 1
+        do i = 1, bs%n_center
+            cbs = bs%center_i_bs(i)
+            do j = 1, bs%bs(cbs)%n_subshell
+                l = bs%bs(cbs)%cg(j)%l
+                ls = molden_sphe_order(l)
+                do k = 1, amp%n_sphe(l)
+                    if ((ls(1, k) > 2) .and. (abs(ls(2, k)) > 2)) then
+                        moa(pos, :) = - moa(pos, :)
+                    end if
+                    pos = pos + 1
+                end do
+            end do
+        end do
+    end subroutine orca_fix
 
 
     subroutine tm2molden_fix(bs, moa)
@@ -206,13 +241,12 @@ contains
             cbs = bs%center_i_bs(i)
             do j = 1, bs%bs(cbs)%n_subshell
                 l = bs%bs(cbs)%cg(j)%l
-                lc = amp%cart(l)
+                lc = molden_cart_order(l)
                 do k = 1, amp%n_cart(l)
                     mult = 1.0_dp
                     mult = mult * sqrt(real(factorial2(2*lc(1, k)-1), kind=dp))
                     mult = mult * sqrt(real(factorial2(2*lc(2, k)-1), kind=dp))
                     mult = mult * sqrt(real(factorial2(2*lc(3, k)-1), kind=dp))
-                    write(*,*) lc(:, k), mult
                     moa(pos, :) = moa(pos, :) * mult
                     pos = pos + 1
                 end do
