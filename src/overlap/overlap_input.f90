@@ -40,6 +40,8 @@ contains
         write(stdout, '(a)')
         write(stdout, '(a)') 'optional arguments:'
         write(stdout, '(a)') '  -h, --help                  show this help message and exit                      '
+        write(stdout, '(a)') '  -in, --input-format         format of input files                                '
+        write(stdout, '(32x,a,a)') 'default: ', input_format_1
         write(stdout, '(a)') '  -in1, --input-format-1      format of input files for bra orbitals/states        '
         write(stdout, '(32x,a,a)') 'default: ', input_format_1
         write(stdout, '(a)') '  -in2, --input-format-2      format of input files for ket orbitals/states        '
@@ -155,6 +157,11 @@ contains
             select case(temp)
             case('--help', '-h')
                 call print_help()
+            case('--input-format', '-in')
+                i = i + 1
+                call get_command_argument(i, temp)
+                input_format_1 = trim(adjustl(temp))
+                input_format_2 = trim(adjustl(temp))
             case('--input-format-1', '-in1')
                 i = i + 1
                 call get_command_argument(i, temp)
