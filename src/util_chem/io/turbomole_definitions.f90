@@ -64,7 +64,7 @@ contains
         case(3)
             phase(7) = -num1
         case(4)
-            phase(4) = -num1
+            phase(5) = -num1
             phase(7) = -num1
         end select
     end function turbomole_sphe_phase
