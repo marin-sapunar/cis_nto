@@ -86,8 +86,9 @@ contains
                     read(readf%line, *) zeta(nfunc, j), beta(nfunc, j)
                 end do
                 if (fix_gto_norm) then
-                    beta(nfunc, :) = beta(nfunc, :) / gto_norms(zeta(nfunc, :), &
-                    &                                           amp%l(orbtype(nfunc)), 0, 0)
+                    j = nprim(nfunc)
+                    beta(nfunc, :j) = beta(nfunc, :j) / gto_norms(zeta(nfunc, :j), &
+                    &                                             amp%l(orbtype(nfunc)), 0, 0)
                 end if
             end do
             call abas(abas_index(i))%init(nfunc, orbtype, nprim, zeta, beta)
