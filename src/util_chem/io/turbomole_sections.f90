@@ -29,6 +29,9 @@ contains
         integer, intent(out) :: rhf
 
         rhf = 0
+        nsphe = 0
+        ncart = 0
+        natom = 0
         do
             call readf%next()
             if (index(readf%line, '$') /= 0) return

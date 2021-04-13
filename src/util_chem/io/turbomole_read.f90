@@ -151,6 +151,7 @@ contains
     !----------------------------------------------------------------------------------------------
     subroutine turbomole_read_cis(path, wfa, wfb, occ_mo, act_mo)
         use occupation_mod
+        use basis_set_mod, only : basis_set
         character(len=*), intent(in) :: path
         real(dp), allocatable :: wfa(:, :)
         real(dp), allocatable :: wfb(:, :)
@@ -158,6 +159,7 @@ contains
         logical, allocatable :: act_mo(:, :)
         type(occupation_numbers) :: onum
         character(len=:), allocatable :: method
+        type(basis_set) :: bs
         integer :: natom
         integer :: ncart
         integer :: rhf
@@ -165,8 +167,14 @@ contains
         logical :: check
 
         call tm_enter_dir(path)
-        call tm_find_section('$rundimensions')
-        call section_read_rundim(tm_reader, natom, ncart, onum%n, rhf)
+        call tm_find_section('$rundimensions', check)
+        natom = 0
+        ncart = 0
+        onum%n = 0
+        rhf = 0
+        if (check) then
+            call section_read_rundim(tm_reader, natom, ncart, onum%n, rhf)
+        end if
         if (rhf == 0) then
             call tm_find_section('$closed shells', check)
             if (check) then
@@ -183,6 +191,13 @@ contains
             write(stderr, *) ' Looking for: rhfshells/closed shells/alpha shells.'
             call abort()
         end if
+        if ((ncart == 0) .or. (onum%n == 0) .or. (natom == 0)) then
+            call turbomole_read_basis(path, bs, .true.)
+            natom = bs%n_center
+            ncart = bs%n_bf_cart
+            onum%n = bs%n_bf_sphe
+        end if
+
         call tm_reader%close()
         allocate(occ_mo(onum%n, 2), source=.false.)
         allocate(act_mo(onum%n, 2), source=.true.)
