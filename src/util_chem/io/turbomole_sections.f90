@@ -27,6 +27,8 @@ contains
         integer, intent(out) :: ncart
         integer, intent(out) :: nsphe
         integer, intent(out) :: rhf
+
+        rhf = 0
         do
             call readf%next()
             if (index(readf%line, '$') /= 0) return

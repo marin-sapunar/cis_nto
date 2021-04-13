@@ -167,6 +167,22 @@ contains
         call tm_enter_dir(path)
         call tm_find_section('$rundimensions')
         call section_read_rundim(tm_reader, natom, ncart, onum%n, rhf)
+        if (rhf == 0) then
+            call tm_find_section('$closed shells', check)
+            if (check) then
+                rhf = 1
+            else
+                call tm_find_section('$alpha shells', check)
+                if (check) rhf = 2
+            end if
+        end if
+        if (rhf == 0) then
+            write(stderr, *) 'Error in turbomole_read module,&
+                            & turbomole_read_cis subroutine.'
+            write(stderr, *) ' No rhf information'
+            write(stderr, *) ' Looking for: rhfshells/closed shells/alpha shells.'
+            call abort()
+        end if
         call tm_reader%close()
         allocate(occ_mo(onum%n, 2), source=.false.)
         allocate(act_mo(onum%n, 2), source=.true.)
