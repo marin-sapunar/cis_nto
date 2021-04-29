@@ -194,12 +194,9 @@ contains
                 l = bs%bs(cbs)%cg(j)%l
                 ls = molden_sphe_order(l)
                 do k = 1, amp%n_sphe(l)
-                    select case(ls(1, k))
-                    case(3, 4, 5)
-                        if ((abs(ls(2, k)) > 2) .and. (abs(ls(2, k)) < 5)) then
-                            moa(pos, :) = - moa(pos, :)
-                        end if
-                    end select
+                    if ((abs(ls(2, k)) > 2) .and. (abs(ls(2, k)) < 5)) then
+                        moa(pos, :) = - moa(pos, :)
+                    end if
                     pos = pos + 1
                 end do
             end do

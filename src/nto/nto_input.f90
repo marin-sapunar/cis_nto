@@ -27,7 +27,7 @@ contains
     subroutine print_help()
         write(stdout, '(a)') 'usage: cis_nto.exe [optional arguments] path'
         write(stdout, '(a)')
-        write(stdout, '(a)') 'Analyze CIS wave function in terms of NTOs.'
+        write(stdout, '(a)') 'Calculate Natural Transition Orbitals for a CIS type wave function.'
         write(stdout, '(a)')
         write(stdout, '(a)') 'positional arguments:'
         write(stdout, '(a)') '  path                        directory containing calculation                     '
@@ -37,15 +37,12 @@ contains
         write(stdout, '(a)') '  -in, --input-format         format of input files for bra orbitals/states        '
         write(stdout, '(32x,a,a)') 'default: ', input_format
         write(stdout, '(a)') '  -t, --wf-threshold t        truncate wave functions using given threshold        '
+        write(stdout, '(32x,a,f5.2)') 'default: ', wf_threshold
         write(stdout, '(a)') '  -tnex, --truncate-nex n     truncate wave functions to n dominant excitations    '
-        write(stdout, '(a)') '  -ns, --(no-)norm-states     renormalize input states before calculation          '
-        write(stdout, '(32x,a,l1)') 'default: ', norm_states
-        write(stdout, '(a)') '  -os, --(no-)orth-states     reorthogonalize input states before calculation      '
-        write(stdout, '(32x,a,l1)') 'default: ', orth_states
-        write(stdout, '(a)') '  -cp, --(no-)center-pairs    attempt to remove effect of basis set translation by '
-        write(stdout, '(a)') '                              recentering pairs of AOs in AO overlap calculation   '
-        write(stdout, '(a)') '                              (untested, not recommended)                          '
-        write(stdout, '(32x,a,l1)') 'default: ', center_pairs
+        write(stdout, '(a)') '                              (0 means all excitations are printed)                '
+        write(stdout, '(32x,a,i0)') 'default: ', truncate_nex
+        write(stdout, '(a)') '  -o, --out-file o            name of output file for NTOs                         '
+        write(stdout, '(32x,a,a)') 'default: ', outfile_nto
         write(stdout, '(a)') '  -p, --print-level p         control output level of program (0 = quiet)          '
         write(stdout, '(32x,a,i0)') 'default: ', print_level
         stop
@@ -68,8 +65,6 @@ contains
         truncate_nex = 0
         norm_states = .true.
         orth_states = .false.
-        center_atoms = .false. !unused
-        center_pairs = .false.
         print_level = 2
         ! Set timings to 0
         time_in = 0.0_dp
@@ -109,18 +104,10 @@ contains
                 i = i + 1
                 call get_command_argument(i, temp)
                 read(temp, *) truncate_nex
-            case('--norm-states', '-ns')
-                norm_states = .true.
-            case('--no-norm-states', '-nns')
-                norm_states = .false.
-            case('--orth-states', '-os')
-                orth_states = .true.
-            case('--no-orth-states', '-nos')
-                orth_states = .false.
-            case('--center-pairs', '-cp')
-                center_pairs = .true.
-            case('--no-center-pairs', '-ncp')
-                center_pairs = .false.
+            case('--out-file', '-o')
+                i = i + 1
+                call get_command_argument(i, temp)
+                read(temp, *) outfile_nto
             case('--print-level', '-p')
                 i = i + 1
                 call get_command_argument(i, temp)

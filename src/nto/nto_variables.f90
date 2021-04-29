@@ -22,8 +22,6 @@ module nto_variables
     integer :: truncate_nex
     logical :: norm_states
     logical :: orth_states
-    logical :: center_atoms
-    logical :: center_pairs
     ! System
     real(dp), allocatable :: geom(:) !< Geometry
     integer, allocatable :: atnum(:) !< Atom numbers
@@ -37,10 +35,6 @@ module nto_variables
     real(dp), allocatable :: cisa(:, :, :) !< CIS matrix alpha
     real(dp), allocatable :: cisb(:, :, :) !< CIS matrix beta
     ! Results
-    real(dp), allocatable :: s_mo_a(:, :) !< Molecular orbital overlaps alpha.
-                                          !! Dimensions: (n_mo_a, n_mo_a)
-    real(dp), allocatable :: s_mo_b(:, :) !< Molecular orbital overlaps beta.
-                                          !! Dimensions: (n_mo_b, n_mo_b)
     real(dp), allocatable :: nto_a(:, :, :) !< NTOs alpha.
     real(dp), allocatable :: nto_b(:, :, :) !< NTOs beta.
     real(dp), allocatable :: nto_c_a(:, :) !< NTO alpha coefficients.
