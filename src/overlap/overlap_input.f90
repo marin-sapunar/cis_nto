@@ -245,7 +245,7 @@ contains
         path2 = trim(adjustl(temp))
 
         if (operator_string /= 'overlap') then
-            if (.not. mo_stop) then
+            if (.not. (mo_stop .or. ao_stop)) then
                 write(stderr, *) 'Warning. Only overlap operator is implemented for wave functions.'
                 write(stderr, *) '  Setting mo_stop option to .true.'
                 mo_stop = .true.
