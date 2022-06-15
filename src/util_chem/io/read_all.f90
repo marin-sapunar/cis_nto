@@ -47,7 +47,7 @@ contains
             call molden_read_geom(path, geom, tsymbol, tnumber)
         case('molpro')
             call molpro_output_read_geom(path, geom, tsymbol, tnumber)
-	case('orca_c')
+        case('orca_c')
             call molden_read_geom(path, geom, tsymbol, tnumber)
         case default
             write(stderr, *) 'Error in read_geom subroutine.'
@@ -127,7 +127,7 @@ contains
             case default
                 call molden_read_mo(path, mos)
             end select
-	case('orca_c')
+        case('orca_c')
             call molden_read_mo(path, mos, bs, 3)
         case('molpro_output')
             call molpro_output_read_mo(path, mos)

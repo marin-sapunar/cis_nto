@@ -48,11 +48,24 @@ contains
     !> @brief Return ordered ang. mom. numbers of spherical bfs within subshell of given l.
     !----------------------------------------------------------------------------------------------
     function molden_sphe_order(ll) result(lm)
-        use ang_mom_defs, only : amp, sphe_nums
         integer, intent(in) :: ll
         integer, allocatable :: lm(:, :)
-        allocate(lm(2, amp%n_sphe(ll)))
-        lm = sphe_nums(ll)
+        integer :: i
+
+        allocate(lm(2, 2*ll+1))
+        lm(1, :) = ll
+        select case(ll)
+        case(0)
+            lm(2, :) = [0]
+        case(1)
+            lm(2, :) = [1, -1, 0]
+        case default
+            lm(2, 1) = 0
+            do i = 1, ll
+                lm(2, 2*i) = i
+                lm(2, 2*i+1) = -i
+            end do
+        end select
     end function molden_sphe_order
 
 

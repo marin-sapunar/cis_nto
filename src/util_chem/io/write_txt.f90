@@ -14,6 +14,10 @@ module write_txt_mod
     public :: write_txt
 
 
+    character(len=*), parameter :: numfmt = 'e24.16'
+    character(len=*), parameter :: outfmt = '*('//numfmt//')'
+
+
     !----------------------------------------------------------------------------------------------
     ! SUBROUTINE: write_txt
     !
@@ -40,12 +44,9 @@ contains
         character(len=*), intent(in) :: fname
         real(dp), intent(in) :: array(:, :)
         integer :: i, ounit
-        character(len=100) :: outfmt
-
-        write(outfmt, '(a,i0,a)') '(', size(array, 1), 'e24.16)'
 
         open(newunit=ounit, file=fname, action='write')
-        write(ounit, *) size(array, 1), size(array, 2)
+        write(ounit, '(2(x,i0))') size(array, 1), size(array, 2)
         do i = 1, size(array, 2)
             write(ounit, outfmt) array(:, i)
         end do
@@ -61,12 +62,9 @@ contains
         character(len=*), intent(in) :: fname
         real(dp), intent(in) :: array(:, :, :)
         integer :: i, j, ounit
-        character(len=100) :: outfmt
-
-        write(outfmt, '(a,i0,a)') '(', size(array, 1), 'e24.16)'
 
         open(newunit=ounit, file=fname, action='write')
-        write(ounit, *) size(array, 1), size(array, 2), size(array, 3)
+        write(ounit, '(3(x,i0))') size(array, 1), size(array, 2), size(array, 3)
         do i = 1, size(array, 3)
             do j = 1, size(array, 2)
                 write(ounit, outfmt) array(:, j, i)

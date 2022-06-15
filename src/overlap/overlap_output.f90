@@ -20,7 +20,9 @@ module overlap_output_mod
     public :: output_dyson
 
 
-    character(len=*), parameter :: out_fmt_s = '(5x,1000f10.6)'
+    character(len=*), parameter :: numfmt = 'f10.6'
+    character(len=*), parameter :: l1_fmt = '(5x,*('//numfmt//'))'
+    character(len=*), parameter :: l2_fmt = '(9x,*('//numfmt//'))'
 
 
 contains
@@ -98,7 +100,7 @@ contains
             write(stdout, *)
             write(stdout, '(1x,a)') 'Raw overlap matrix:'
             do i = lbound(s_wf, 1), ubound(s_wf, 1)
-                write(stdout, out_fmt_s) s_wf(i, :)
+                write(stdout, l1_fmt) s_wf(i, :)
             end do
         end if
 
@@ -109,15 +111,15 @@ contains
                 write(stdout, *)
                 write(stdout, '(1x,a)') 'Orthogonalized overlap matrix:'
                 do i = lbound(s_wf, 1), ubound(s_wf, 1)
-                    write(stdout, out_fmt_s) s_wf(i, :)
+                    write(stdout, l1_fmt) s_wf(i, :)
                 end do
                 angle = acos(sum(s_wf*s_wf_orig) / mat_norm(s_wf) / mat_norm(s_wf_orig))
                 write(stdout, *)
                 write(stdout, '(5x,a,f6.2)') 'Frobenius inner product angle: ', angle * 180 / pi
                 write(stdout, '(5x,a)') 'Norms of rows of raw overlap matrix: '
-                write(stdout, '(9x,1000f10.4)') sum(s_wf_orig**2, 2)
+                write(stdout, l2_fmt) sum(s_wf_orig**2, 2)
                 write(stdout, '(5x,a)') 'Norms of columns of raw overlap matrix: '
-                write(stdout, '(9x,1000f10.4)') sum(s_wf_orig**2, 1)
+                write(stdout, l2_fmt) sum(s_wf_orig**2, 1)
             end if
         end if
     end subroutine output_orth
@@ -141,12 +143,12 @@ contains
                 write(stdout, *) 
                 write(stdout, '(1x,a)') 'Overlap matrix with phase matching between assigned bra/ket states:'
                 do i = lbound(s_wf, 1), ubound(s_wf, 1)
-                    write(stdout, out_fmt_s) s_wf(i, :)
+                    write(stdout, l1_fmt) s_wf(i, :)
                 end do
                 call assignment_problem(-s_wf**2, assigned_rows, assigned_cols)
                 write(stdout, '(5x,a)') 'Assignment:'
-                write(stdout, '(9x,a,1000(i0, 1x))') 'Rows: ', assigned_rows
-                write(stdout, '(9x,a,1000(i0, 1x))') 'Cols: ', assigned_cols
+                write(stdout, '(9x,a,*(i0, 1x))') 'Rows: ', assigned_rows
+                write(stdout, '(9x,a,*(i0, 1x))') 'Cols: ', assigned_cols
             end if
         end if
     end subroutine output_phase
