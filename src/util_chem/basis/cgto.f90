@@ -320,12 +320,12 @@ contains
         end do
         if (l2>0) then
             do i=2,l1
-                s(i,1,0) = qp2*s(i,0,0) + inv2p * i *s(i-1,0,0)
+                s(i,1,0) = qp2*s(i,0,0) + inv2p* i *s(i-1,0,0)
             end do
         end if
         do j=2,l2
-            s(0,j,0) = qp1*s(0,j-1,0) + inv2p*(j-1)*s(0,j-2,0)
-            s(1,j,0) = qp2*s(0,j,0)   + inv2p* j   *s(0,j-1,0)
+            s(0,j,0) = qp2*s(0,j-1,0) + inv2p*(j-1)*s(0,j-2,0)
+            s(1,j,0) = qp1*s(0,j,0)   + inv2p* j   *s(0,j-1,0)
         end do
         do j=2,l2
             do i=2,l1
@@ -333,13 +333,13 @@ contains
             end do
         end do
         do j=l2-l3+1,l2
-            do i=l3-l2+j,l1
+            do i=1,l1
                 s(i,j,1) = qp3*s(i,j,0) + inv2p * (i*s(i-1,j,0) + j*s(i,j-1,0))
             end do
         end do
         do k=2,l3
             do j=l2-l3+k,l2
-                do i=l3-l2+j-k+1,l1
+                do i=k,l1
                     s(i,j,k)=qp3*s(i,j,k-1) + inv2p * (i*s(i-1,j,k-1) + j*s(i,j-1,k-1) + (k-1)*s(i,j,k-2))
                 end do
             end do
