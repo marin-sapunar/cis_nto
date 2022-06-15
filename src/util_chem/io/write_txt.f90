@@ -15,7 +15,7 @@ module write_txt_mod
 
 
     character(len=*), parameter :: numfmt = 'e24.16'
-    character(len=*), parameter :: outfmt = '*('//numfmt//')'
+    character(len=*), parameter :: outfmt = '(*('//numfmt//'))'
 
 
     !----------------------------------------------------------------------------------------------
@@ -46,7 +46,7 @@ contains
         integer :: i, ounit
 
         open(newunit=ounit, file=fname, action='write')
-        write(ounit, '(2(x,i0))') size(array, 1), size(array, 2)
+        write(ounit, '(2(1x,i0))') size(array, 1), size(array, 2)
         do i = 1, size(array, 2)
             write(ounit, outfmt) array(:, i)
         end do
@@ -64,7 +64,7 @@ contains
         integer :: i, j, ounit
 
         open(newunit=ounit, file=fname, action='write')
-        write(ounit, '(3(x,i0))') size(array, 1), size(array, 2), size(array, 3)
+        write(ounit, '(3(1x,i0))') size(array, 1), size(array, 2), size(array, 3)
         do i = 1, size(array, 3)
             do j = 1, size(array, 2)
                 write(ounit, outfmt) array(:, j, i)
