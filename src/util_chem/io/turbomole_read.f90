@@ -81,7 +81,6 @@ contains
         bs%n_bs = section_count_basis(tm_reader)
         allocate(bs%bs(bs%n_bs))
         call section_read_basis(tm_reader, bs%n_bs, bs%bs)
-        call tm_reader%close()
         if (tread_atoms) then
             call tm_find_section('$atoms')
             nabas = tm_reader%count_lines_to_keyword('$')
@@ -93,12 +92,12 @@ contains
             if (allocated(bs%center_i_bs)) deallocate(bs%center_i_bs)
             allocate(bs%center_i_bs(bs%n_center))
             call tm_match_basis_with_atoms(bs%bs, key, key_atom_index, bs%center_i_bs)
-            call tm_reader%close()
             do i = 1, bs%n_center
                 bs%n_bf_sphe = bs%n_bf_sphe + bs%bs(bs%center_i_bs(i))%n_sphe
                 bs%n_bf_cart = bs%n_bf_cart + bs%bs(bs%center_i_bs(i))%n_cart
             end do
         end if
+        call tm_reader%close()
         call chdir(tm_initdir)
     end subroutine turbomole_read_basis
 
@@ -121,7 +120,6 @@ contains
         call tm_enter_dir(path)
         call tm_find_section('$scfmo', check)
         if (.not. check) then
-            call tm_reader%close()
             call tm_find_section('$uhfmo_alpha', check)
         end if
         if (check) then
@@ -130,7 +128,6 @@ contains
             allocate(tmoa_e(nmo))
             call section_read_mo(tm_reader, nmo, nbas, tmoa_c, tmoa_e)
         end if
-        call tm_reader%close()
         call tm_find_section('$uhfmo_beta', check)
         if (check) then
             call section_count_mo(tm_reader, nbas, nmo)
@@ -198,32 +195,26 @@ contains
             onum%n = bs%n_bf_sphe
         end if
 
-        call tm_reader%close()
         allocate(occ_mo(onum%n, 2), source=.false.)
         allocate(act_mo(onum%n, 2), source=.true.)
         if (rhf == 1) then
             call tm_find_section('$closed shells')
             call section_read_shells(tm_reader, onum%n, occ_mo(:, 1))
             occ_mo(:, 2) = occ_mo(:, 1)
-            call tm_reader%close()
         else
             call tm_find_section('$alpha shells')
             call section_read_shells(tm_reader, onum%n, occ_mo(:, 1))
-            call tm_reader%close()
             call tm_find_section('$beta shells')
             call section_read_shells(tm_reader, onum%n, occ_mo(:, 2))
-            call tm_reader%close()
         end if
         call tm_find_section('$freeze', check)
         if (check) then
             call section_read_freeze(tm_reader, onum%n, act_mo(:, 1))
             act_mo(:, 2) = act_mo(:, 1)
         end if
-        call tm_reader%close()
 
         call occ_mask_to_nums(rhf, occ_mo, act_mo, onum)
         call tm_find_section('ricc2', check)
-        call tm_reader%close()
         if (check) then
             method = 'ricc2'
         else
@@ -242,6 +233,7 @@ contains
         case('escf')
             call read_cis_escf(rhf, wfa, wfb)
         end select
+        call tm_reader%close()
         call chdir(tm_initdir)
     end subroutine turbomole_read_cis
 
@@ -298,11 +290,9 @@ contains
 
         call tm_find_section('$dft')
         call section_read_dft(tm_reader, dft_func)
-        call tm_reader%close()
         call tm_find_section('$scfinstab')
         call tm_reader%parseline(' ')
         instab = trim(adjustl(tm_reader%args(2)%s))
-        call tm_reader%close()
 
         supdim = 2
         if ((instab == 'ucis') .or. (instab == 'ciss')) supdim = 1
@@ -549,17 +539,16 @@ contains
                     end do
                 end if
             end do outer
-            call tm_reader%close()
         case('escf')
             call tm_find_section('$soes')
             call tm_reader%next()
             call tm_reader%parseline(' ')
             read(tm_reader%args(2)%s, *) nex
-            call tm_reader%close()
         case default
             write(stderr, *) 'Error in turbomole_read_mod subroutine.'
             write(stderr, *) 'Unrecognized method '//method//' while checking number of states.'
         end select
+        call tm_reader%close()
     end function tm_count_n_ex_states
 
 

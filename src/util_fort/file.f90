@@ -30,7 +30,7 @@ module file_mod
     !----------------------------------------------------------------------------------------------
     type reader
         character(len=:), allocatable :: file
-        integer :: unit
+        integer :: unit = -1
         character(len=:), allocatable :: comment
         character(len=:), allocatable :: continuation
         character(len=:), allocatable :: delimiters
@@ -76,11 +76,27 @@ contains
         logical, intent(in), optional :: skip_empty !< Skip empty lines when reading.
         logical, intent(in), optional :: abort_on_eof !< Abort on eof or return iostat.
         logical, intent(in), optional :: abort_on_error !< Abort on eof or return iostat.
+        integer :: fcheck
+        logical :: check
 
-        self%file=file_name
-        call need_file(self%file)
-        open(newunit=self%unit, file=self%file, action='read', status='old')
-    
+        call need_file(file_name)
+        inquire(file=file_name, number=fcheck)
+        if ((fcheck /= -1) .and. (fcheck /= self%unit)) then
+            write(stderr, *) 'Error in reader_open subroutine. File open in different location.'
+            call abort()
+        end if
+        if (self%unit /= -1) then
+            if (self%file /= file_name) then
+                call self%close()
+            else
+                call self%rewind()
+            end if
+        end if
+        if (self%unit == -1) then
+            self%file = file_name
+            open(newunit=self%unit, file=self%file, action='read', status='old')
+        end if
+
         if (.not. allocated(self%comment)) self%comment = ''
         if (.not. allocated(self%continuation)) self%continuation = ''
         if (.not. allocated(self%delimiters)) self%delimiters = ' '
@@ -99,8 +115,13 @@ contains
     !----------------------------------------------------------------------------------------------
     subroutine reader_close(self)
         class(reader) :: self
+        logical :: check
 
-        close(self%unit)
+        if (self%unit /= -1) then
+            inquire(unit=self%unit, opened=check)
+            if (check) close(self%unit)
+        end if
+        self%unit = -1
         self%file = ''
         self%iostat = 0
         self%line_num = 0
