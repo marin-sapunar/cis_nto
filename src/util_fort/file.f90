@@ -14,6 +14,8 @@ module file_mod
     public :: reader
     public :: check_string_in_file
     public :: check_is_dir
+    public :: dirname
+    public :: strip_fname
     public :: need_dir
     public :: need_file
     
@@ -380,6 +382,41 @@ contains
         inquire(file=trim(test_dir)//'/.', exist=is_dir)
 #endif
     end function check_is_dir
+
+
+    !----------------------------------------------------------------------------------------------
+    ! FUNCTION: dirname
+    !> @brief Return the directory name from a path string.
+    !----------------------------------------------------------------------------------------------
+    function dirname(path) result(cdir)
+        character(len=*), intent(in) :: path
+        character(len=:), allocatable :: cdir
+
+        if (check_is_dir(path)) then
+            cdir = path
+        else
+            cdir = path(1:scan(path, '/', back=.true.))
+            if (cdir == '') then
+                cdir = '.'
+            end if
+        end if
+    end function dirname
+
+
+    !----------------------------------------------------------------------------------------------
+    ! FUNCTION: strip_fname
+    !> @brief Strip directory from a path. If it is a directory return an empty string.
+    !----------------------------------------------------------------------------------------------
+    function strip_fname(path) result(cfile)
+        character(len=*), intent(in) :: path
+        character(len=:), allocatable :: cfile
+
+        if (check_is_dir(path)) then
+            cfile = ''
+        else
+            cfile = path(scan(path, '/', back=.true.)+1:)
+        end if
+    end function strip_fname
 
 
     !----------------------------------------------------------------------------------------------

@@ -22,9 +22,6 @@ module turbomole_read_mod
 
     ! Helper variables while searching through a turbomole directory.
     type(reader) :: tm_reader
-    character(len=:), allocatable :: tm_dname
-    character(len=:), allocatable :: tm_fname
-    character(len=1000) :: tm_initdir
 
 
 contains
@@ -41,14 +38,12 @@ contains
         character(len=2), allocatable :: tsymbol(:) !< Temp. atomic symbols.
         integer :: natom
 
-        call tm_enter_dir(path)
-        call tm_find_section('$coord')
+        call tm_find_section(path, '$coord')
         natom = tm_reader%count_lines_to_keyword('$')
         allocate(geom(3*natom))
         allocate(tsymbol(natom))
         call section_read_coord(tm_reader, natom, tsymbol, geom)
         call tm_reader%close()
-        call chdir(tm_initdir)
         if (present(at_symbol)) at_symbol=tsymbol
     end subroutine turbomole_read_geom
 
@@ -76,13 +71,12 @@ contains
         tread_atoms = .true.
         if (present(read_atoms)) tread_atoms = read_atoms
 
-        call tm_enter_dir(path)
-        call tm_find_section('$basis')
+        call tm_find_section(path, '$basis')
         bs%n_bs = section_count_basis(tm_reader)
         allocate(bs%bs(bs%n_bs))
         call section_read_basis(tm_reader, bs%n_bs, bs%bs)
         if (tread_atoms) then
-            call tm_find_section('$atoms')
+            call tm_find_section(path, '$atoms')
             nabas = tm_reader%count_lines_to_keyword('$')
             allocate(key_asym(nabas))
             allocate(key_atom_index(nabas))
@@ -98,7 +92,6 @@ contains
             end do
         end if
         call tm_reader%close()
-        call chdir(tm_initdir)
     end subroutine turbomole_read_basis
 
 
@@ -117,10 +110,9 @@ contains
         real(dp), allocatable :: tmob_c(:, :)
         real(dp), allocatable :: tmob_e(:)
 
-        call tm_enter_dir(path)
-        call tm_find_section('$scfmo', check)
+        call tm_find_section(path, '$scfmo', check)
         if (.not. check) then
-            call tm_find_section('$uhfmo_alpha', check)
+            call tm_find_section(path, '$uhfmo_alpha', check)
         end if
         if (check) then
             call section_count_mo(tm_reader, nbas, nmo)
@@ -128,7 +120,7 @@ contains
             allocate(tmoa_e(nmo))
             call section_read_mo(tm_reader, nmo, nbas, tmoa_c, tmoa_e)
         end if
-        call tm_find_section('$uhfmo_beta', check)
+        call tm_find_section(path, '$uhfmo_beta', check)
         if (check) then
             call section_count_mo(tm_reader, nbas, nmo)
             allocate(tmob_c(nbas, nmo))
@@ -136,7 +128,6 @@ contains
             call section_read_mo(tm_reader, nmo, nbas, tmob_c, tmob_e)
         end if
         call tm_reader%close()
-        call chdir(tm_initdir)
 
         call mos%init(ca=tmoa_c, ea=tmoa_e, cb=tmob_c, eb=tmob_e)
     end subroutine turbomole_read_mo
@@ -163,8 +154,7 @@ contains
         integer :: nex
         logical :: check
 
-        call tm_enter_dir(path)
-        call tm_find_section('$rundimensions', check)
+        call tm_find_section(path, '$rundimensions', check)
         natom = 0
         ncart = 0
         onum%n = 0
@@ -173,11 +163,11 @@ contains
             call section_read_rundim(tm_reader, natom, ncart, onum%n, rhf)
         end if
         if (rhf == 0) then
-            call tm_find_section('$closed shells', check)
+            call tm_find_section(path, '$closed shells', check)
             if (check) then
                 rhf = 1
             else
-                call tm_find_section('$alpha shells', check)
+                call tm_find_section(path, '$alpha shells', check)
                 if (check) rhf = 2
             end if
         end if
@@ -198,29 +188,29 @@ contains
         allocate(occ_mo(onum%n, 2), source=.false.)
         allocate(act_mo(onum%n, 2), source=.true.)
         if (rhf == 1) then
-            call tm_find_section('$closed shells')
+            call tm_find_section(path, '$closed shells')
             call section_read_shells(tm_reader, onum%n, occ_mo(:, 1))
             occ_mo(:, 2) = occ_mo(:, 1)
         else
-            call tm_find_section('$alpha shells')
+            call tm_find_section(path, '$alpha shells')
             call section_read_shells(tm_reader, onum%n, occ_mo(:, 1))
-            call tm_find_section('$beta shells')
+            call tm_find_section(path, '$beta shells')
             call section_read_shells(tm_reader, onum%n, occ_mo(:, 2))
         end if
-        call tm_find_section('$freeze', check)
+        call tm_find_section(path, '$freeze', check)
         if (check) then
             call section_read_freeze(tm_reader, onum%n, act_mo(:, 1))
             act_mo(:, 2) = act_mo(:, 1)
         end if
 
         call occ_mask_to_nums(rhf, occ_mo, act_mo, onum)
-        call tm_find_section('ricc2', check)
+        call tm_find_section(path, 'ricc2', check)
         if (check) then
             method = 'ricc2'
         else
             method = 'escf'
         end if
-        nex = tm_count_n_ex_states(method)
+        nex = tm_count_n_ex_states(path, method)
 
         if (allocated(wfa)) deallocate(wfa)
         if (allocated(wfb)) deallocate(wfb)
@@ -229,12 +219,11 @@ contains
 
         select case(method)
         case('ricc2')
-            call read_cis_ricc2(rhf, wfa, wfb)
+            call read_cis_ricc2(path, rhf, wfa, wfb)
         case('escf')
-            call read_cis_escf(rhf, wfa, wfb)
+            call read_cis_escf(path, rhf, wfa, wfb)
         end select
         call tm_reader%close()
-        call chdir(tm_initdir)
     end subroutine turbomole_read_cis
 
 
@@ -245,7 +234,8 @@ contains
     !> @details
     !! The coefficients are read from unformmated CCRE0... files.
     !----------------------------------------------------------------------------------------------
-    subroutine read_cis_ricc2(rhf, wfa, wfb)
+    subroutine read_cis_ricc2(path, rhf, wfa, wfb)
+        character(len=*), intent(in) :: path
         integer, intent(in) :: rhf
         real(dp) :: wfa(:, :)
         real(dp) :: wfb(:, :)
@@ -258,7 +248,7 @@ contains
         do i = 1, size(wfa, 2)
             statekey = '----'
             write(statekey(lenstk-int(log10(real(i))):lenstk), '(i0)') i
-            inputfile = 'CCRE0-1--1'//statekey
+            inputfile = dirname(path)//'/CCRE0-1--1'//statekey
             call need_file(inputfile, 'Error in read_cis_ricc2 subroutine.')
             open(newunit=inunit, file=inputfile, form='UNFORMATTED', action='READ')
                 read(unit=inunit) dummy(1:3)
@@ -277,7 +267,8 @@ contains
     !! Read type of functional and type of calculation (regular or TDA) to determine dimensions of
     !! eigenvectors and read eigenvectors from appropriate file.
     !----------------------------------------------------------------------------------------------
-    subroutine read_cis_escf(rhf, wfa, wfb)
+    subroutine read_cis_escf(path, rhf, wfa, wfb)
+        character(len=*), intent(in) :: path
         integer, intent(in) :: rhf
         real(dp) :: wfa(:, :)
         real(dp) :: wfb(:, :)
@@ -288,9 +279,9 @@ contains
         integer :: i
 
 
-        call tm_find_section('$dft')
+        call tm_find_section(path, '$dft')
         call section_read_dft(tm_reader, dft_func)
-        call tm_find_section('$scfinstab')
+        call tm_find_section(path, '$scfinstab')
         call tm_reader%parseline(' ')
         instab = trim(adjustl(tm_reader%args(2)%s))
 
@@ -305,7 +296,7 @@ contains
         allocate(eigvec(edim, nex))
         allocate(eigval(nex))
 
-        call tm_find_eigenpairs(instab)
+        call tm_find_eigenpairs(path, instab)
         call section_read_eigenpairs(tm_reader, nex, edim, eigval, eigvec)
         call tm_reader%close()
         do i = 1, nex
@@ -421,49 +412,34 @@ contains
 
 
     !----------------------------------------------------------------------------------------------
-    ! SUBROUTINE: tm_enter_dir
-    !
-    !> @brief Enter directory containing turbomole files.
-    !> @details
-    !! If given path is a directory enter the directory and set main file name to 'control'. If 
-    !! not, work in current directory and start from the file given in path.
-    !----------------------------------------------------------------------------------------------
-    subroutine tm_enter_dir(path)
-        character(len=*), intent(in) :: path
-
-        if (check_is_dir(path//'/')) then
-            tm_dname = path
-            tm_fname = 'control'
-        else
-            tm_dname = '.'
-            tm_fname = path
-        end if
-        call getcwd(tm_initdir)
-        call chdir(tm_dname)
-    end subroutine tm_enter_dir
-
-
-    !----------------------------------------------------------------------------------------------
     ! SUBROUTINE: tm_find_section
     !
     !> @brief Go to a turbomole section.
     !> @details
-    !! Finds a section in the tm_fname file. If the section is redirected to a different file
+    !! Finds a section in a turbomole directory. If the section is redirected to a different file
     !! (as in: $section file=fname), open the new file and find the section in that file.
     !----------------------------------------------------------------------------------------------
-    subroutine tm_find_section(section, found)
+    subroutine tm_find_section(path, section, found)
+        character(len=*), intent(in) :: path
         character(len=*), intent(in) :: section
         logical, intent(out), optional :: found
+        character(len=:), allocatable :: tm_dname
+        character(len=:), allocatable :: tm_fname
         integer :: i
         logical :: check
         
-        call tm_reader%open(tm_fname, comment='#', continuation='\')
+        tm_dname = dirname(path)//'/'
+        tm_fname = strip_fname(path)
+        if (tm_fname == '') tm_fname = 'control'
+
+        call tm_reader%open(tm_dname//tm_fname, comment='#', continuation='\')
         call tm_reader%go_to_keyword(section, found=check)
         if (.not. check) then
             if (.not. present(found)) then
                 write(stderr, *) 'Error in tm_find_section.'
                 write(stderr, *) 'Section "'//section//'" not found.'
-                call abort()
+                write(stderr, *) '  Path: '//tm_dname//tm_fname//'.'
+                stop
             else
                 found = .false.
                 return
@@ -475,8 +451,21 @@ contains
         do i = 2, tm_reader%narg - 1
             if (tm_reader%args(i)%s == 'file') then
                 call tm_reader%close()
-                call tm_reader%open(tm_reader%args(i+1)%s)
-                call tm_reader%go_to_keyword(tm_reader%args(1)%s)
+                call tm_reader%open(tm_dname//tm_reader%args(i+1)%s)
+                call tm_reader%go_to_keyword(tm_reader%args(1)%s, found=check)
+                if (.not. check) then
+                    if (.not. present(found)) then
+                        write(stderr, *) 'Error in tm_find_section.'
+                        write(stderr, *) 'Section "'//section//'" not found after redirecting.'
+                        write(stderr, *) '  Path: '//tm_dname//tm_reader%args(i+1)%s//'.'
+                        stop
+                    else
+                        found = .false.
+                        return
+                    end if
+                else
+                    if (present(found)) found = .true.
+                end if
             end if
         end do
     end subroutine tm_find_section
@@ -490,21 +479,22 @@ contains
     !! Eigenpairs section is not mentioned in control file, the default name of the file containing
     !! the section depends on the scfinstab option in the control file.
     !----------------------------------------------------------------------------------------------
-    subroutine tm_find_eigenpairs(instab)
+    subroutine tm_find_eigenpairs(path, instab)
+        character(len=*), intent(in) :: path
         character(len=*), intent(in) :: instab
         logical :: check
-        call tm_find_section('$eigenpairs', check)
+        call tm_find_section(path, '$eigenpairs', check)
         if (.not. check) then
             call tm_reader%close()
             select case(instab)
             case('rpas')
-                call tm_reader%open('sing_a')
+                call tm_reader%open(dirname(path)//'/sing_a')
             case('ciss')
-                call tm_reader%open('ciss_a')
+                call tm_reader%open(dirname(path)//'/ciss_a')
             case('urpa')
-                call tm_reader%open('unrs_a')
+                call tm_reader%open(dirname(path)//'/unrs_a')
             case('ucis')
-                call tm_reader%open('ucis_a')
+                call tm_reader%open(dirname(path)//'/ucis_a')
             end select
             call tm_reader%go_to_keyword('$eigenpairs')
         end if
@@ -515,13 +505,14 @@ contains
     ! FUNCTION: tm_count_n_ex_states
     !> @brief Find number of excited states included in calculation (depending on method).
     !----------------------------------------------------------------------------------------------
-    function tm_count_n_ex_states(method) result(nex)
+    function tm_count_n_ex_states(path, method) result(nex)
+        character(len=*), intent(in) :: path
         character(len=*) :: method
         integer :: nex
         integer :: i
         select case(method)
         case('ricc2')
-            call tm_find_section('$excitations')
+            call tm_find_section(path, '$excitations')
             outer: do
                 call tm_reader%next()
                 if (index(tm_reader%line, '$') == 1) then
@@ -540,7 +531,7 @@ contains
                 end if
             end do outer
         case('escf')
-            call tm_find_section('$soes')
+            call tm_find_section(path, '$soes')
             call tm_reader%next()
             call tm_reader%parseline(' ')
             read(tm_reader%args(2)%s, *) nex
