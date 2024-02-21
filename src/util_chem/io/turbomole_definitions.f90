@@ -79,9 +79,10 @@ contains
     !!  1 - LDA
     !!  2 - GGA
     !!  3 - MGGA
-    !!  4 - Hybrid
+    !!  4 - Hybrid and 
     !!  5 - ODFT
     !!  6 - Double-hybrid
+    !!  7 - Range-separated hybrid
     !----------------------------------------------------------------------------------------------
     function turbomole_functional_type(func) result (functype)
         character(len=*), intent(in) :: func
@@ -91,25 +92,45 @@ contains
                                                                  'vwn                  ', &
                                                                  's-vwn_Gaussian       ', &
                                                                  'pwlda                ']
-        character(len=14), dimension(7), parameter :: ggafunc = ['becke-exchange', &
+        character(len=14), dimension(8), parameter :: ggafunc = ['becke-exchange', &
                                                                  'b-lyp         ', &
                                                                  'b-vwn         ', &
                                                                  'lyp           ', &
                                                                  'b-p           ', &
                                                                  'pbe           ', &
-                                                                 'b97-d         ']
-        character(len=4 ), dimension(1), parameter :: mggfunc = ['tpss']
-        character(len=15), dimension(8), parameter :: hybfunc = ['bh-lyp         ', &
+                                                                 'b97-d         ', &
+                                                                 'b97-3x        ']
+        character(len=10), dimension(5), parameter :: mggfunc = ['tpss      ', &
+                                                                 'r2scan    ', &
+                                                                 'm06-l     ', &
+                                                                 'scan-libxc', &
+                                                                 'scan      ']
+        character(len=15), dimension(9), parameter :: hybfunc = ['bh-lyp         ', &
                                                                  'b3-lyp         ', &
                                                                  'b3-lyp_Gaussian', &
                                                                  'pbe0           ', &
                                                                  'tpshh          ', &
+                                                                 'pw6b95         ', &
                                                                  'm06            ', &
                                                                  'm06-2x         ', &
                                                                  'pbeh-3c        ']
         character(len=3 ), dimension(2), parameter :: odffunc = ['lhf', &
                                                                  'oep']
         character(len=7 ), dimension(1), parameter :: dhyfunc = ['b2-plyp']
+        character(len=9 ), dimension(14), parameter :: rshfunc = ['hse06    ', &
+                                                                  'cam-b3lyp', &
+                                                                  'wb97x    ', &
+                                                                  'wb97x-d  ', &
+                                                                  'wb97x-v  ', &
+                                                                  'wb97m-v  ', &
+                                                                  'lc-wpbe  ', &
+                                                                  'm11      ', &
+                                                                  'revm11   ', &
+                                                                  'mn12-sx  ', &
+                                                                  'mn15     ', &
+                                                                  'mn15-l   ', &
+                                                                  'revtpss  ', &
+                                                                  'pkzb     ']
         functype = 0
         if (any(ldafunc == func)) functype = 1
         if (any(ggafunc == func)) functype = 2
@@ -117,6 +138,7 @@ contains
         if (any(hybfunc == func)) functype = 4
         if (any(odffunc == func)) functype = 5
         if (any(dhyfunc == func)) functype = 6
+        if (any(rshfunc == func)) functype = 7
         if (functype == 0) then
             write(stderr, *) 
             write(stderr, *) 'Error in turbomole_definitions module.'
