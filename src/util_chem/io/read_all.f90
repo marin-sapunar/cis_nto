@@ -48,7 +48,7 @@ contains
         case('molpro')
             call molpro_output_read_geom(path, geom, tsymbol, tnumber)
         case('orca_c')
-            call molden_read_geom(path, geom, tsymbol, tnumber)
+            call molden_read_geom(path//".molden.input", geom, tsymbol, tnumber)
         case default
             write(stderr, *) 'Error in read_geom subroutine.'
             write(stderr, *) 'Input format not implemented: '//trim(adjustl(dformat))
@@ -82,7 +82,7 @@ contains
         case('molpro')
             call molpro_output_read_basis(path, basis)
         case('orca_c')
-            call molden_read_basis(path, basis, 3)
+            call molden_read_basis(path//".molden.input", basis, 3)
         case default
             write(stderr, *) 'Error in read_basis subroutine.'
             write(stderr, *) 'Input format not implemented: '//trim(adjustl(dformat))
@@ -128,7 +128,7 @@ contains
                 call molden_read_mo(path, mos)
             end select
         case('orca_c')
-            call molden_read_mo(path, mos, bs, 3)
+            call molden_read_mo(path//".molden.input", mos, bs, 3)
         case('molpro_output')
             call molpro_output_read_mo(path, mos)
         case default
@@ -180,7 +180,7 @@ contains
         case('turbomole')
             call turbomole_read_cis(path, twfa, twfb, tocc_mo, tact_mo)
         case('orca_cis')
-            call orca_read_cis(path, twfa, tocc_mo, tact_mo)
+            call orca_read_cis(path//".cis", twfa, tocc_mo, tact_mo)
         case default
             write(stderr, *) 'Error in read_cis subroutine.'
             write(stderr, *) 'Input format not implemented: '//trim(adjustl(dformat))

@@ -201,7 +201,7 @@ contains
             else
                 ab = 'beta'
             end if
-            write(stdout, '(3x,7a)') 'Norms of ', cset, ' spin ', ab, ' occupied orbitals in',     &
+            write(stdout, '(3x,7a)') 'Norms of ', cset, ' spin ', ab, ' occupied orbitals in ',     &
             &                        oset, ' basis:'
             write(stdout, '(3x,8es11.3)') norms
         end if
@@ -273,7 +273,7 @@ contains
         if (print_level >= 2) then
             write(stdout, *)
             write(stdout, '(3x,a,a,a)') 'Initial norms of ', set_name,' excited states:'
-            write(stdout, '(5x,8es11.3)') norms
+            write(stdout, '(5x,8es11.3)') sqrt(norms)
             if (any(norms < thr)) then
                 write(stdout, '(5x,a)') 'Warning. States with very low initial norm present.'
                 write(stdout, '(5x,a)') '         Check for excitations to/from frozen orbitals.'

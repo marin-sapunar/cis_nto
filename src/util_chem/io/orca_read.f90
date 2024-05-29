@@ -25,22 +25,17 @@ contains
         real(dp), allocatable :: wfa(:, :)
         logical, allocatable :: occ_mo(:, :)
         logical, allocatable :: act_mo(:, :)
-        character(len=4) :: statekey
-        character(len=:), allocatable :: inputfile
         integer :: dummy, vdim, cdim
-        integer :: i, j, inunit, nex, p_ind, firstvirt
+        integer :: i, j, inunit, nex, firstvirt
         type(occupation_numbers) :: onum
 
-        p_ind=index(path, '.molden')
-        statekey = 'cis'
-        inputfile=path(1:p_ind)//statekey
         if (print_level >= 2) then 
             write(stdout, *) '  '
-            write(stdout, *) 'Reading CIS coefficients from:  ', inputfile
+            write(stdout, *) 'Reading CIS coefficients from:  ', path
         endif
         
-        !!call need_file(inputfile, 'Error in orca_read_cis subroutine.')
-        open(newunit=inunit, file=inputfile, form='UNFORMATTED', access='STREAM', action='READ')
+        !!call need_file(path, 'Error in orca_read_cis subroutine.')
+        open(newunit=inunit, file=path, form='UNFORMATTED', access='STREAM', action='READ')
         read(unit=inunit) nex
         read(unit=inunit) onum%fo(1)        ! first non-frozen occupied orbital
         read(unit=inunit) onum%o(1)
