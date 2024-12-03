@@ -76,10 +76,14 @@ contains
         write(stdout, '(a)') '                                overlap                                            '
         write(stdout, '(a)') '                                r^2 (equivalent to "x^2 + y^2 + z^2")              '
         write(stdout, '(32x,a,a)') 'default: ', operator_string
-        write(stdout, '(a)') '  -cp, --(no-)center-pairs    attempt to remove effect of basis set translation by '
-        write(stdout, '(a)') '                              recentering pairs of AOs in AO overlap calculation   '
-        write(stdout, '(a)') '                              (untested, not recommended)                          '
-        write(stdout, '(32x,a,l1)') 'default: ', center_pairs
+        write(stdout, '(a)') '  -aoc, --recenter-ao         geometry at which to place centers for atomic orbital'
+        write(stdout, '(a)') '                              basis functions in the integral calculation:         '
+        write(stdout, '(a)') '                              (untested, not recommended to change)                '
+        write(stdout, '(a)') '                              Available options:                                   '
+        write(stdout, '(a)') '                                -1 - place all AOs on first geometry               '
+        write(stdout, '(a)') '                                 0 - place all AOs at their actual positions       '
+        write(stdout, '(a)') '                                 1 - place all AOs on second geometry              '
+        write(stdout, '(32x,a,i0)') 'default: ', ao_center
         write(stdout, '(a)') '  -fmn, --freeze-mo-norm t    freeze occupied ket MOs when their norm in bra basis '
         write(stdout, '(a)') '                              is smaller than given threshold. Same number of bra  '
         write(stdout, '(a)') '                              MOs with smallest norms in ket basis is also frozen. '
@@ -116,12 +120,11 @@ contains
         dyson_c = .false.
         wf_threshold = 1.0_dp
         truncate_nex = 0
+        ao_center = 0
         norm_states = .true.
         orth_states = .false.
         orth_overlap = .false.
         match_phase = .false.
-        center_atoms = .false. !unused
-        center_pairs = .false.
         freeze_mo_norm = .false.
         freeze_mo_norm_t = -1.0_dp
         operator_string = 'overlap'
@@ -208,14 +211,14 @@ contains
                 match_phase = .true.
             case('--no-match-phase', '-nmp')
                 match_phase = .false.
+            case('--recenter-ao', '-aoc')
+                i = i + 1
+                call get_command_argument(i, temp)
+                read(temp, *) ao_center
             case('--operator', '-op')
                 i = i + 1
                 call get_command_argument(i, temp)
                 operator_string = trim(adjustl(temp))
-            case('--center-pairs', '-cp')
-                center_pairs = .true.
-            case('--no-center-pairs', '-ncp')
-                center_pairs = .false.
             case('--freeze-mo-norm', '-fmn')
                 i = i + 1
                 call get_command_argument(i, temp)

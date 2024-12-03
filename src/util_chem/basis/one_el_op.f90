@@ -32,13 +32,8 @@ contains
     !! The matrix is initially constructed in the basis of contracted Cartesian Gaussian functions
     !! ordered by 'internal' order (defined by functions given in ang_mom_defs). Afterwards, the
     !! basis is changed to the source format given in the basis_set variables.
-    !! The center_atoms and center_pairs options can be used to partially remove the effect of
-    !! translation from the overlaps. If center_atoms is .true., only overlaps between basis 
-    !! functions on the same atom are calculated as if the atom is at the origin. If center_pairs
-    !! is .true., overlaps between functions on two atoms are calculated as if the midpoint between
-    !! the two atoms is at the origin.
     !----------------------------------------------------------------------------------------------
-    subroutine one_el_op(geom1, geom2, bs1, bs2, operator_string, mat, center_atoms, center_pairs)
+    subroutine one_el_op(geom1, geom2, bs1, bs2, operator_string, mat, ao_center)
         use linalg_wrapper_mod, only : gemm
         use basis_set_mod
         use basis_transform_mod
@@ -48,22 +43,17 @@ contains
         type(basis_set), intent(inout) :: bs2 !< Basis set 2.
         character(len=*), intent(in) :: operator_string !< Operator to calculate.
         real(dp), allocatable, intent(out) :: mat(:, :) !< Operator matrix.
-        logical, intent(in), optional :: center_atoms !< Translate same atom to center.
-        logical, intent(in), optional :: center_pairs !< Translate pairs of atoms to center.
+        integer, intent(in) :: ao_center !< Option for treating the atom centers:
+                                         !!  -1 - Place all basis functions on geom1
+                                         !!   0 - Calculate actual integrals (default)
+                                         !!   1 - Place all basis functions on geom2
         real(dp), allocatable :: tmp(:, :)
         integer, allocatable :: lxyz(:, :)
         integer, allocatable :: add(:)
         integer :: clxyz(3), i
-        logical :: opt_atoms
-        logical :: opt_pairs
         type(basis_transform) :: trans1
         type(basis_transform) :: trans2
         character(len=:), allocatable :: tstring
-
-        opt_atoms = .false.
-        opt_pairs = .false.
-        if (present(center_atoms)) opt_atoms = center_atoms
-        if (present(center_pairs)) opt_pairs = center_pairs
 
         select case(operator_string)
         case('overlap')
@@ -78,7 +68,14 @@ contains
         ! Calculate matrix in basis of Cartesian GTOs in default order.
         do i = 1, size(lxyz, 1)
             clxyz = lxyz(i, :)
-            call cart_one_el_op(geom1, geom2, bs1, bs2, clxyz, tmp, opt_atoms, opt_pairs)
+            select case(ao_center)
+            case(-1)
+                call cart_one_el_op(geom1, geom1, bs1, bs2, clxyz, tmp)
+            case(1)
+                call cart_one_el_op(geom2, geom2, bs1, bs2, clxyz, tmp)
+            case default
+                call cart_one_el_op(geom1, geom2, bs1, bs2, clxyz, tmp)
+            end select
             if (.not. allocated(mat)) allocate(mat(1:size(tmp, 1), 1:size(tmp, 2)), source=0.0_dp)
             if (add(i) == 1) then
                 mat = mat + tmp
@@ -176,7 +173,7 @@ contains
     !!
     !! where < B_1,i | and | B_2,j > are contracnted Cartesian Gaussian functions. 
     !----------------------------------------------------------------------------------------------
-    subroutine cart_one_el_op(geom1, geom2, bs1, bs2, lxyz, mat, center_atoms, center_pairs)
+    subroutine cart_one_el_op(geom1, geom2, bs1, bs2, lxyz, mat)
         use basis_set_mod
         use ang_mom_defs, only : amp
         use cgto_mod, only : cgto_one_el
@@ -187,21 +184,12 @@ contains
         integer, intent(in) :: lxyz(3) !< List of exponents of the coordinates in the operator.
                                        !! (lx, ly, lz)
         real(dp), allocatable, intent(out) :: mat(:, :) !< Operator matrix.
-        logical, intent(in), optional :: center_atoms !< Translate same atom to center.
-        logical, intent(in), optional :: center_pairs !< Translate pairs of atoms to center.
-        logical :: opt_atoms
-        logical :: opt_pairs
 
         integer :: i, j, k, l, ck0, cl0, ck, cl, nbf1, nbf2, bi, bj
         real(dp) :: qi(3), qj(3), qc(3)
 
         if (allocated(mat)) deallocate(mat)
         allocate(mat(bs1%n_bf_cart, bs2%n_bf_cart), source=num0)
-
-        opt_atoms = .false.
-        opt_pairs = .false.
-        if (present(center_atoms)) opt_atoms = center_atoms
-        if (present(center_pairs)) opt_pairs = center_pairs
 
         ck = 0
         do i = 1, bs1%n_center
@@ -211,18 +199,8 @@ contains
             do j = 1, bs2%n_center
                 bj = bs2%center_i_bs(j)
                 cl0 = cl
-                if (opt_pairs) then
-                    qi = (geom1(3*i-2:3*i) - geom1(3*j-2:3*j)) / 2
-                    qj = (geom2(3*j-2:3*j) - geom2(3*i-2:3*i)) / 2
-                else if (opt_atoms) then
-                    if (i == j) then
-                        qi = num0
-                        qj = num0
-                    end if
-                else
-                    qi = geom1(3*i-2:3*i)
-                    qj = geom2(3*j-2:3*j)
-                end if
+                qi = geom1(3*i-2:3*i)
+                qj = geom2(3*j-2:3*j)
                 qc = num0
                 ck = ck0
                 do k = 1, bs1%bs(bi)%n_subshell

@@ -24,12 +24,11 @@ module overlap_variables
     character(len=4) :: cis_algorithm
     real(dp) :: wf_threshold
     integer :: truncate_nex
+    integer :: ao_center
     logical :: norm_states
     logical :: orth_states
     logical :: orth_overlap
     logical :: match_phase
-    logical :: center_atoms
-    logical :: center_pairs
     logical :: freeze_mo_norm
     real(dp) :: freeze_mo_norm_t
     character(len=:), allocatable :: outfile_ao

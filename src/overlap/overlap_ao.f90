@@ -56,7 +56,7 @@ contains
                 write(stdout, *) 'Expecting ket MOs written in terms of cartesian AOs.'
             end if
         end if
-        call one_el_op(geom1, geom2, bs1, bs2, operator_string, s_ao, center_atoms, center_pairs)
+        call one_el_op(geom1, geom2, bs1, bs2, operator_string, s_ao, ao_center)
         if (print_level >= 3) then
             write(stdout, '(5x,a)') 'Diagonal of the AO overlap matrix: '
             write(stdout, '(6x,15f8.4)') [ ( s_ao(i, i), i=1, min(size(s_ao, 1), size(s_ao, 2)) ) ]
