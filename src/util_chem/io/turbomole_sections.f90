@@ -214,6 +214,7 @@ contains
             nsphe = 0
             cfunc = 0
             call readf%next() 
+            if (readf%line(1:1) == "$") exit
             abas(i)%key = trim(adjustl(readf%line))
             call readf%next() ! *
             do
