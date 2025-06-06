@@ -532,9 +532,20 @@ contains
             end do outer
         case('escf')
             call tm_find_section(path, '$soes')
-            call tm_reader%next()
             call tm_reader%parseline(' ')
-            read(tm_reader%args(2)%s, *) nex
+            if (tm_reader%narg > 1) then
+                if (tm_reader%args(2)%s == "all") then
+                    read(tm_reader%args(3)%s, *) nex
+                else
+                    write(stderr, *) 'Error in turbomole_read_mod subroutine.'
+                    write(stderr, *) 'Unrecognized format of $soes keyword.'
+                    call abort()
+                end if
+            else
+                call tm_reader%next()
+                call tm_reader%parseline(' ')
+                read(tm_reader%args(2)%s, *) nex
+            end if
         case default
             write(stderr, *) 'Error in turbomole_read_mod subroutine.'
             write(stderr, *) 'Unrecognized method '//method//' while checking number of states.'
