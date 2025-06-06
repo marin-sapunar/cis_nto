@@ -29,8 +29,8 @@ enable_language (C)
 
 ###################################################################################################
 # Compiler specific options:                                                                      #
-  if(CMAKE_Fortran_COMPILER_ID STREQUAL "Intel")
-    set(dialect "-fpp -assume realloc_lhs")
+  if(CMAKE_Fortran_COMPILER_ID MATCHES "Intel")
+    set(dialect "-fpp")
     set(CMAKE_Fortran_FLAGS_RELEASE  "-O3")
     set(CMAKE_Fortran_FLAGS_DEBUG    "-O2 -traceback -g")
     set(CMAKE_Fortran_FLAGS_DEBUGALL "-O0 -traceback -g -check all -debug all")
@@ -44,7 +44,7 @@ enable_language (C)
 
 
 # NOT TESTED FOR INTEL!!!!
-  if(CMAKE_C_COMPILER_ID STREQUAL "Intel")
+  if(CMAKE_C_COMPILER_ID MATCHES "Intel")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
   elseif(CMAKE_C_COMPILER_ID STREQUAL "GCC")
@@ -87,7 +87,7 @@ enable_language (C)
     set(LINKLIBS ${LINKLIBS} ${F95_LIBS})
     # MKL libraries.
     set(MKL_LIBS "-Wl,--no-as-needed -Wl,--start-group")
-    if(CMAKE_Fortran_COMPILER_ID STREQUAL "Intel")
+    if(CMAKE_Fortran_COMPILER_ID MATCHES "Intel")
         set(MKL_LIBS ${MKL_LIBS} "-lmkl_intel_lp64 -lmkl_intel_thread")
     elseif(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
         set(MKL_LIBS ${MKL_LIBS} "-lmkl_gf_lp64 -lmkl_gnu_thread")
@@ -98,7 +98,7 @@ enable_language (C)
         set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -pgf90libs")
     endif()
     set(MKL_LIBS ${MKL_LIBS} "-lmkl_core -Wl,--end-group -lpthread -lm -ldl")
-    if(CMAKE_Fortran_COMPILER_ID STREQUAL "Intel")
+    if(CMAKE_Fortran_COMPILER_ID MATCHES "Intel")
         set(MKL_LIBS ${MKL_LIBS} "-liomp5")
     elseif(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
         set(MKL_LIBS ${MKL_LIBS} "-lgomp")

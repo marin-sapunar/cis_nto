@@ -249,7 +249,8 @@ contains
         end if
         if (present(a2)) then
             if (mo_dim == 1) then
-                allocate(wrk_a2, source=a2(index_vector, :))
+                wrk_a2 = a2(index_vector, :)
+               !allocate(wrk_a2, source=a2(index_vector, :))
             else if (mo_dim == 2) then
                 allocate(wrk_a2, source=a2(:, index_vector))
             end if
@@ -258,7 +259,8 @@ contains
         end if
         if (present(a3)) then
             if (mo_dim == 1) then
-                allocate(wrk_a3, source=a3(index_vector, :, :))
+                wrk_a3 = a3(index_vector, :, :)
+               !allocate(wrk_a3, source=a3(index_vector, :, :))
             else if (mo_dim == 2) then
                 allocate(wrk_a3, source=a3(:, index_vector, :))
             else if (mo_dim == 3) then
