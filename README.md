@@ -22,7 +22,7 @@ For wave function overlap calculations, the code is currently interfaced only to
 * Prerequisites
   * cmake
   * make
-  * MKL (with the [MKL Fortran 95 Interface][F95])
+  * LAPACK/MKL
 
 Commands to download and compile the code:
 
@@ -59,7 +59,6 @@ The source code is available at: [GitHub][Git]
 
 
 [Git]: https://github.com/marin-sapunar/cis_nto
-[F95]: https://software.intel.com/en-us/mkl-linux-developer-guide-fortran-95-interfaces-to-lapack-and-blas
 [NTOpaper]: https://pubs.acs.org/doi/10.1021/acs.jctc.9b00235
 [L2Mpaper]: https://dx.doi.org/10.1016/j.cpc.2020.107521
 

@@ -1,17 +1,31 @@
 module linalg_wrapper_mod
     use global_defs
-#ifdef LINALG_F95
-    use blas95
-    use lapack95
-#endif
     implicit none
-    public
+    private
 
+#if BLA_INT64
+    integer, parameter :: blas_int = int64
+#else
+    integer, parameter :: blas_int = int32
+#endif
+
+    public :: blas_int
+    public :: dot
+    public :: gemv
+    public :: gemm
+    public :: ger
+    public :: gesvd
+    public :: getrf
+    public :: getri
+    public :: syev
+
+    interface gemm
+        module procedure gemm_d, gemm_z
+    end interface gemm
 
 contains
 
 
-#ifndef LINALG_F95
     function dot(x, y) result(z)
         real(dp) :: x(:)
         real(dp) :: y(:)
@@ -30,7 +44,7 @@ contains
         character(len=1) :: wrk_trans
         real(dp) :: wrk_alpha
         real(dp) :: wrk_beta
-        integer :: m, n
+        integer(blas_int) :: m, n
         external dgemv
         m = size(a, 1)
         n = size(a, 2)
@@ -44,8 +58,7 @@ contains
     end subroutine gemv
 
 
-    subroutine gemm(a, b, c, transa, transb, alpha, beta)
-        !> @todo add complex version
+    subroutine gemm_d(a, b, c, transa, transb, alpha, beta)
         real(dp) :: a(:, :)
         real(dp) :: b(:, :)
         real(dp) :: c(:, :)
@@ -57,7 +70,7 @@ contains
         character(len=1) :: wrk_transb
         real(dp) :: wrk_alpha
         real(dp) :: wrk_beta
-        integer :: m, n, k, lda, ldb, ldc
+        integer(blas_int) :: m, n, k, lda, ldb, ldc
         external dgemm
         lda = size(a, 1)
         ldb = size(b, 1)
@@ -80,10 +93,10 @@ contains
             k = size(a, 2)
         end if
         call dgemm(wrk_transa, wrk_transb, m, n, k, wrk_alpha, a, lda, b, ldb, wrk_beta, c, ldc)
-    end subroutine gemm
+    end subroutine gemm_d
 
 
-    subroutine cgemm(a, b, c, transa, transb, alpha, beta)
+    subroutine gemm_z(a, b, c, transa, transb, alpha, beta)
         complex(dp) :: a(:, :)
         complex(dp) :: b(:, :)
         complex(dp) :: c(:, :)
@@ -95,7 +108,7 @@ contains
         character(len=1) :: wrk_transb
         complex(dp) :: wrk_alpha
         complex(dp) :: wrk_beta
-        integer :: m, n, k, lda, ldb, ldc
+        integer(blas_int) :: m, n, k, lda, ldb, ldc
         external zgemm
         lda = size(a, 1)
         ldb = size(b, 1)
@@ -110,7 +123,7 @@ contains
         wrk_beta = cmplx(num0, num0, dp)
         if (present(beta)) wrk_beta = beta
         m = lda
-        if (transa /= 'N') then
+        if (wrk_transa /= 'N') then
             m = size(a, 2)
             k = lda
         else
@@ -118,7 +131,7 @@ contains
             k = size(a, 2)
         end if
         call zgemm(wrk_transa, wrk_transb, m, n, k, wrk_alpha, a, lda, b, ldb, wrk_beta, c, ldc)
-    end subroutine cgemm
+    end subroutine gemm_z
 
 
     subroutine ger(a, x, y, alpha)
@@ -126,8 +139,8 @@ contains
         real(dp) :: y(:)
         real(dp) :: a(:, :)
         real(dp), optional :: alpha
-        integer :: m
-        integer :: n
+        integer(blas_int) :: m
+        integer(blas_int) :: n
         real(dp) :: wrk_alpha
         external dger
         m = size(x)
@@ -151,8 +164,8 @@ contains
         character(len=1) :: wrk_job
         character(len=1) :: jobu
         character(len=1) :: jobvt
-        integer :: wrk_info
-        integer :: m, n, ldvt, ldu, lwork
+        integer(blas_int) :: wrk_info
+        integer(blas_int) :: m, n, ldvt, ldu, lwork
         external :: dgesvd
 
         m = size(a, 1)
@@ -218,15 +231,15 @@ contains
         real(dp) :: a(:, :)
         integer, optional :: ipiv(:)
         integer, optional :: info
-        integer :: wrk_info
-        integer, allocatable :: wrk_ipiv(:)
-        integer :: n, m
+        integer(blas_int) :: wrk_info
+        integer(blas_int), allocatable :: wrk_ipiv(:)
+        integer(blas_int) :: n, m
         external :: dgetrf
 
         m = size(a, 1)
         n = size(a, 2)
         if (present(ipiv)) then
-            allocate(wrk_ipiv, source=ipiv)
+            allocate(wrk_ipiv(size(ipiv)))
         else
             allocate(wrk_ipiv(min(m, n)))
         end if
@@ -245,6 +258,28 @@ contains
         end if
     end subroutine getrf
 
+    subroutine getri(a, ipiv, info)
+        real(dp) :: a(:, :)
+        integer  :: ipiv(:)
+        integer, optional :: info
+        integer(blas_int) :: lwrk
+        integer(blas_int), allocatable :: wrk(:)
+        integer(blas_int) :: n, lda
+        external :: dgetri
+
+        lda = size(a, 1)
+        n = size(a, 2)
+        lwrk = n
+        allocate(wrk(lwrk))
+
+        ! Call DGETRI
+        call  dgetri( n, a, lda, ipiv, wrk, lwrk, info )
+        if (info /= 0) then
+            write(stderr, *) 'Error. GETRI call failed.'
+            write(stderr, '(a, i0)') '        Info: ', info
+            stop
+        end if
+    end subroutine getri
 
     subroutine syev(a, w, jobz, uplo, info)
         real(dp) :: a(:, :)
@@ -255,8 +290,8 @@ contains
         real(dp), allocatable :: work(:)
         character(len=1) :: wrk_jobz
         character(len=1) :: wrk_uplo
-        integer :: wrk_info
-        integer :: n, lwork
+        integer(blas_int) :: wrk_info
+        integer(blas_int) :: n, lwork
         external :: dsyev
 
         n = size(a, 1)
@@ -267,13 +302,14 @@ contains
 
         ! Determine size of work array.
         allocate(work(1))
-        call dsyev(wrk_jobz, wrk_uplo, n, a, n, w, work, -1, info)
+        lwork = -1
+        call dsyev(wrk_jobz, wrk_uplo, n, a, n, w, work, lwork, wrk_info)
         lwork = int(work(1))
         deallocate(work)
         allocate(work(lwork))
 
         ! Call DSYEV.
-        call dsyev(wrk_jobz, wrk_uplo, n, a, n, w, work, lwork, info)
+        call dsyev(wrk_jobz, wrk_uplo, n, a, n, w, work, lwork, wrk_info)
         if (present(info)) then
             info = wrk_info
         else
@@ -284,7 +320,6 @@ contains
             end if
         end if
     end subroutine syev
-#endif
 
 
 end module linalg_wrapper_mod
