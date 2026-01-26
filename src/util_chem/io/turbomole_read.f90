@@ -64,6 +64,9 @@ contains
         character(len=2), allocatable :: key_asym(:) !< Atomic symbols corresponding to keys.
         type(ivec), allocatable :: key_atom_index(:) !< Atom indexes corresponding to keys.
         logical :: tread_atoms
+        logical :: joined_format
+        real(dp), allocatable :: geom(:)
+        character(len=2), allocatable :: at_symbol(:)
         integer :: i, n
 
         bs%sphe_mo = .true.
@@ -81,17 +84,25 @@ contains
             allocate(key_asym(nabas))
             allocate(key_atom_index(nabas))
             allocate(key(nabas))
-            call section_read_atoms(tm_reader, nabas, key_asym, key_atom_index, key)
-            bs%n_center = maxval(key_atom_index)
+            call section_read_atoms(tm_reader, nabas, key_asym, key_atom_index, key, joined_format)
+            call tm_reader%close()
             if (allocated(bs%center_i_bs)) deallocate(bs%center_i_bs)
-            allocate(bs%center_i_bs(bs%n_center))
-            call tm_match_basis_with_atoms(bs%bs, key, key_atom_index, bs%center_i_bs)
+            if (joined_format) then
+                call turbomole_read_geom(path, geom, at_symbol)
+                bs%n_center = size(at_symbol)
+                allocate(bs%center_i_bs(bs%n_center))
+                call tm_reader%close()
+                call tm_match_basis_with_coord(bs%bs, key(1)%s, at_symbol, bs%center_i_bs)
+            else
+                bs%n_center = maxval(key_atom_index)
+                allocate(bs%center_i_bs(bs%n_center))
+                call tm_match_basis_with_atoms(bs%bs, key, key_atom_index, bs%center_i_bs)
+            end if
             do i = 1, bs%n_center
                 bs%n_bf_sphe = bs%n_bf_sphe + bs%bs(bs%center_i_bs(i))%n_sphe
                 bs%n_bf_cart = bs%n_bf_cart + bs%bs(bs%center_i_bs(i))%n_cart
             end do
         end if
-        call tm_reader%close()
     end subroutine turbomole_read_basis
 
 
@@ -315,7 +326,7 @@ contains
     !> @brief Match information from $atoms and $basis sections.
     !> @details
     !! Take list of indices of atoms corresponding to each basis set and create list with index of
-    !! of basis set corresponding to each atom.
+    !! basis set corresponding to each atom.
     !----------------------------------------------------------------------------------------------
     subroutine tm_match_basis_with_atoms(basis, key, key_atom_index, atom_basis_index)
         use basis_set_mod, only : basis_set_single
@@ -352,6 +363,44 @@ contains
             write(stderr, '(a,i0,a)') ' Expected ', size(atom_basis_index), 'atoms.'
         end if
     end subroutine tm_match_basis_with_atoms
+
+
+    !----------------------------------------------------------------------------------------------
+    ! SUBROUTINE: tm_match_basis_with coord
+    !
+    !> @brief Match information from $coord and $basis sections.
+    !> @details
+    !! Take list of atom symbols and name of basis set and create list with index of basis set
+    !! corresponding to each atom.
+    !----------------------------------------------------------------------------------------------
+    subroutine tm_match_basis_with_coord(basis, key, at_symbol, atom_basis_index)
+        use basis_set_mod, only : basis_set_single
+        use ivec_mod
+        use string_mod
+        type(basis_set_single), intent(in) :: basis(:)
+        character(len=*), intent(in) :: key
+        character(len=*), intent(in) :: at_symbol(:)
+        integer, intent(out) :: atom_basis_index(:)
+        integer :: i, j, k, chk_natom
+        character(len=:), allocatable :: check_key
+
+        chk_natom = 0
+        do i = 1, size(at_symbol)
+            check_key = trim(at_symbol(i))//' '//key
+            do j = 1, size(basis)
+                if (check_key == basis(j)%key) then
+                    atom_basis_index(i) = j
+                    chk_natom = chk_natom + 1
+                    exit
+                else if (j == size(basis)) then
+                    write(stderr, *) 'Error in turbomole_read module,&
+                                    & tm_match_basis_with_coord subroutine.'
+                    write(stderr, *) check_key//' not found in basis section.'
+                    call abort()
+                end if
+            end do
+        end do
+    end subroutine tm_match_basis_with_coord
 
 
     !----------------------------------------------------------------------------------------------

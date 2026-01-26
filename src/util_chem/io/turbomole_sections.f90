@@ -77,7 +77,7 @@ contains
     !! The $atoms section contains list of basis sets and indices of atoms corresponding to each
     !! type of basis set. Also contains aux. basis set information, but is not read here.
     !----------------------------------------------------------------------------------------------
-    subroutine section_read_atoms(readf, nabas, basis_asym, basis_index, basis_key)
+    subroutine section_read_atoms(readf, nabas, basis_asym, basis_index, basis_key, joined_format)
         use ivec_mod
         use string_mod
         type(reader), intent(inout) :: readf
@@ -85,28 +85,36 @@ contains
         character(len=2), intent(out) :: basis_asym(nabas)
         type(ivec), intent(out) :: basis_index(nabas)
         type(string), intent(out) :: basis_key(nabas)
+        logical, intent(out) :: joined_format
         integer :: i
         integer :: j
         character(len=:), allocatable :: indexstr
+
+        joined_format = .false.
         
         do i = 1, nabas
-           indexstr = ''
-           call readf%next()
-           call readf%parseline('=\ ')
-           read(readf%args(1)%s, '(a)') basis_asym(i)
-           do j = 2, readf%narg
-               if (char_is_num(readf%args(j)%s(1:1))) then
-                   indexstr = indexstr//' '//readf%args(j)%s
-               else
-                   exit
-               end if
-           end do
-           call read_index_list(indexstr, basis_index(i)%c)
-           do j = 3, readf%narg - 1
-               if (readf%args(j)%s == 'basis') then
-                   basis_key(i)%s = readf%args(j+1)%s//' '//readf%args(j+2)%s
-               end if
-           end do
+            indexstr = ''
+            call readf%next()
+            call readf%parseline('=\ ')
+            if ((i == 1) .and. (readf%args(1)%s == 'basis')) then
+                joined_format = .true.
+                basis_key(1)%s = readf%args(2)%s           
+                exit
+            end if
+            read(readf%args(1)%s, '(a)') basis_asym(i)
+            do j = 2, readf%narg
+                if (char_is_num(readf%args(j)%s(1:1))) then
+                    indexstr = indexstr//' '//readf%args(j)%s
+                else
+                    exit
+                end if
+            end do
+            call read_index_list(indexstr, basis_index(i)%c)
+            do j = 3, readf%narg - 1
+                if (readf%args(j)%s == 'basis') then
+                    basis_key(i)%s = readf%args(j+1)%s//' '//readf%args(j+2)%s
+                end if
+            end do
         end do
     end subroutine section_read_atoms
 
