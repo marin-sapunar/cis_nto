@@ -1,4 +1,3 @@
-cat > /home/hamid/cis_nto/test_cp2k/render_nto.tcl << 'TCLEOF'
 # Render adamantane HOMO/LUMO/NTOs as publication-quality isosurfaces.
 # Usage: vmd -dispdev text -e render_nto.tcl
 
@@ -59,4 +58,3 @@ foreach pair {
 
 puts "All images rendered."
 quit
-TCLEOF
