@@ -1,3 +1,62 @@
-build
-test/test_cases/logs*
-*swp
+# Editor / OS cruft
+*.bak
+*.bak2
+*~
+.DS_Store
+*.Zone.Identifier
+
+# Build artifacts
+build/
+
+# CP2K test intermediate files (keep only sources + scripts)
+test_cp2k/std_*.molden
+test_cp2k/nto_*.molden
+test_cp2k/s1_*.molden
+test_cp2k/s2_*.molden
+test_cp2k/homo_*.molden
+test_cp2k/lumo_*.molden
+test_cp2k/mo_*.molden
+test_cp2k/tmp_*.molden
+test_cp2k/temp_*.molden
+test_cp2k/*_sym_*.txt
+test_cp2k/cubes/
+test_cp2k/nto_*.log
+test_cp2k/run_all_*.log
+test_cp2k/run_all_output*.txt
+test_cp2k/*.tga
+test_cp2k/*.png
+
+# CP2K test backups and generated variants
+test_cp2k/*.py.broken*
+test_cp2k/*_padded.molden
+test_cp2k/run_all_padded.sh
+test_cp2k/*.bak
+test_cp2k/*.py.broken*
+test_cp2k/*_padded.molden
+test_cp2k/run_all_padded.sh
+
+# ML-BP test: fetched from upstream at run time
+test_cp2k/mlbp/*.molden
+test_cp2k/mlbp/*.log
+test_cp2k/mlbp/cubes/
+test_cp2k/mlbp/std_*.molden
+test_cp2k/mlbp/nto_*.molden
+test_cp2k/mlbp/s1_*.molden
+test_cp2k/mlbp/homo_*.molden
+test_cp2k/mlbp/lumo_*.molden
+test_cp2k/mlbp/*_sym_*.txt
+
+# ML-BP test: fetched from upstream at run time
+test_cp2k/mlbp/*.molden
+test_cp2k/mlbp/*.log
+test_cp2k/mlbp/cubes/
+test_cp2k/mlbp/std_*.molden
+test_cp2k/mlbp/nto_*.molden
+test_cp2k/mlbp/s1_*.molden
+test_cp2k/mlbp/homo_*.molden
+test_cp2k/mlbp/lumo_*.molden
+test_cp2k/mlbp/*_sym_*.txt
+
+# Adamantane test inputs: fetched from upstream at run time
+test_cp2k/*.molden
+test_cp2k/*.log

@@ -126,7 +126,8 @@ contains
 
     !----------------------------------------------------------------------------------------------
     ! SUBROUTINE: section_read_mo
-    !> @brief Read the molden [MO] section.
+    !> @brief Read the molden [MO] section.  Handles sparse coefficient blocks as
+    !>        emitted by CP2K (coefficients below the print threshold are omitted).
     !----------------------------------------------------------------------------------------------
     subroutine section_read_mo(readf, nbas, nmo_a, mo_e_a, mo_o_a, mo_c_a, nmo_b, mo_e_b, mo_o_b, &
     &                          mo_c_b)
@@ -134,63 +135,82 @@ contains
         integer, intent(in) :: nbas !< Number of basis functions.
         integer, intent(in) :: nmo_a !< Number of molecular orbitals alpha.
         real(dp), intent(out) :: mo_e_a(nmo_a) !< Molecular orbital energies alpha.
-        real(dp), intent(out) :: mo_o_a(nmo_a) !< Molecular orbital energies alpha.
+        real(dp), intent(out) :: mo_o_a(nmo_a) !< Molecular orbital occupations alpha.
         real(dp), intent(out) :: mo_c_a(nbas, nmo_a) !< Molecular orbital coefficients alpha.
         integer, intent(in) :: nmo_b !< Number of molecular orbitals beta.
         real(dp), intent(out) :: mo_e_b(nmo_b) !< Molecular orbital energies beta.
-        real(dp), intent(out) :: mo_o_b(nmo_b) !< Molecular orbital energies beta.
+        real(dp), intent(out) :: mo_o_b(nmo_b) !< Molecular orbital occupations beta.
         real(dp), intent(out) :: mo_c_b(nbas, nmo_b) !< Molecular orbital coefficients beta.
         integer :: cs
         real(dp) :: ce, co
         integer :: cmo_a
         integer :: cmo_b
         integer :: i, j, ca, cb
+        integer :: idx, ios
+        logical :: coeff_line
 
         cmo_a = 0
         cmo_b = 0
         i = 0
         ca = 0
         cb = 0
+
         do while (i < nmo_a + nmo_b)
-            call readf%next()
-            call readf%parseline('= ')
-            select case(readf%args(1)%s) 
-            case('Spin')
-                select case(readf%args(2)%s)
-                case('Alpha')
-                    cs = 1
-                    cmo_a = cmo_a + 1
-                case('Beta')
-                    cs = 2
-                    cmo_b = cmo_b + 1
+            call readf%next(abort_on_eof=.false.)
+            if (is_iostat_end(readf%iostat)) exit
+            if (len_trim(readf%line) == 0) cycle
+
+            ! Coefficient lines look like "    <idx>   <value>" with no '=' sign.
+            ! Header lines are "Key= value" (Spin/Ene/Occup/Sym).  Decide by the '='.
+            if (index(readf%line, '=') > 0) then
+                call readf%parseline('= ')
+                select case(trim(readf%args(1)%s))
+                case('Spin')
+                    ! A Spin= line marks the start of a new MO.
+                    i = i + 1
+                    if (i > nmo_a + nmo_b) exit
+                    select case(trim(readf%args(2)%s))
+                    case('Alpha')
+                        cs = 1
+                        cmo_a = cmo_a + 1
+                        ca = ca + 1
+                        mo_c_a(:, cmo_a) = 0.0_dp
+                    case('Beta')
+                        cs = 2
+                        cmo_b = cmo_b + 1
+                        cb = cb + 1
+                        mo_c_b(:, cmo_b) = 0.0_dp
+                    end select
+                case('Ene')
+                    read(readf%args(2)%s, *) ce
+                case('Occup')
+                    read(readf%args(2)%s, *) co
+                case('Sym')
+                    ! Sym= is a symmetry label, not a coefficient; ignore.
+                case default
+                    ! Ignore unknown header keys.
                 end select
-            case('Ene')
-                read(readf%args(2)%s, *) ce
-            case('Occup')
-                read(readf%args(2)%s, *) co
-            case('1')
-                i = i + 1
+            else
+                ! Coefficient line: parse "<idx> <value>".
+                call readf%parseline(' ')
+                if (readf%narg < 2) cycle
+                read(readf%args(1)%s, *, iostat=ios) idx
+                if (ios /= 0) cycle
+                if (idx < 1 .or. idx > nbas) cycle
                 if (cs == 1) then
-                    ca = ca + 1
-                    read(readf%args(2)%s, *) mo_c_a(1, cmo_a)
-                    mo_e_a(ca) = ce
-                    mo_o_a(ca) = co
-                else
-                    cb = cb + 1
-                    read(readf%args(2)%s, *) mo_c_b(1, cmo_b)
-                    mo_e_b(cb) = ce
-                    mo_o_b(cb) = co
-                end if
-                do j = 2, nbas
-                    call readf%next()
-                    call readf%parseline('= ')
-                    if (cs == 1) then
-                        read(readf%args(2)%s, *) mo_c_a(j, cmo_a)
-                    else
-                        read(readf%args(2)%s, *) mo_c_b(j, cmo_b)
+                    read(readf%args(2)%s, *, iostat=ios) mo_c_a(idx, cmo_a)
+                    if (ios == 0) then
+                        mo_e_a(cmo_a) = ce
+                        mo_o_a(cmo_a) = co
                     end if
-                end do
-            end select
+                else if (cs == 2) then
+                    read(readf%args(2)%s, *, iostat=ios) mo_c_b(idx, cmo_b)
+                    if (ios == 0) then
+                        mo_e_b(cmo_b) = ce
+                        mo_o_b(cmo_b) = co
+                    end if
+                end if
+            end if
         end do
     end subroutine section_read_mo
 
