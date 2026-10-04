@@ -45,3 +45,22 @@ with at least 20000 non-negligible cells.
 
 Cite the ML-BP dataset from AkimovLab when publishing results
 obtained with this test.
+
+## Functional coverage
+
+Only B3LYP is fetched and run by the shipped test. During development
+the reader was exercised against all seven ML-BP functionals:
+
+| functional | reader | `cis_nto -alg NTO` | notes |
+|---|---|---|---|
+| B3LYP | OK | OK | shipped test |
+| PBE0 | OK | OK | not shipped |
+| BHandHLYP | OK | OK | not shipped |
+| CAM-B3LYP | OK | OK | not shipped |
+| wB97X | OK | OK | not shipped |
+| wB97XD | OK | OK | not shipped |
+| PBEh | OK | fails | upstream DGEMM bug, see ISSUES.md |
+
+The reader itself is functional-independent: it parses the Molden and
+log the same way for all seven. The PBEh failure is in `cis_nto`'s
+NTO construction, not in the reader.
