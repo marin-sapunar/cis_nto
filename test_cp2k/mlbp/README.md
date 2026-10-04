@@ -118,3 +118,34 @@ correct physics, not a bug.
    (dz=0.27 bohr vs dx=0.72 bohr). After `molden_to_cube.py`'s L2
    renormalization the cube integrates to 1.000000.
 4. `compare.sh` ends with `ALL CHECKS PASSED`.
+
+## Comparison with the paper
+
+Table 1 of the ML-BP paper (J. Phys. Chem. Lett., 2024,
+doi:10.1021/acs.jpclett.5c01417) lists the bright-state composition
+per functional:
+
+| functional | state | major transition | contribution |
+|---|---|---|---|
+| PBEh12.5   | 1  | HOMO -> LUMO       | 99.3% |
+| B3LYP      | 1  | HOMO -> LUMO       | 97.9% |
+| PBE0       | 1  | HOMO -> LUMO       | 96.7% |
+| BHandHLYP  | 1  | HOMO -> LUMO       | 83.7% |
+| CAM-B3LYP  | 1  | HOMO -> LUMO       | 76.9% |
+| wB97XD     | 38 | HOMO-3 -> LUMO+5   | 18.5% |
+| wB97X      | 38 | HOMO-5 -> LUMO+7   | 15.3% |
+
+For B3LYP the paper reports S1 = 97.9% HOMO -> LUMO. This test
+measures the S1 dominant NTO occupation as 0.9940, which corresponds
+to 98.8% single-configuration character -- matching the paper to
+within the accuracy of the two different codes.
+
+For wB97X and wB97XD the bright state is not S1 but state 38, so its
+Table 1 entry does not correspond to the S1 NTO occupation measured
+here. This is a paper-convention difference, not a discrepancy.
+
+Figure 2 of the paper shows the NTO pairs (hole and electron) for
+PBEh, PBE0 and wB97X at isosurface value 0.015 bohr^-3, rendered with
+Multiwfn + VMD. The cubes produced by `molden_to_cube.py` are the
+same physical objects; the shipped `render_nto.tcl` script can be used
+for a visual side-by-side comparison.
