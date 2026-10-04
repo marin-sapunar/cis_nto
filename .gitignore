@@ -60,3 +60,24 @@ test_cp2k/mlbp/*_sym_*.txt
 # Adamantane test inputs: fetched from upstream at run time
 test_cp2k/*.molden
 test_cp2k/*.log
+
+# CP2K test outputs
+test_cp2k/std_*.molden
+test_cp2k/nto_*.molden
+test_cp2k/s1_*.molden
+test_cp2k/homo_*.molden
+test_cp2k/lumo_*.molden
+test_cp2k/cubes/
+test_cp2k/__pycache__/
+test_cp2k/*.pyc
+
+test_cp2k/mlbp/*.molden
+test_cp2k/mlbp/*.log
+test_cp2k/mlbp/std_*.molden
+test_cp2k/mlbp/nto_*.molden
+test_cp2k/mlbp/s1_*.molden
+test_cp2k/mlbp/homo_*.molden
+test_cp2k/mlbp/lumo_*.molden
+test_cp2k/mlbp/cubes/
+test_cp2k/mlbp/__pycache__/
+test_cp2k/mlbp/*.pyc

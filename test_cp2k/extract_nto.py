@@ -4,17 +4,18 @@ Extract a single MO block from a molden file.
 
 Usage: extract_nto.py source.molden output.molden <selector>
 
-Selector is either a Sym tag (e.g. "2001a") or a 1-based index.
+Selector is either a 1-based block index or a Sym tag (e.g. "2001a").
 
-Block delimiters:
-  - If the file has Sym= lines, each Sym= starts a new block.
-  - Otherwise each Ene= line starts a new block.
+If the selector parses as an integer in [1, nblocks], that block is used.
+Otherwise a Sym-tag lookup is attempted; if exactly one block matches, it
+is used; if more than one matches, the program aborts (ambiguous Sym tags
+appear in NTO molden files where the same label is emitted once per
+excited state).
 """
 import sys
 
 
 def find_blocks(lines):
-    """Return list of (start, end) index pairs for each MO block."""
     mo_start = None
     for i, l in enumerate(lines):
         if l.strip() == "[MO]":
@@ -27,7 +28,6 @@ def find_blocks(lines):
                  if lines[i].strip().startswith("Sym=")]
     ene_lines = [i for i in range(mo_start, len(lines))
                  if lines[i].strip().startswith("Ene=")]
-
     delims = sym_lines if sym_lines else ene_lines
     if not delims:
         return []
@@ -49,7 +49,6 @@ def get_sym(lines, start, end):
 def extract(src, dst, selector):
     lines = open(src).readlines()
 
-    # Header: everything up to and including the first [MO]
     header = []
     for i, l in enumerate(lines):
         header.append(l)
@@ -60,21 +59,25 @@ def extract(src, dst, selector):
     print(f"Found {len(blocks)} MO blocks in {src}")
 
     chosen = None
-    for s, e in blocks:
-        sym = get_sym(lines, s, e)
-        if sym == selector:
-            chosen = (s, e)
-            print(f"Matched by Sym={selector}")
-            break
+
+    try:
+        idx = int(selector)
+        if 1 <= idx <= len(blocks):
+            chosen = blocks[idx - 1]
+            print(f"Matched by index {selector}")
+    except ValueError:
+        pass
 
     if chosen is None:
-        try:
-            idx = int(selector)
-            if 1 <= idx <= len(blocks):
-                chosen = blocks[idx - 1]
-                print(f"Matched by index {selector}")
-        except ValueError:
-            pass
+        matches = [b for b in blocks if get_sym(lines, b[0], b[1]) == selector]
+        if len(matches) == 1:
+            chosen = matches[0]
+            print(f"Matched by Sym={selector}")
+        elif len(matches) > 1:
+            raise SystemExit(
+                f"Selector {selector!r} matches {len(matches)} blocks in {src}. "
+                f"Pass a 1-based block index instead."
+            )
 
     if chosen is None:
         raise SystemExit(f"Selector {selector!r} not found in {src}")
@@ -88,6 +91,6 @@ def extract(src, dst, selector):
 
 if __name__ == "__main__":
     if len(sys.argv) != 4:
-        print("Usage: extract_nto.py source.molden output.molden <sym|index>")
+        print("Usage: extract_nto.py source.molden output.molden <index|sym>")
         sys.exit(1)
     extract(sys.argv[1], sys.argv[2], sys.argv[3])
