@@ -1,17 +1,22 @@
 #!/usr/bin/env python3
 """
-Compare leading-transition weights and oscillator strengths from a
-CP2K TDDFPT log against reference values.
+Parse a CP2K TDDFPT log's 'Excitation analysis' block and compare the
+leading HOMO->LUMO transition amplitude for a chosen state against a
+user-supplied reference value.
 
 Usage:
-    validate_against_paper.py <cp2k_log> <state> [weight] [f_osc]
+    validate_against_paper.py <cp2k_log> <state> [ref_weight]
 
-If the log contains an 'Excitation analysis' block, the function prints
-the parsed transition list for the requested state, and — if a
-reference weight is given — checks it to 1e-3.
+<cp2k_log> is the CP2K output file (NOT the cis_nto banner; those are
+written as nto_<tag>.log and do not contain the excitation analysis).
+<state> is 1-based. If [ref_weight] is given, the script checks the
+leading HOMO->LUMO amplitude against it to 1e-3 and exits nonzero on
+mismatch. If omitted, the script just prints the parsed transitions.
 
-The reference values used by the shipped test come from the ML-BP
-dataset's published tables; see test_cp2k/README.md.
+Reference values must be supplied by the user. They depend on the
+system and on the quantity the user wants to compare — the CP2K log
+reports raw CI coefficients, which are not necessarily identical to
+the state-averaged weights printed in a paper's Table 1.
 
 Exit code: 0 on success, 1 on mismatch, 2 on parse failure.
 """

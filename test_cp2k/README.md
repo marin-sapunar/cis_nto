@@ -110,8 +110,10 @@ MOs, 896 Cartesian AOs).
   (refuses ambiguous Sym matches)
 - `molden_to_cube.py` - evaluates a single-MO Molden on a 3D grid and
   writes a Gaussian cube (with L2 normalization)
-- `validate_against_paper.py` - standalone tool for comparing CP2K log
-  leading-transition weights against user-supplied reference values
+- `validate_against_paper.py` - standalone tool: parses the CP2K log's
+  `Excitation analysis` block and compares a state's leading transition
+  amplitude against a user-supplied reference value. Not called by
+  `compare.sh`.
 - `compare_nto.py` - overlap between two Molden coefficient vectors
 - `make_grid.py` - grid helper
 - `render_all.tcl`, `render_nto.tcl` - VMD rendering
