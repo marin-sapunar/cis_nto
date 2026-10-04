@@ -75,5 +75,6 @@ PYEOF
 done
 
 echo
+
 if [ "$fail" -eq 0 ]; then echo "  ALL CHECKS PASSED"; exit 0
 else echo "  $fail CHECK(S) FAILED"; exit 1; fi
