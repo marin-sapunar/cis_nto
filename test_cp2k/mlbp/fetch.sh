@@ -18,14 +18,25 @@ cd "$HERE"
 BASE="https://raw.githubusercontent.com/AkimovLab/Project_MLBP_excitonic/main/step3"
 TARBALL="${FUNC}_50_states.tar.gz"
 
-# Check if a directory for this functional already exists (any name)
+# Mapping from tarball functional name to the directory CP2K's tarball
+# actually creates. Some entries differ in case, use an underscore, or
+# contain a typo in the upstream tarball.
+case "$FUNC" in
+    B3LYP)      DIRNAME="." ;;
+    PBEh0125)   DIRNAME="PBEh0125_50states" ;;
+    BHandHLYP)  DIRNAME="BHandHLYP_50states" ;;
+    PBE0)       DIRNAME="PBE0_50_states" ;;
+    CAM_B3LYP)  DIRNAME="CAM_B3LYP_50_states" ;;
+    wB97X)      DIRNAME="wB97X_50_states" ;;
+    wB97XD)     DIRNAME="wb97XD_50_staes" ;;
+    *)          DIRNAME="${FUNC}_50_states" ;;
+esac
+
+# Check if the directory for this functional already exists
 existing=""
-for d in ${FUNC}*/ ; do
-    if [ -d "$d" ]; then
-        existing="$d"
-        break
-    fi
-done
+if [ -d "$DIRNAME" ]; then
+    existing="$DIRNAME/"
+fi
 
 if [ -n "$existing" ] && [ -f "${existing}out.log" ]; then
     echo "Already extracted: $existing"

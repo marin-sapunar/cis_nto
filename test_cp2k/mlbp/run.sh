@@ -31,6 +31,22 @@ case "$FUNC" in
         MOLDEN="BHandHLYP_50states/Bhand_opted-MOS-1_0.molden"
         LOG="BHandHLYP_50states/out.log"
         ;;
+    PBE0)
+        MOLDEN="PBE0_50_states/PBE0_OPTED-MOS-1_0.molden"
+        LOG="PBE0_50_states/out.log"
+        ;;
+    CAM_B3LYP)
+        MOLDEN="CAM_B3LYP_50_states/CAM_B3LYP_OPTED-MOS-1_0.molden"
+        LOG="CAM_B3LYP_50_states/out.log"
+        ;;
+    wB97X)
+        MOLDEN="wB97X_50_states/wB97x_opted-MOS-1_0.molden"
+        LOG="wB97X_50_states/out.log"
+        ;;
+    wB97XD)
+        MOLDEN="wb97XD_50_staes/w97x_d_opted-MOS-1_0.molden"
+        LOG="wb97XD_50_staes/out.log"
+        ;;
     *)
         # Generic fallback: find the first Molden under a matching directory
         dir=""
