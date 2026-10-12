@@ -86,9 +86,12 @@ echo "  NTO log:    nto_${TAG}.log"
 echo "  NTO Molden: nto_${TAG}.molden"
 
 echo
-echo "===== Reconstruction notice ====="
+echo "===== Reconstruction notice (from nto_${TAG}.log) ====="
 grep -E "log references|molden contains|reconstruction method|dropping|FATAL" \
     "nto_${TAG}.log" || echo "(no reconstruction notice)"
+echo
+echo "Full reader output: nto_${TAG}.log"
+echo "Structured record:  results.json (after 'python3 aggregate.py')"
 
 echo
 echo "===== Dominant NTO pair ====="
