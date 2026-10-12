@@ -96,24 +96,27 @@ AkimovLab dataset.
   TDDFPT `Excitation analysis` block. This is what `cis_nto -in cp2k`
   reads alongside the Molden.
 
-**Why the `ADDED_MOS` warning is expected.** CP2K <= 2024.1 does not
-write the `&MO_MOLDEN ADDED_MOS` virtuals into the Molden file. The
-log therefore references more MOs (1504) than the Molden contains
-(832). The reader caps `added_mos` at the Molden's actual MO count and
-prints:
+**What the `ADDED_MOS` notice means.** CP2K <= 2024.1 does not write the
+`&MO_MOLDEN ADDED_MOS` virtuals into the Molden file. The log therefore
+references more MOs (1504) than the Molden contains (832). The reader
+detects the mismatch and invokes `cp2k_virtuals_mod` to handle it:
 
-    Warning in cp2k_read_cis:
-      CIS log references 1504 MOs
-      molden contains 832 MOs
-      capping added_mos to 0
+    Notice in cp2k_read_cis:
+      log references : 1504 MOs
+      molden contains: 832 MOs
+      reconstruction method: truncated
+      dropping 672 virtuals
 
-This warning is **not** a failure. It is the reader doing the right
-thing: silently accepting a mismatch would corrupt the CIS vectors.
-You should see this warning once per run, before the NTO construction
-starts.
+The current strategy is **consistent truncation**: the missing virtuals
+are dropped from both bra and ket so the CIS vectors remain
+well-defined and the NTO construction can proceed. Future revisions
+will add RESTART.wfn-based reconstruction, which reads `<project>.wfn`
+to recover the missing virtuals rather than discarding them.
 
-**Why the S1 NTO cubes match the HOMO/LUMO cubes.** B3LYP S1 is
-99.4% a single HOMO->LUMO transition. The dominant occupied NTO is
+This notice is **not** a failure. Silently accepting the mismatch would
+corrupt the CIS vectors; the reader instead reduces the virtual space
+to what the Molden can represent and reports the loss. If truncation
+leaves zero virtuals, the run aborts with a diagnostic (Issue #5).
 therefore essentially the HOMO and the dominant virtual NTO is
 essentially the LUMO. The cube files agree to ~4 decimals. This is
 correct physics, not a bug.

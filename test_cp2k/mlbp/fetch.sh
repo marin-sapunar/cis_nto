@@ -1,24 +1,35 @@
 #!/usr/bin/env bash
 #
-# Fetch the ML-BP B3LYP test input from the AkimovLab repository.
+# Fetch an ML-BP test input from the AkimovLab repository.
+#
+# Usage:
+#   bash fetch.sh              # default: B3LYP
+#   bash fetch.sh PBEh0125     # any of the seven upstream tarballs
 #
 # Source: https://github.com/AkimovLab/Project_MLBP_excitonic
-# The upstream repository stores CP2K output in .tar.gz archives.
 #
 set -eu
+
+FUNC="${1:-B3LYP}"
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
 cd "$HERE"
 
 BASE="https://raw.githubusercontent.com/AkimovLab/Project_MLBP_excitonic/main/step3"
-TARBALL="B3LYP_50_states.tar.gz"
-EXTRACTED_DIR="B3LYP_50states"
-MOLDEN="b3lyp_opted-MOS-1_0.molden"
-LOG="out.log"
+TARBALL="${FUNC}_50_states.tar.gz"
 
-if [ -f "$MOLDEN" ] && [ -f "$LOG" ]; then
-    echo "Input already present:"
-    ls -la "$MOLDEN" "$LOG"
+# Check if a directory for this functional already exists (any name)
+existing=""
+for d in ${FUNC}*/ ; do
+    if [ -d "$d" ]; then
+        existing="$d"
+        break
+    fi
+done
+
+if [ -n "$existing" ] && [ -f "${existing}out.log" ]; then
+    echo "Already extracted: $existing"
+    ls -la "$existing"
     exit 0
 fi
 
@@ -27,26 +38,26 @@ curl -fsSL -o "$TARBALL" "$BASE/$TARBALL"
 
 echo "Extracting ..."
 tar -xzf "$TARBALL"
+rm -f "$TARBALL"
 
-# Locate the two files
-molden_src=$(find . -name "$MOLDEN" -print -quit)
-log_src=$(find . -name "$LOG" -print -quit)
+# Find the directory the tarball extracted to
+extracted=""
+for d in ${FUNC}*/ ; do
+    if [ -d "$d" ] && [ -f "${d}out.log" ]; then
+        extracted="$d"
+        break
+    fi
+done
 
-if [ -z "$molden_src" ] || [ -z "$log_src" ]; then
-    echo "ERROR: expected files not found in tarball"
-    echo "  Wanted: $MOLDEN and $LOG"
+if [ -z "$extracted" ]; then
+    echo "ERROR: could not find extracted directory for $FUNC"
+    echo "Contents of current directory:"
+    ls -la
     exit 1
 fi
 
-mv "$molden_src" "$MOLDEN"
-mv "$log_src" "$LOG"
-
-# Clean up
-rm -rf "$EXTRACTED_DIR"
-rm -f "$TARBALL"
-
 echo
-echo "Done:"
-ls -la "$MOLDEN" "$LOG"
+echo "Done. Files in $extracted:"
+ls -la "$extracted"
 echo
-echo "Next: bash run.sh"
+echo "Next: run 'bash run.sh $FUNC' (after updating the case block)."
