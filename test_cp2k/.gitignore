@@ -4,3 +4,7 @@ mlbp/*_50states/
 mlbp/*_50_staes/
 mlbp/*.tar.gz
 mlbp/cubes/
+
+# Adamantane-family inputs — fetched at run time from AkimovLab
+*.molden
+*.log
