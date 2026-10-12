@@ -24,8 +24,21 @@ wB97XD), each with 50 TDDFPT excited states.
   coefficients; the reader places each coefficient at its true AO
   index.
 - **`ADDED_MOS` virtual mismatch** - CP2K <= 2024.1 does not write the
-  `&MO_MOLDEN ADDED_MOS` virtuals into the Molden, so the reader caps
-  `added_mos` at the Molden's actual MO count and issues a warning.
+  `&MO_MOLDEN ADDED_MOS` virtuals into the Molden. The reader detects the
+  mismatch and invokes `cp2k_virtuals_mod` to reconstruct or consistently
+  truncate the virtual space, then reports which strategy was used:
+
+      Notice in cp2k_read_cis:
+        log references : 1504 MOs
+        molden contains: 832 MOs
+        reconstruction method: truncated
+        dropping 672 virtuals
+
+  Three strategies are tried in order: (1) read `<project>-RESTART.wfn` for
+  the full MO set, (2) require an augmented Molden, (3) drop the missing
+  virtuals from both bra and ket so the overlap stays well-defined. If the
+  truncation leaves zero virtuals, the run aborts with a diagnostic instead
+  of entering an infinite DGEMM loop (Issue #5).
 
 ## Running
 

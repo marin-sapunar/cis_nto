@@ -33,6 +33,7 @@ module cp2k_read_mod
     use file_mod, only : reader
     use molden_read_mod
     use cp2k_sections_mod
+    use cp2k_virtuals_mod, only : reconstruct_virtuals, reconstruction_info
     implicit none
 
     private
@@ -182,10 +183,11 @@ contains
 
         type(reader) :: readf
         integer :: nocc, nmo_scf, added_mos, nstates, nvir, ntot
-        integer :: nmo_molden, n_capped
+        integer :: nmo_molden
         integer, allocatable :: n_excitations(:), occ_indices(:,:), virt_indices(:,:)
         real(dp), allocatable :: exc_energies(:), ci_amplitudes(:,:)
         integer :: istate, j, occ, virt, idx
+        type(reconstruction_info) :: recon_info
 
         call cp2k_split_paths(path, molden_path, log_path)
 
@@ -214,21 +216,43 @@ contains
             call abort()
         end if
         if (nmo_scf + added_mos > nmo_molden) then
-            n_capped = max(0, nmo_molden - nmo_scf)
-            write(*, '(A)') 'Warning in cp2k_read_cis:'
-            write(*, '(A,I0)') '  CIS log references ', nmo_scf + added_mos, ' MOs'
-            write(*, '(A,I0)') '  molden contains ',      nmo_molden, ' MOs'
-            write(*, '(A,I0)') '  capping added_mos to ', n_capped
-            write(*, '(A)') '  (CP2K <= 2024.1 does not write &MO_MOLDEN added virtuals.'
-            write(*, '(A)') '   Set ADDED_MOS inside &MO_MOLDEN to include them.)'
-            added_mos = n_capped
+            write(*, '(A)') 'Notice in cp2k_read_cis:'
+            write(*, '(A,I0)') '  log references : ', nmo_scf + added_mos, ' MOs'
+            write(*, '(A,I0)') '  molden contains: ', nmo_molden, ' MOs'
+
+            call reconstruct_virtuals(molden_path, log_path, nmo_scf, nocc, &
+                                      added_mos, recon_info)
+            write(*, '(A)') '  reconstruction method: ' // recon_info%method
+
+            if (recon_info%method == "restart" .and. .not. recon_info%success) then
+                write(*, '(A)') '  RESTART.wfn parser not yet implemented; truncating.'
+                recon_info%method = "truncated"
+                recon_info%n_dropped = max(0, nmo_scf + added_mos - nmo_molden)
+            end if
+
+            if (recon_info%method == "truncated") then
+                write(*, '(A,I0)') '  dropping ', recon_info%n_dropped, ' virtuals'
+                added_mos = max(0, nmo_molden - nmo_scf)
+                recon_info%success = .true.
+            end if
         end if
 
         nvir = (nmo_scf + added_mos) - nocc
         ntot =  nmo_scf + added_mos
 
         if (nvir < 1) then
-            write(stderr, *) 'Error in cp2k_read_cis: nvir <= 0. Check nocc/nmo.'
+            write(stderr, *) '============================================================='
+            write(stderr, *) 'FATAL: no virtual orbitals available for WFO calculation.'
+            write(stderr, '(A,I0)') '  nocc  = ', nocc
+            write(stderr, '(A,I0)') '  nmo   = ', nmo_scf + added_mos
+            write(stderr, '(A,I0)') '  nvir  = ', nvir
+            write(stderr, *) ''
+            write(stderr, *) 'This usually means the CP2K Molden omitted ADDED_MOS virtuals.'
+            write(stderr, *) 'Options:'
+            write(stderr, *) '  1. Re-run CP2K with &MO_MOLDEN ADDED_MOS <N> to write them.'
+            write(stderr, *) '  2. Provide a RESTART.wfn for virtual reconstruction.'
+            write(stderr, *) '  3. Use a smaller basis where all virtuals fit in the Molden.'
+            write(stderr, *) '============================================================='
             call abort()
         end if
 
