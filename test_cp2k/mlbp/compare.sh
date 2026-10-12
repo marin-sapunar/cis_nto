@@ -69,3 +69,10 @@ done
 echo
 if [ "$fail" -eq 0 ]; then echo "  ALL CHECKS PASSED"; exit 0
 else echo "  $fail CHECK(S) FAILED"; exit 1; fi
+
+# Aggregate across all functional runs into results.json
+if [ -f "$HERE/aggregate.py" ]; then
+    echo
+    echo "===== Aggregating all functional runs ====="
+    python3 "$HERE/aggregate.py"
+fi

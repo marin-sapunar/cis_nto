@@ -1,0 +1,148 @@
+{
+  "schema_version": "1.0",
+  "generated_utc": "2026-10-12T06:26:27+00:00",
+  "dataset": "ML-BP (AkimovLab/Project_MLBP_excitonic, step3)",
+  "paper_doi": "10.1021/acs.jpclett.5c01417",
+  "functionals": [
+    {
+      "functional": "PBEh0125",
+      "state": 1,
+      "reconstruction": {
+        "log_references": 1504,
+        "molden_contains": 832,
+        "method": "truncated",
+        "n_dropped": 672
+      },
+      "nto": {
+        "dominant_occupied_nto": 0.998384,
+        "dominant_virtual_nto": 0.99686
+      },
+      "paper": {
+        "state": 1,
+        "value": 0.993,
+        "note": "HOMO -> LUMO"
+      },
+      "delta_paper": 0.005384
+    },
+    {
+      "functional": "B3LYP",
+      "state": 1,
+      "reconstruction": {
+        "log_references": 1504,
+        "molden_contains": 832,
+        "method": "truncated",
+        "n_dropped": 672
+      },
+      "nto": {
+        "dominant_occupied_nto": 0.994035,
+        "dominant_virtual_nto": 0.989472
+      },
+      "paper": {
+        "state": 1,
+        "value": 0.979,
+        "note": "HOMO -> LUMO"
+      },
+      "delta_paper": 0.015035
+    },
+    {
+      "functional": "PBE0",
+      "state": 1,
+      "reconstruction": {
+        "log_references": 1504,
+        "molden_contains": 832,
+        "method": "truncated",
+        "n_dropped": 672
+      },
+      "nto": {
+        "dominant_occupied_nto": 0.990963,
+        "dominant_virtual_nto": 0.983552
+      },
+      "paper": {
+        "state": 1,
+        "value": 0.967,
+        "note": "HOMO -> LUMO"
+      },
+      "delta_paper": 0.023963
+    },
+    {
+      "functional": "BHandHLYP",
+      "state": 1,
+      "reconstruction": {
+        "log_references": 1504,
+        "molden_contains": 832,
+        "method": "truncated",
+        "n_dropped": 672
+      },
+      "nto": {
+        "dominant_occupied_nto": 0.679452,
+        "dominant_virtual_nto": 0.914883
+      },
+      "paper": {
+        "state": 1,
+        "value": 0.837,
+        "note": "HOMO -> LUMO"
+      },
+      "delta_paper": -0.157548
+    },
+    {
+      "functional": "CAM_B3LYP",
+      "state": 1,
+      "reconstruction": {
+        "log_references": 1504,
+        "molden_contains": 832,
+        "method": "truncated",
+        "n_dropped": 672
+      },
+      "nto": {
+        "dominant_occupied_nto": 0.90077,
+        "dominant_virtual_nto": 0.87747
+      },
+      "paper": {
+        "state": 1,
+        "value": 0.769,
+        "note": "HOMO -> LUMO"
+      },
+      "delta_paper": 0.13177
+    },
+    {
+      "functional": "wB97XD",
+      "state": 1,
+      "reconstruction": {
+        "log_references": 1504,
+        "molden_contains": 832,
+        "method": "truncated",
+        "n_dropped": 672
+      },
+      "nto": {
+        "dominant_occupied_nto": 0.752114,
+        "dominant_virtual_nto": 0.783141
+      },
+      "paper": {
+        "state": 38,
+        "value": 0.185,
+        "note": "HOMO-3 -> LUMO+5"
+      },
+      "delta_paper": null
+    },
+    {
+      "functional": "wB97X",
+      "state": 1,
+      "reconstruction": {
+        "log_references": 1504,
+        "molden_contains": 832,
+        "method": "truncated",
+        "n_dropped": 672
+      },
+      "nto": {
+        "dominant_occupied_nto": 0.721681,
+        "dominant_virtual_nto": 0.770563
+      },
+      "paper": {
+        "state": 38,
+        "value": 0.153,
+        "note": "HOMO-5 -> LUMO+7"
+      },
+      "delta_paper": null
+    }
+  ]
+}
