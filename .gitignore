@@ -55,3 +55,4 @@ test_cp2k/*.pyc
 
 test_cp2k/mlbp/__pycache__/
 test_cp2k/mlbp/*.pyc
+*.bak
