@@ -1,0 +1,27 @@
+# ML-BP test data — fetched at run time by fetch.sh, not vendored
+# (see fetch.sh and README.md for details)
+B3LYP_50_states/
+BHandHLYP_50states/
+CAM_B3LYP_50_states/
+PBE0_50_states/
+PBEh0125_50states/
+wB97X_50_states/
+wb97XD_50_staes/
+
+# Individual fetched files at the top level
+b3lyp_opted-MOS-1_0.molden
+out.log
+
+# Produced artifacts
+nto_*.log
+nto_*.molden
+std_*.molden
+run_*.log
+cubes/
+
+# Backups from local edits
+*.bak
+*.bak2
+*.bak3
+*.bak4
+*.truncated

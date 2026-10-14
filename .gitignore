@@ -1,3 +1,37 @@
-build
-test/test_cases/logs*
-*swp
+# Build artifacts
+build/
+*.o
+*.mod
+*.a
+
+# Editor / OS
+*.bak
+*.swp
+*~
+.DS_Store
+Thumbs.db
+
+# Windows Zone.Identifier files
+*:Zone.Identifier
+
+# Test input data — fetched at runtime by fetch.sh
+# Keep scripts, markdown docs, and results.json tracked.
+test_cp2k/*.molden
+test_cp2k/*.log
+test_cp2k/*.cube
+test_cp2k/cubes/*.cube
+test_cp2k/mlbp/*.molden
+test_cp2k/mlbp/*.log
+test_cp2k/mlbp/*.cube
+test_cp2k/mlbp/*.wfn
+test_cp2k/mlbp/cubes/*.cube
+
+# Explicit keeps (defensive; gitignore order matters)
+!test_cp2k/*.md
+!test_cp2k/*.sh
+!test_cp2k/*.py
+!test_cp2k/mlbp/*.md
+!test_cp2k/mlbp/*.sh
+!test_cp2k/mlbp/*.py
+!test_cp2k/mlbp/results.json
+*.bak_pre_*
