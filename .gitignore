@@ -34,3 +34,4 @@ test_cp2k/mlbp/cubes/*.cube
 !test_cp2k/mlbp/*.sh
 !test_cp2k/mlbp/*.py
 !test_cp2k/mlbp/results.json
+*.bak_pre_*
