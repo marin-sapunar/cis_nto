@@ -1,8 +1,9 @@
 {
-  "schema_version": "1.0",
-  "generated_utc": "2026-10-12T06:26:27+00:00",
+  "schema_version": "1.1",
+  "generated_utc": "2026-10-14T08:26:49+00:00",
   "dataset": "ML-BP (AkimovLab/Project_MLBP_excitonic, step3)",
   "paper_doi": "10.1021/acs.jpclett.5c01417",
+  "notes": "delta_paper is computed against the leading single-excitation weight (max_ia X_ia^2), the quantity reported by the paper. NTO eigenvalues are reported as supplemental information and are not directly comparable to the paper.",
   "functionals": [
     {
       "functional": "PBEh0125",
@@ -13,16 +14,23 @@
         "method": "truncated",
         "n_dropped": 672
       },
+      "leading_ci_weight": {
+        "leading_weight": 0.9934507584000001,
+        "leading_occ": 160,
+        "leading_vir": 161,
+        "total_weight": 0.9997258335260003,
+        "n_excitations": 196
+      },
       "nto": {
-        "dominant_occupied_nto": 0.998384,
-        "dominant_virtual_nto": 0.99686
+        "leading_nto_eigenvalue": 0.99686,
+        "second_nto_eigenvalue": 0.99686
       },
       "paper": {
         "state": 1,
         "value": 0.993,
         "note": "HOMO -> LUMO"
       },
-      "delta_paper": 0.005384
+      "delta_paper": 0.000451
     },
     {
       "functional": "B3LYP",
@@ -33,16 +41,17 @@
         "method": "truncated",
         "n_dropped": 672
       },
+      "leading_ci_weight": null,
       "nto": {
-        "dominant_occupied_nto": 0.994035,
-        "dominant_virtual_nto": 0.989472
+        "leading_nto_eigenvalue": 0.989472,
+        "second_nto_eigenvalue": 0.989472
       },
       "paper": {
         "state": 1,
         "value": 0.979,
         "note": "HOMO -> LUMO"
       },
-      "delta_paper": 0.015035
+      "delta_paper": null
     },
     {
       "functional": "PBE0",
@@ -53,16 +62,23 @@
         "method": "truncated",
         "n_dropped": 672
       },
+      "leading_ci_weight": {
+        "leading_weight": 0.9670224571290001,
+        "leading_occ": 160,
+        "leading_vir": 161,
+        "total_weight": 0.9996556393350011,
+        "n_excitations": 302
+      },
       "nto": {
-        "dominant_occupied_nto": 0.990963,
-        "dominant_virtual_nto": 0.983552
+        "leading_nto_eigenvalue": 0.983552,
+        "second_nto_eigenvalue": 0.983552
       },
       "paper": {
         "state": 1,
         "value": 0.967,
         "note": "HOMO -> LUMO"
       },
-      "delta_paper": 0.023963
+      "delta_paper": 2.2e-05
     },
     {
       "functional": "BHandHLYP",
@@ -73,16 +89,23 @@
         "method": "truncated",
         "n_dropped": 672
       },
+      "leading_ci_weight": {
+        "leading_weight": 0.8365480369000001,
+        "leading_occ": 160,
+        "leading_vir": 161,
+        "total_weight": 0.999494926561999,
+        "n_excitations": 639
+      },
       "nto": {
-        "dominant_occupied_nto": 0.679452,
-        "dominant_virtual_nto": 0.914883
+        "leading_nto_eigenvalue": 0.914883,
+        "second_nto_eigenvalue": 0.914883
       },
       "paper": {
         "state": 1,
         "value": 0.837,
         "note": "HOMO -> LUMO"
       },
-      "delta_paper": -0.157548
+      "delta_paper": -0.000452
     },
     {
       "functional": "CAM_B3LYP",
@@ -93,16 +116,23 @@
         "method": "truncated",
         "n_dropped": 672
       },
+      "leading_ci_weight": {
+        "leading_weight": 0.769469313636,
+        "leading_occ": 160,
+        "leading_vir": 161,
+        "total_weight": 0.9994469313970001,
+        "n_excitations": 706
+      },
       "nto": {
-        "dominant_occupied_nto": 0.90077,
-        "dominant_virtual_nto": 0.87747
+        "leading_nto_eigenvalue": 0.87747,
+        "second_nto_eigenvalue": 0.87747
       },
       "paper": {
         "state": 1,
         "value": 0.769,
         "note": "HOMO -> LUMO"
       },
-      "delta_paper": 0.13177
+      "delta_paper": 0.000469
     },
     {
       "functional": "wB97XD",
@@ -113,9 +143,16 @@
         "method": "truncated",
         "n_dropped": 672
       },
+      "leading_ci_weight": {
+        "leading_weight": 0.6129261468160001,
+        "leading_occ": 160,
+        "leading_vir": 161,
+        "total_weight": 0.999524497105,
+        "n_excitations": 935
+      },
       "nto": {
-        "dominant_occupied_nto": 0.752114,
-        "dominant_virtual_nto": 0.783141
+        "leading_nto_eigenvalue": 0.783141,
+        "second_nto_eigenvalue": 0.783141
       },
       "paper": {
         "state": 38,
@@ -133,9 +170,16 @@
         "method": "truncated",
         "n_dropped": 672
       },
+      "leading_ci_weight": {
+        "leading_weight": 0.5932989270810001,
+        "leading_occ": 160,
+        "leading_vir": 161,
+        "total_weight": 0.9993871322640009,
+        "n_excitations": 1236
+      },
       "nto": {
-        "dominant_occupied_nto": 0.721681,
-        "dominant_virtual_nto": 0.770563
+        "leading_nto_eigenvalue": 0.770563,
+        "second_nto_eigenvalue": 0.770563
       },
       "paper": {
         "state": 38,
