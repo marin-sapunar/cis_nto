@@ -1,5 +1,6 @@
 module linalg_wrapper_mod
     use global_defs
+    use, intrinsic :: iso_fortran_env, only : int32, int64
     implicit none
     private
 

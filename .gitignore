@@ -1,3 +1,14 @@
 build
 test/test_cases/logs*
 *swp
+
+# Build artifacts and logs
+*.log
+*.log.*
+build.configure.log
+build.log
+
+# GPU prototype (not part of the OpenBLAS PR)
+src/util_chem/l2m/*_gpu.c
+src/util_chem/l2m/*_gpu.h
+src/util_chem/l2m/test_minors.c

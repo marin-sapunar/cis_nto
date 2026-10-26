@@ -232,7 +232,7 @@ contains
             write(stdout, '(9x, a40, f14.4)') 'NTO generation            - time (sec):', time_nto
             write(stdout, '(9x, a40, f14.4)') 'Determinant blocks        - time (sec):', time_det
             write(stdout, '(9x, 40x, a14)') '--------------'
-            write(stdout, '(9x, a40, f14.4)') 'Total                     - time (sec):', time_tot
+            write(stdout, '(9x, a40, f14.4)') 'Total WF overlap          - time (sec):', time_tot
         end if
         if (print_level >= 2) then
             write(stdout, *) 

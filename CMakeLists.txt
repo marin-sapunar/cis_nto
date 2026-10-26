@@ -57,6 +57,7 @@ enable_language (C)
 ###################################################################################################
 # Libraries.                                                                                      #
   add_definitions(-DLINALG=1)
+  add_definitions(-DL2M=ON)
   if(LINALG STREQUAL "LAPACK")
     if (BLAS_64)
       set(BLA_SIZEOF_INTEGER 8)
@@ -76,6 +77,7 @@ enable_language (C)
     find_package(MKL CONFIG REQUIRED)
     set(LINALG_LIBS MKL::MKL)
     add_definitions(-DMKL=1)
+    add_definitions(-DLINALG_F95=1)
   endif()
 
 
@@ -94,9 +96,16 @@ enable_language (C)
 
 ################################################################################
 # Build                                                                        #
-  file(GLOB SOURCES_UTIL "src/util_chem/*/*f90" "src/util_fort/*f90")
+  file(GLOB SOURCES_UTIL
+      "src/util_chem/atom/*f90"
+      "src/util_chem/basis/*f90"
+      "src/util_chem/cis/*f90"
+      "src/util_chem/io/*f90"
+      "src/util_fort/*f90")
   add_library(theochemutil STATIC ${SOURCES_UTIL})
   target_link_libraries(theochemutil ${LINALG_LIBS})
+
+  file(GLOB SOURCES_PROG "src/overlap/*f90")
 
   file(GLOB SOURCES_OLAP "src/overlap/*f90" "src/l2m/*c")
   file(GLOB SOURCES_CONV "src/convert/*f90")
@@ -114,6 +123,22 @@ enable_language (C)
   target_link_libraries(cis_nto.exe theochemutil ${LINKLIBS})
   target_link_libraries(cis_overlap.exe theochemutil ${LINKLIBS})
   target_link_libraries(convert.exe theochemutil ${LINKLIBS})
+
+  add_executable(cis_overlap-opt-gauss.exe ${SOURCES_PROG} 
+      src/util_chem/l2m/getlvl2minors_opt.c
+      src/util_chem/l2m/ssblock_opt.c 
+      src/util_chem/l2m/determinants.c 
+      src/util_chem/l2m/c_wrapper_opt.c)
+  set_target_properties(cis_overlap-opt-gauss.exe PROPERTIES COMPILE_FLAGS "-DGAUSS")
+  target_link_libraries(cis_overlap-opt-gauss.exe theochemutil ${LINKLIBS})
+
+  add_executable(cis_overlap-opt-givens.exe ${SOURCES_PROG} 
+      src/util_chem/l2m/getlvl2minors_opt.c
+      src/util_chem/l2m/ssblock_opt.c 
+      src/util_chem/l2m/determinants.c 
+      src/util_chem/l2m/c_wrapper_opt.c)
+  set_target_properties(cis_overlap-opt-givens.exe PROPERTIES COMPILE_FLAGS "-DGIVENS")
+  target_link_libraries(cis_overlap-opt-givens.exe theochemutil ${LINKLIBS})
 
 ################################################################################
 # Check                                                                        #
