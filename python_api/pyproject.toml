@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cis-nto"
+version = "1.0.0"
+description = "Python API for cis_nto: overlap calculator for CI/MR-CISD wavefunctions"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [{name = "Hamid Zabihi"}, {name = "Marin Sapunar"}]
+dependencies = ["numpy>=1.20", "h5py>=3.0", "scipy>=1.7"]
+
+[project.optional-dependencies]
+libra = ["libra-py"]
+test = ["pytest>=7.0", "pytest-cov"]
+
+[project.urls]
+Repository = "https://github.com/marin-sapunar/cis_nto"

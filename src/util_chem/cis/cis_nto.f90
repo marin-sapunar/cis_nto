@@ -42,6 +42,18 @@ contains
         real(dp) :: wrk_c(nv, no) !< Array for CI coefficients
         real(dp) :: wrk_o(no, no) !< Array for occupied NTOs
         real(dp) :: wrk_v(nv, no) !< Array for virtual NTOs
+
+        if (nv <= 0) then
+            write(stderr, *) 'Error in cis_nto_1state: nv = ', nv
+            write(stderr, *) 'No virtual orbitals to construct NTOs from.'
+            write(stderr, *) 'Check the input wave function dimensions.'
+            call abort()
+        end if
+        if (no <= 0) then
+            write(stderr, *) 'Error in cis_nto_1state: no = ', no
+            call abort()
+        end if
+
         wrk_c = wf(:, :)
         call gesvd(wrk_c, s=nto_c, u=wrk_v, vt=wrk_o)
         nto_mo(1:no, 1:no) = transpose(wrk_o)

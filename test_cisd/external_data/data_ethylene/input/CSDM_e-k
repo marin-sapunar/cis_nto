@@ -1,0 +1,37 @@
+printlevel 2
+
+geomfile "geom"
+veloc external
+velocfile "veloc"
+
+nstates 3 0 0 
+actstates 2 0 0 
+charge 0 1 0 
+state 2 mch
+coeff auto
+rngseed 201
+
+ezero     -78.0486221467
+tmax 81.000000
+stepsize 0.100000
+nsubsteps 200
+integrator fvv
+
+method scp
+surf diagonal
+coupling ktdc
+nogradcorrect
+pointer_basis diag
+neom_rep diag
+neom gdiff
+decoherence_scheme dom
+switching_procedure CSDM
+decotime_method csdm
+nospinorbit
+output_format ascii
+output_dat_steps 1
+
+
+ktdc_method energy
+
+nac_projection
