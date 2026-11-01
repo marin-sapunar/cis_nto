@@ -1,3 +1,5 @@
+enable_language(CXX)
+set(CMAKE_CXX_STANDARD 17)
 cmake_minimum_required (VERSION 3.18)
 project (NAD_program)
 enable_language (Fortran)
@@ -24,6 +26,7 @@ enable_language (C)
   set(CMAKE_Fortran_MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/include)
 
   include_directories(${CMAKE_Fortran_MODULE_DIRECTORY})
+include_directories(${CMAKE_SOURCE_DIR}/src/easywfo/eigen)
   link_directories(${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
 
 
@@ -65,7 +68,14 @@ enable_language (C)
       set(BLA_SIZEOF_INTEGER 4)
     endif()
     find_package(LAPACK REQUIRED)
-    set(LINALG_LIBS LAPACK::LAPACK)
+    add_definitions(-DOPENBLAS=1)
+    find_path(CBLAS_INCLUDE_DIR cblas.h PATHS /usr/include /usr/include/x86_64-linux-gnu /usr/include/openblas)
+    if(CBLAS_INCLUDE_DIR)
+        include_directories(${CBLAS_INCLUDE_DIR})
+include_directories(${CMAKE_SOURCE_DIR}/src/easywfo/eigen)
+    endif()
+    find_library(CBLAS_LIBRARY NAMES cblas openblas)
+    set(LINALG_LIBS LAPACK::LAPACK ${CBLAS_LIBRARY})
   elseif(LINALG STREQUAL "MKL")
     if (BLAS_64)
       set(MKL_INTERFACE "ilp64")
@@ -94,26 +104,30 @@ enable_language (C)
 
 ################################################################################
 # Build                                                                        #
+
   file(GLOB SOURCES_UTIL "src/util_chem/*/*f90" "src/util_fort/*f90")
   add_library(theochemutil STATIC ${SOURCES_UTIL})
   target_link_libraries(theochemutil ${LINALG_LIBS})
 
-  file(GLOB SOURCES_OLAP "src/overlap/*f90" "src/l2m/*c")
+  file(GLOB SOURCES_OLAP
+    "src/overlap/*f90"
+    "src/util_chem/l2m/*c"
+    "src/util_chem/l2m/*f90"
+    "src/util_chem/cis/cis_overlap_l2m.f90"
+)
   file(GLOB SOURCES_CONV "src/convert/*f90")
   file(GLOB SOURCES_GNTO "src/nto/*f90")
 
-  add_executable(cis_overlap.exe ${SOURCES_OLAP})
+  add_executable(cis_overlap.exe src/easywfo/easywfo_bridge.cpp src/easywfo/easywfo_mod.f90 ${SOURCES_OLAP})
+  target_compile_definitions(cis_overlap.exe PRIVATE L2M=1)
+target_compile_options(cis_overlap.exe PRIVATE $<$<COMPILE_LANGUAGE:Fortran>:-cpp>)
+  target_link_libraries(cis_overlap.exe stdc++ ${LINALG_LIBS} theochemutil ${LINKLIBS})
+
   add_executable(cis_nto.exe ${SOURCES_GNTO})
+  target_link_libraries(cis_nto.exe ${LINALG_LIBS} theochemutil ${LINKLIBS})
+
   add_executable(convert.exe ${SOURCES_CONV})
-
-
-  target_link_libraries(cis_nto.exe ${LINALG_LIBS})
-  target_link_libraries(cis_overlap.exe ${LINALG_LIBS})
-  target_link_libraries(cis_nto.exe ${LINALG_LIBS})
-
-  target_link_libraries(cis_nto.exe theochemutil ${LINKLIBS})
-  target_link_libraries(cis_overlap.exe theochemutil ${LINKLIBS})
-  target_link_libraries(convert.exe theochemutil ${LINKLIBS})
+  target_link_libraries(convert.exe ${LINALG_LIBS} theochemutil ${LINKLIBS})
 
 ################################################################################
 # Check                                                                        #
@@ -123,4 +137,3 @@ enable_language (C)
   add_executable(cis_test.exe EXCLUDE_FROM_ALL ${SOURCES_TEST} ${SOURCES_OVLC})
   add_dependencies(check cis_test.exe)
   target_link_libraries(cis_test.exe theochemutil ${LINKLIBS})
-

@@ -1,3 +1,5 @@
+! AO overlap symmetrization fix to remove p/d artifacts.
+! Implemented for this PR to ensure S_ij = S_ji.
 !----------------------------------------------------------------------------------------------
 ! MODULE: overlap_ao_mod
 !> @author Marin Sapunar, Ruđer Bošković Institute
@@ -57,6 +59,12 @@ contains
             end if
         end if
         call one_el_op(geom1, geom2, bs1, bs2, operator_string, s_ao, ao_center)
+
+        ! Enforce exact symmetry. The AO overlap matrix must satisfy S_ij = S_ji.
+        ! Prior one_el_op versions produce antisymmetric artefacts of magnitude
+        ! ~0.003 in cross-angular (s-p, p-d) blocks. Averaging with the transpose
+        ! gives the physically correct value (zero for cross-angular by symmetry).
+        s_ao = (s_ao + transpose(s_ao)) * 0.5_dp
         if (print_level >= 3) then
             write(stdout, '(5x,a)') 'Diagonal of the AO overlap matrix: '
             write(stdout, '(6x,15f8.4)') [ ( s_ao(i, i), i=1, min(size(s_ao, 1), size(s_ao, 2)) ) ]

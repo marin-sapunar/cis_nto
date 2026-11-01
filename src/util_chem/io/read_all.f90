@@ -12,6 +12,7 @@ module read_all_mod
     use turbomole_read_mod
     use orca_read_mod
     use molpro_output_read_mod
+    use cp2k_read_mod
     implicit none
 
 
@@ -39,20 +40,27 @@ contains
         character(len=2), allocatable :: tsymbol(:)
         integer, allocatable :: tnumber(:)
 
-        select case(dformat(:6))
-        case('turbom')
-            call turbomole_read_geom(path, geom, tsymbol)
-            tnumber = element_s2z(tsymbol)
-        case('molden')
-            call molden_read_geom(path, geom, tsymbol, tnumber)
-        case('molpro')
-            call molpro_output_read_geom(path, geom, tsymbol, tnumber)
-        case('orca_c')
-            call molden_read_geom(path//".molden.input", geom, tsymbol, tnumber)
-        case default
-            write(stderr, *) 'Error in read_geom subroutine.'
-            write(stderr, *) 'Input format not implemented: '//trim(adjustl(dformat))
-        end select
+        block
+            character(len=:), allocatable :: dfmt
+            dfmt = adjustl(dformat)
+            select case(dfmt(1:min(len_trim(dfmt), 6)))
+            case('turbom')
+                call turbomole_read_geom(path, geom, tsymbol)
+                tnumber = element_s2z(tsymbol)
+            case('molden')
+                call molden_read_geom(path, geom, tsymbol, tnumber)
+            case('molpro')
+                call molpro_output_read_geom(path, geom, tsymbol, tnumber)
+            case('cp2k')
+                call cp2k_read_geom(path, geom, tsymbol, tnumber)
+            case('orca_c')
+                call molden_read_geom(path//".molden.input", geom, tsymbol, tnumber)
+            case default
+                write(stderr, *) 'Error in read_geom subroutine.'
+                write(stderr, *) 'Input format not implemented: '//trim(adjustl(dformat))
+                call abort()
+            end select
+        end block
 
         if (present(atom_symbol)) atom_symbol = tsymbol
         if (present(atom_number)) atom_number = tnumber
@@ -69,25 +77,31 @@ contains
         character(len=*), intent(in) :: path
         type(basis_set), intent(inout) :: basis
         
-        select case(dformat(:6))
-        case('turbom')
-            call turbomole_read_basis(path, basis)
-        case('molden') 
-            select case(dformat)
-            case('molden_orca')
-                call molden_read_basis(path, basis, 3)
+        block
+            character(len=:), allocatable :: dfmt
+            dfmt = adjustl(dformat)
+            select case(dfmt(1:min(len_trim(dfmt), 6)))
+            case('turbom')
+                call turbomole_read_basis(path, basis)
+            case('molden')
+                select case(trim(adjustl(dformat)))
+                case('molden_orca')
+                    call molden_read_basis(path, basis, 3)
+                case default
+                    call molden_read_basis(path, basis, 1)
+                end select
+            case('molpro')
+                call molpro_output_read_basis(path, basis)
+            case('cp2k')
+                call cp2k_read_basis(path, basis)
+            case('orca_c')
+                call molden_read_basis(path//".molden.input", basis, 3)
             case default
-                call molden_read_basis(path, basis, 1)
+                write(stderr, *) 'Error in read_basis subroutine.'
+                write(stderr, *) 'Input format not implemented: '//trim(adjustl(dformat))
+                call abort()
             end select
-        case('molpro')
-            call molpro_output_read_basis(path, basis)
-        case('orca_c')
-            call molden_read_basis(path//".molden.input", basis, 3)
-        case default
-            write(stderr, *) 'Error in read_basis subroutine.'
-            write(stderr, *) 'Input format not implemented: '//trim(adjustl(dformat))
-            stop
-        end select
+        end block
 
         call basis%check_init()
     end subroutine read_basis
@@ -105,36 +119,43 @@ contains
         type(molecular_orbitals) :: mos
         type(basis_set), intent(in), optional :: bs
 
-        select case(dformat(:6))
-        case('turbom')
-            call turbomole_read_mo(path, mos)
-        case('molden') 
-            select case(dformat)
-            case('molden_tm2molden')
-                if (.not. present(bs)) then
-                    write(stderr, *) 'Error, read_mo called for tm2molden without passing bs.'
-                    stop
-                end if
-                call molden_read_mo(path, mos, bs, 1)
-            case('molden_cfour')
-                if (.not. present(bs)) then
-                    write(stderr, *) 'Error, read_mo called for cfour without passing bs.'
-                    stop
-                end if
-                call molden_read_mo(path, mos, bs, 2)
-            case('molden_orca')
-                call molden_read_mo(path, mos, bs, 3)
+        block
+            character(len=:), allocatable :: dfmt
+            dfmt = adjustl(dformat)
+            select case(dfmt(1:min(len_trim(dfmt), 6)))
+            case('turbom')
+                call turbomole_read_mo(path, mos)
+            case('molden')
+                select case(trim(adjustl(dformat)))
+                case('molden_tm2molden')
+                    if (.not. present(bs)) then
+                        write(stderr, *) 'Error, read_mo called for tm2molden without passing bs.'
+                        call abort()
+                    end if
+                    call molden_read_mo(path, mos, bs, 1)
+                case('molden_cfour')
+                    if (.not. present(bs)) then
+                        write(stderr, *) 'Error, read_mo called for cfour without passing bs.'
+                        call abort()
+                    end if
+                    call molden_read_mo(path, mos, bs, 2)
+                case('molden_orca')
+                    call molden_read_mo(path, mos, bs, 3)
+                case default
+                    call molden_read_mo(path, mos)
+                end select
+            case('cp2k')
+                call cp2k_read_mo(path, mos, bs)
+            case('orca_c')
+                call molden_read_mo(path//".molden.input", mos, bs, 3)
+            case('molpro_output')
+                call molpro_output_read_mo(path, mos)
             case default
-                call molden_read_mo(path, mos)
+                write(stderr, *) 'Error in read_mo subroutine.'
+                write(stderr, *) 'Input format not implemented: '//trim(adjustl(dformat))
+                call abort()
             end select
-        case('orca_c')
-            call molden_read_mo(path//".molden.input", mos, bs, 3)
-        case('molpro_output')
-            call molpro_output_read_mo(path, mos)
-        case default
-            write(stderr, *) 'Error in read_mo subroutine.'
-            write(stderr, *) 'Input format not implemented: '//trim(adjustl(dformat))
-        end select
+        end block
 
         !< @todo add check for proper mos initialization
     end subroutine read_mo
@@ -176,14 +197,17 @@ contains
         torthog = .true.
         if (present(orthog)) torthog = orthog
 
-        select case(dformat)
+        select case(trim(adjustl(dformat)))
         case('turbomole')
             call turbomole_read_cis(path, twfa, twfb, tocc_mo, tact_mo)
         case('orca_cis')
             call orca_read_cis(path//".cis", twfa, tocc_mo, tact_mo)
+        case('cp2k')
+            call cp2k_read_cis(path, twfa, twfb, tocc_mo, tact_mo)
         case default
             write(stderr, *) 'Error in read_cis subroutine.'
             write(stderr, *) 'Input format not implemented: '//trim(adjustl(dformat))
+            call abort()
         end select
 
         if (tnorm) call wfab_normalize(allocated(twfb), twfa, twfb)

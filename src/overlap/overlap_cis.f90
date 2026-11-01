@@ -7,6 +7,7 @@
 !----------------------------------------------------------------------------------------------
 module overlap_cis_mod
     use global_defs
+    use easywfo_mod
     implicit none
 
 

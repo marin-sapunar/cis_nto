@@ -107,7 +107,7 @@ contains
             case('--out-file', '-o')
                 i = i + 1
                 call get_command_argument(i, temp)
-                read(temp, *) outfile_nto
+                outfile_nto = trim(adjustl(temp))
             case('--print-level', '-p')
                 i = i + 1
                 call get_command_argument(i, temp)
