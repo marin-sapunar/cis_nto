@@ -63,3 +63,6 @@ The source code is available at: [GitHub][Git]
 [L2Mpaper]: https://dx.doi.org/10.1016/j.cpc.2020.107521
 
 
+
+## Dependencies
+- **Eigen:** The C++ EasyWFO core requires Eigen3. It is automatically downloaded by CMake via `FetchContent`.

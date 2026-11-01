@@ -1,0 +1,182 @@
+{
+  "schema_version": "1.1",
+  "generated_utc": "2026-10-21T08:42:07+00:00",
+  "dataset": "ML-BP (AkimovLab/Project_MLBP_excitonic, step3)",
+  "paper_doi": "10.1021/acs.jpclett.5c01417",
+  "notes": "delta_paper is computed against the leading single-excitation weight (max_ia X_ia^2), the quantity reported by the paper. NTO eigenvalues are reported as supplemental information and are not directly comparable to the paper.",
+  "functionals": [
+    {
+      "functional": "PBEh0125",
+      "state": 1,
+      "reconstruction": {
+        "log_references": 1504,
+        "molden_contains": 832,
+        "method": "truncated",
+        "n_dropped": 672
+      },
+      "leading_ci_weight": {
+        "leading_weight": 0.9934507584000001,
+        "leading_occ": 160,
+        "leading_vir": 161,
+        "total_weight": 0.9997258335260003,
+        "n_excitations": 196
+      },
+      "nto": {
+        "leading_nto_eigenvalue": 0.99686,
+        "second_nto_eigenvalue": 0.99686
+      },
+      "paper": {
+        "state": 1,
+        "value": 0.993,
+        "note": "HOMO -> LUMO"
+      },
+      "delta_paper": 0.000451
+    },
+    {
+      "functional": "B3LYP",
+      "state": 1,
+      "reconstruction": {
+        "log_references": 1504,
+        "molden_contains": 832,
+        "method": "truncated",
+        "n_dropped": 672
+      },
+      "leading_ci_weight": {
+        "leading_weight": 0.978799571649,
+        "leading_occ": 160,
+        "leading_vir": 161,
+        "total_weight": 0.999696858325,
+        "n_excitations": 251
+      },
+      "nto": {
+        "leading_nto_eigenvalue": 0.989472,
+        "second_nto_eigenvalue": 0.989472
+      },
+      "paper": {
+        "state": 1,
+        "value": 0.979,
+        "note": "HOMO -> LUMO"
+      },
+      "delta_paper": -0.0002
+    },
+    {
+      "functional": "PBE0",
+      "state": 1,
+      "reconstruction": {
+        "log_references": 1504,
+        "molden_contains": 832,
+        "method": "truncated",
+        "n_dropped": 672
+      },
+      "leading_ci_weight": {
+        "leading_weight": 0.9670224571290001,
+        "leading_occ": 160,
+        "leading_vir": 161,
+        "total_weight": 0.9996556393350011,
+        "n_excitations": 302
+      },
+      "nto": {
+        "leading_nto_eigenvalue": 0.983552,
+        "second_nto_eigenvalue": 0.983552
+      },
+      "paper": {
+        "state": 1,
+        "value": 0.967,
+        "note": "HOMO -> LUMO"
+      },
+      "delta_paper": 2.2e-05
+    },
+    {
+      "functional": "BHandHLYP",
+      "state": 1,
+      "reconstruction": {
+        "log_references": 1504,
+        "molden_contains": 832,
+        "method": "truncated",
+        "n_dropped": 672
+      },
+      "leading_ci_weight": {
+        "leading_weight": 0.8365480369000001,
+        "leading_occ": 160,
+        "leading_vir": 161,
+        "total_weight": 0.999494926561999,
+        "n_excitations": 639
+      },
+      "nto": {
+        "leading_nto_eigenvalue": 0.914883,
+        "second_nto_eigenvalue": 0.914883
+      },
+      "paper": {
+        "state": 1,
+        "value": 0.837,
+        "note": "HOMO -> LUMO"
+      },
+      "delta_paper": -0.000452
+    },
+    {
+      "functional": "CAM_B3LYP",
+      "state": 1,
+      "reconstruction": {
+        "log_references": 1504,
+        "molden_contains": 832,
+        "method": "truncated",
+        "n_dropped": 672
+      },
+      "leading_ci_weight": {
+        "leading_weight": 0.769469313636,
+        "leading_occ": 160,
+        "leading_vir": 161,
+        "total_weight": 0.9994469313970001,
+        "n_excitations": 706
+      },
+      "nto": {
+        "leading_nto_eigenvalue": 0.87747,
+        "second_nto_eigenvalue": 0.87747
+      },
+      "paper": {
+        "state": 1,
+        "value": 0.769,
+        "note": "HOMO -> LUMO"
+      },
+      "delta_paper": 0.000469
+    },
+    {
+      "functional": "wB97XD",
+      "state": 1,
+      "reconstruction": null,
+      "leading_ci_weight": {
+        "leading_weight": 0.6129261468160001,
+        "leading_occ": 160,
+        "leading_vir": 161,
+        "total_weight": 0.999524497105,
+        "n_excitations": 935
+      },
+      "nto": {},
+      "paper": {
+        "state": 38,
+        "value": 0.185,
+        "note": "HOMO-3 -> LUMO+5"
+      },
+      "delta_paper": null
+    },
+    {
+      "functional": "wB97X",
+      "state": 1,
+      "reconstruction": null,
+      "leading_ci_weight": {
+        "leading_weight": 0.5932989270810001,
+        "leading_occ": 160,
+        "leading_vir": 161,
+        "total_weight": 0.9993871322640009,
+        "n_excitations": 1236
+      },
+      "nto": {},
+      "paper": {
+        "state": 38,
+        "value": 0.153,
+        "note": "HOMO-5 -> LUMO+7"
+      },
+      "delta_paper": null
+    }
+  ]
+}

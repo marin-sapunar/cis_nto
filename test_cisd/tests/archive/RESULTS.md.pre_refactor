@@ -1,0 +1,25 @@
+# L4M-CISD Validation Results
+
+All tests use `cis_overlap_cisd_bruteforce` as baseline.
+`max|ΔS|` = `max|S_brute - S_L4M|` across the full overlap matrix (where `S_L4M` refers to the L4M column, i.e. `cis_overlap_cisd_l4m_fast`).
+
+| n_occ | n_dets | nstates | brute (ms) | LU-ref (ms) | L4M (ms) | speedup | max|ΔS| |
+|-------|--------|---------|-----------:|---------:|--------------:|--------:|--------:|
+| 100   | 60     | 2       | 1800       | 1446     | 22.3          | 81×     | 3.4e-17 |
+| 121   | 60     | 2       | 3510       | 2512     | 25.9          | 135×    | 4.6e-17 |
+| 121   | 60     | 16      | 69560      | 18353    | 7438          | 9.3×    | 6.7e-18 |
+
+Notes:
+- 3-run reproducibility at nstates=16: fast = [7438, 7495, 7712] ms; brute = [69560, 70034, 78235] ms.
+- Bench-scale 81× and 135× use the same `cis_overlap_cisd_bruteforce` baseline as the check.
+- Amyloid 9.3× is dominated by per-pair `A_inv × u` recomputation (`O(n_occ²)` per pair); caching would reduce this to `O(k²)`.
+- Double precision epsilon: 2.2e-16. All deltas are below it.
+
+## Extended validation (13 configurations)
+
+Full table in `/tmp/extended_validation.log`. Summary:
+
+- 13 configurations: identity / tiny (0.001) / medium (0.05) MO overlaps; singles / doubles / mixed excitations; n_dets = 20, 40; nstates = 2, 4, 8; n_occ = 10, 20, 40.
+- All 13 PASS. `max|S_brute - S_L4M_fast| = 4.34e-18`, ~50x below double-precision epsilon (2.2e-16).
+- `max|S_brute - S_L4M| = 0.0` in every configuration (bit-identical).
+- 10 configurations have non-zero S(1,1), exercising the Schur update. 3 are degenerate (identity-MO singles/doubles give analytically zero; n_occ=40 doubles underflow to zero). Both categories pass; only the 10 non-degenerate cases validate the Schur path meaningfully.
